@@ -1,0 +1,10 @@
+---
+name: Ligurian
+
+domain:
+  minimum_latitude: 40.0
+  maximum_latitude: 44.5
+  minimum_longitude: 5.0
+  maximum_longitude: 15.0
+  minimum_depth: 0.0
+  maximum_depth: 3800.0
