@@ -3,6 +3,7 @@ from datetime import datetime
 import yaml
 import copernicusmarine
 import os
+import xarray as xr
 
 start=datetime(year=1999, month=1, day=1)
 end=datetime(year=2022, month=12, day=31)
@@ -84,6 +85,36 @@ def download_data (variable, output_dir):
     print (f"download complete: {output_filename}")
     return dataset
 
+def validate_dataset(filepath, variable):
+    """Validates the dataset, by checking for:
+    dimensions, variables, and depth coverage."""
+    print(f"dataset validated: {filepath}")
+
+    dataset= xr.open_dataset(filepath)   #open the dataset using xarray
+
+        #check for necessary dimensions
+    required_dims=["time", "depth", "latitude", "longitude"]
+    for dim in required_dims:
+        if dim not in dataset.dims:
+            print(f"{dim}: dimension missing, validation failed")
+            dataset.close()
+            return False
+        
+    if variable not in dataset.data_vars: 
+        print(f"{variable}: variable missing. Validation failed")
+        dataset.close ()
+        return False
+    
+    if "depth" in dataset.variables: 
+        depth_values = dataset["depth"].values
+        print(f"{depth_values}")
+        if depth_values.min()<0 or depth_values.max()>300:
+            print ("depth range is outside the expected bounds. Validation failed.")
+            return False
+    
+    print ("Successful Validation")
+    dataset.close()
+    return True
 
 def argument():
     # TODO: Write a sensible description of what this script does
@@ -143,6 +174,7 @@ def argument():
     # )
 
     return parser.parse_args()
+
 def main():
     args = argument()
 
