@@ -35,6 +35,10 @@ parameters = {
     "maximum_depth":250,
 }
 
+def date_from_str(date_str):
+    return datetime.strptime(date_str, "%Y-%m-%d")
+
+
 def parse_args ():
     """
     parse command line arguments: 
@@ -50,6 +54,13 @@ def parse_args ():
         type=str,
         required=True,
         help="Name of the variable to download"
+    )
+
+    parser.add_argument(
+        "--start-date",
+        type=date_from_str,
+        required=True,
+        help="Starting date for the download (format YYYY-MM-DD)"
     )
 
         #parser.add_argument(    #input the frequency: download per month or day
