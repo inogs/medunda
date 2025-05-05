@@ -1,7 +1,6 @@
 import copernicusmarine
 from datetime import datetime
 import argparse
-import os
 import xarray as xr
 from pathlib import Path
 
