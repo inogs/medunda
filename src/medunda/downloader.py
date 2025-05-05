@@ -4,7 +4,8 @@ import argparse
 import os
 import xarray as xr
 
-from sources.cmems import products
+from sources.cmems import PRODUCTS
+from sources.cmems import VARIABLES
 from tools.argparse_utils import date_from_str
 
 
@@ -36,6 +37,7 @@ def parse_args ():
     parser.add_argument(   
         "--variable",  
         type=str,
+        choices=VARIABLES,
         required=True,
         help="Name of the variable to download"
     )
@@ -55,8 +57,9 @@ def parse_args ():
         "--frequency",
         type=str,
         choices=["monthly", "daily"],
-        required=True,
-        help="frequency of the download"
+        required=False,
+        default="monthly",
+        help="frequency of the downloaded data"
     )
     parser.add_argument(      #input the directory to save the file
         "--output-dir",
@@ -66,17 +69,18 @@ def parse_args ():
     )
     return parser.parse_args()
 
+
 def download_data (variable, output_dir, frequency, start, end):
 
     """ Download and organize data by year, month and day,  for the chosen variables. 
-    Steps: 1) Search in the 'products' dictionnary for the product_id related to the chosen variable
+    Steps: 1) Search in the 'products' dictionary for the product_id related to the chosen variable
            2) Create the output directory if it does not exist
            3) Define the output file name based on the variable
            4) Call copernicusmarine.subset () using the **parameters"""
     
     #1. search for product
     selected_product=None
-    for prod_id, vars_available in products.items():             #zip: to loop between more keys
+    for prod_id, vars_available in PRODUCTS.items():             #zip: to loop between more keys
         if variable in vars_available:
             selected_product=prod_id
             break

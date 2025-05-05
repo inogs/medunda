@@ -1,4 +1,4 @@
-products = {     
+PRODUCTS = {     
        # -> each key represents a product and its associated with a list of available variables.
      # physical variables (MEDSEA_MULTIYEAR_PHY_006_004)
     "med-cmcc-tem-rean-m": ["thetao"],  # temperature
@@ -14,3 +14,8 @@ products = {
     "med-ogs-nut-rean-m": ["si"],      # silicate
     "med-ogs-pft-rean-m"  : ["chl"] ,         # chlorophylle a
 }
+
+VARIABLES = []
+for _var_list in PRODUCTS.values():
+    VARIABLES.extend(_var_list)
+VARIABLES.sort()
