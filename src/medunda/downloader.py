@@ -3,6 +3,7 @@ from datetime import datetime
 import argparse
 import os
 import xarray as xr
+from pathlib import Path
 
 from sources.cmems import PRODUCTS
 from sources.cmems import VARIABLES
@@ -59,14 +60,14 @@ def parse_args ():
     )
     parser.add_argument(      #input the directory to save the file
         "--output-dir",
-        type=str,
-        default=".",
+        type=Path,
+        default=Path("."),
         help="directory where the downloaded file will be saved",
     )
     return parser.parse_args()
 
 
-def download_data (variable: str, output_dir:str , frequency:str, start:datetime, end:datetime):
+def download_data (variable: str, output_dir:Path, frequency:str, start:datetime, end:datetime):
 
     """ Download and organize data by year, month and day,  for the chosen variables. 
     Steps: 1) Search in the 'products' dictionary for the product_id related to the chosen variable
@@ -89,26 +90,29 @@ def download_data (variable: str, output_dir:str , frequency:str, start:datetime
     print (f"trying to download the variable '{variable}' from the product '{selected_product}'")
            
     #2. output directory if not available
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir.mkdir(exist_ok=True)
     
     #3. define the output file name (exp: monthly.uo_1999-2023.nc)
-    output_dir=os.path.join(output_dir, variable, frequency)
-    output_filename = os.path.join(output_dir,f"'{frequency}''{variable}'_'{start}'-'{end}'.nc")
+    final_output_dir = output_dir / variable / frequency
+    final_output_dir.mkdir(exist_ok=True, parents=True)
+
+    output_filename = f"'{frequency}''{variable}'_'{start}'-'{end}'.nc"
+    output_filepath = final_output_dir / output_filename
 
     print (f"downloading '{frequency}''{variable}' from '{start}' to '{end}'")
 
     #4 
-    try:
-        copernicusmarine.subset(
-            dataset_id=selected_product,
-            variables=[variable],
-            start_datetime=start,
-            end_datetime=end,
-            output_filename=output_filename,
-            **parameters
-        )
-    except Exception as e:
-        print(f"download failed: {e}")
+    copernicusmarine.subset(
+        dataset_id=selected_product,
+        variables=[variable],
+        start_datetime=start,
+        end_datetime=end,
+        output_filename=output_filepath,
+        **parameters
+    )
+
+    return (output_filepath, )
+
 
 def validate_dataset(filepath, variable):        
     """Validates the dataset, by checking for:
@@ -116,44 +120,40 @@ def validate_dataset(filepath, variable):
     
     print(f"dataset validated: {filepath}")
 
-    dataset= xr.open_dataset(filepath)   #open the dataset using xarray
-
-        #check for necessary dimensions
-    required_dims=["time", "depth", "latitude", "longitude"]
-    
-    for dim in required_dims:
-        if dim not in dataset.dims:
-            print(f"{dim}: dimension missing, validation failed")
-            dataset.close()
+    with xr.open_dataset(filepath) as dataset:  #open the dataset using xarray
+        # check for necessary dimensions
+        required_dims=["time", "depth", "latitude", "longitude"]
+        
+        for dim in required_dims:
+            if dim not in dataset.dims:
+                print(f"{dim}: dimension missing, validation failed")
+                return False
+            
+        if variable not in dataset.data_vars: 
+            print(f"{variable}: variable missing. Validation failed")
             return False
         
-    if variable not in dataset.data_vars: 
-        print(f"{variable}: variable missing. Validation failed")
-        dataset.close ()
-        return False
-    
-    if "depth" in dataset.variables: 
-        depth_values = dataset["depth"].values
-        print(f"{depth_values}")
-        if depth_values.min()<0 or depth_values.max()>300:
-            print ("depth range is outside the expected bounds. Validation failed.")
-            return False
-    
+        if "depth" in dataset.variables: 
+            depth_values = dataset["depth"].values
+            print(f"{depth_values}")
+            if depth_values.min()<0 or depth_values.max()>300:
+                print ("depth range is outside the expected bounds. Validation failed.")
+                return False
+
     print ("Successful Validation")
-    dataset.close()
     return True
 
 def main ():
     args=parse_args()       #parse the command line arguments
 
-    download_data(args.variable, args.output_dir, args.frequency, args.start_date, args.end_date)
+    downloaded_files = download_data(args.variable, args.output_dir, args.frequency, args.start_date, args.end_date)
 
-    filepath = os.path.join(args.output_dir, f"{args.variable}'{args.frequency}'_'{args.start}'-'{args.end}'.nc")
+    for filepath in downloaded_files:
+        if validate_dataset(filepath, args.variable): 
+            print(f"dataset validated for variable: '{args.variable}'")
+        else:
+            print(f"failed dataset validation for variable:'{args.variable}'")
 
-    if validate_dataset(filepath, args.variable): 
-        print(f"dataset validated for variable: '{args.variable}'")
-    else:
-        print(f"failed dataset validation for variable:'{args.variable}'")
 
 if __name__ == "__main__":
     main()
