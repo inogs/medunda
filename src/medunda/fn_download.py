@@ -38,7 +38,6 @@ parameters = {
 def date_from_str(date_str):
     return datetime.strptime(date_str, "%Y-%m-%d")
 
-
 def parse_args ():
     """
     parse command line arguments: 
@@ -47,29 +46,33 @@ def parse_args ():
     --output-dir: directory to save the download file
     """
     parser = argparse.ArgumentParser(
-        description="dowload monthly data for a chosen variable"  #change to monthly data!!
-    )
-    parser.add_argument(     #input variable name
-        "--variable",
+        description="dowload monthly data for a chosen variable")
+
+    parser.add_argument(   
+        "--variable",  
         type=str,
         required=True,
         help="Name of the variable to download"
     )
-
     parser.add_argument(
         "--start-date",
         type=date_from_str,
         required=True,
         help="Starting date for the download (format YYYY-MM-DD)"
     )
-
-        #parser.add_argument(    #input the frequency: download per month or day
-        #"--frequency",
-        #type=str,
-        #choices=["monthly", "daily"],
-        #required=True,
-        #help="frequency of the download")
-
+    parser.add_argument(
+        "--end-date",
+        type=date_from_str,
+        required=True,
+        help="End date of the download"
+    )
+    parser.add_argument( 
+        "--frequency",
+        type=str,
+        choices=["monthly", "daily"],
+        required=True,
+        help="frequency of the download"
+    )
     parser.add_argument(      #input the directory to save the file
         "--output-dir",
         type=str,
@@ -78,7 +81,7 @@ def parse_args ():
     )
     return parser.parse_args()
 
-def download_data (variable, output_dir):
+def download_data (variable, output_dir, frequency, start, end):
 
     """ Download and organize data by year, month and day,  for the chosen variables. 
     Steps: 1) Search in the 'products' dictionnary for the product_id related to the chosen variable
@@ -100,10 +103,18 @@ def download_data (variable, output_dir):
     #2. output directory if not available
     os.makedirs(output_dir, exist_ok=True)
     
-    #3. define the output file name (exp: vo_annual.nc)
-    output_filename = os.path.join(output_dir,f"{variable}_1999-2023.nc")
+    #3. define the output file name (exp: monthly.uo_1999-2023.nc)
+    output_dir=os.path.join(output_dir, variable, frequency)
+    output_filename = os.path.join(output_dir,f"'{frequency}''{variable}'_'{start}'-'{end}'.nc")
 
-    print (f"dowloading '{variable} from 1999 to 2023")
+
+    if frequency in ["daily", "monthly"]:
+        start_datetime= date_from_str(start)
+        end_datetime= date_from_str(end)
+    else:
+        raise ValueError(f"invalid frequency")
+
+    print (f"downloading '{frequency}''{variable}' from '{start}' to '{end}'")
 
     #4 
     try:
@@ -153,9 +164,9 @@ def validate_dataset(filepath, variable):
 
 def main ():
     args=parse_args()       #parse the command line arguments
-    download_data(args.variable, args.output_dir)     
+    download_data(args.variable, args.output_dir, args.frequency, args.start_date, args.end_date)     
 
-    filepath = os.path.join(args.output_dir, f"{args.variable}_1999-2023.nc")
+    filepath = os.path.join(args.output_dir, f"{args.variable}'{args.frequency}'_'{args.start}'-'{args.end}'.nc")
 
     if validate_dataset(filepath, args.variable): 
         print(f"dataset validated for variable: '{args.variable}'")
