@@ -4,20 +4,10 @@ import argparse
 import xarray as xr
 from pathlib import Path
 
+from domains.domain import GSA9
 from sources.cmems import search_for_product
 from sources.cmems import VARIABLES
 from tools.argparse_utils import date_from_str
-
-
-parameters = {      
-     #geographical coordinates and bathymetry 
-    "minimum_latitude":41,
-    "maximum_latitude":44,
-    "minimum_longitude":9,
-    "maximum_longitude":13,
-    "minimum_depth":0,
-    "maximum_depth":250,
-}
 
 
 def parse_args ():
@@ -101,7 +91,7 @@ def download_data (variable: str, output_dir:Path, frequency:str, start:datetime
         start_datetime=start,
         end_datetime=end,
         output_filename=output_filepath,
-        **parameters
+        **GSA9.model_dump()
     )
 
     return (output_filepath, )
