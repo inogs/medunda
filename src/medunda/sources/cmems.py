@@ -19,3 +19,18 @@ VARIABLES = []
 for _var_list in PRODUCTS.values():
     VARIABLES.extend(_var_list)
 VARIABLES.sort()
+
+
+def search_for_product(var_name: str) -> str:
+    """ Given the name of a variable, return the name of the CMEMS product that
+    contains such variable. """
+
+    selected_product = None
+    for prod_id, vars_available in PRODUCTS.items():             #zip: to loop between more keys
+        if var_name in vars_available:
+            selected_product = prod_id
+            break
+
+    if selected_product is None:
+        raise ValueError (f"Variable '{var_name}' is not available in the dictionary")
+    return selected_product

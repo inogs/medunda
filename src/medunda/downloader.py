@@ -4,7 +4,7 @@ import argparse
 import xarray as xr
 from pathlib import Path
 
-from sources.cmems import PRODUCTS
+from sources.cmems import search_for_product
 from sources.cmems import VARIABLES
 from tools.argparse_utils import date_from_str
 
@@ -78,13 +78,7 @@ def download_data (variable: str, output_dir:Path, frequency:str, start:datetime
         raise ValueError(f"invalid frequency")
 
     #1. search for product
-    selected_product = None
-    for prod_id, vars_available in PRODUCTS.items():             #zip: to loop between more keys
-        if variable in vars_available:
-            selected_product=prod_id
-            break
-    if selected_product is None:
-        raise ValueError (f"Variable '{variable}' is not available in the dictionnary")
+    selected_product = search_for_product(var_name=variable)
     
     print (f"trying to download the variable '{variable}' from the product '{selected_product}'")
            
