@@ -1,47 +1,79 @@
-import argparse
-from datetime import datetime
-import yaml
 import copernicusmarine
+from datetime import datetime
+import argparse
 import os
 import xarray as xr
 
-start=datetime(year=1999, month=1, day=1)
-end=datetime(year=2022, month=12, day=31)
 
-products = {       #Dictionary of available products 
-       # -> each key represents a product and is associated with a list of available variables.
+start=datetime (year= 1999, month=1, day=1)
+end=datetime (year= 2023, month=12, day=31)
 
-    "cmems_mod_med_phy-cur_my_4.2km_P1Y-m": ["uo", "vo"],
-    "cmems_mod_med_phy-tem_my_4.2km_P1Y-m": ["thetao"],
-    "cmems_mod_med_bgc-co2_my_4.2km_P1Y-m": ["pH", "o2"],
-    "cmems_mod_med_bgc-bio_my_4.2km_P1Y-m": ["chl"],
+products = {     
+       # -> each key represents a product and its associated with a list of available variables.
+     # physical variables (MEDSEA_MULTIYEAR_PHY_006_004)
+    "med-cmcc-tem-rean-m": ["thetao"],  # temperature
+    "med-cmcc-cur-rean-m": ["uo"],    # current: composante zonale
+    "med-cmcc-cur-rean-m": [ "vo" ],    # current: composante méridienne
+    "med-cmcc-sal-rean-m" : ["so"],  # salinity
+
+    # biogeochemical variables (MEDSEA_MULTIYEAR_BGC_006_008)
+    "med-ogs-bio-rean-m": ["o2"],            # dissolved oxygen
+    "med-ogs-car-rean-m":  ["ph"],          # pH
+    "med-ogs-nut-rean-m" : ["no3"],          # nitrate
+    "med-ogs-nut-rean-m" : ["po4"],          # phosphate
+    "med-ogs-nut-rean-m": ["si"],      # silicate
+    "med-ogs-pft-rean-m"  : ["chl"] ,         # chlorophylle a
 }
 
-parameters = {         #geographical coordinates and bathymetry 
+parameters = {      
+     #geographical coordinates and bathymetry 
     "minimum_latitude":41,
     "maximum_latitude":44,
     "minimum_longitude":9,
     "maximum_longitude":13,
     "minimum_depth":0,
-    "maximum_depth":200,
+    "maximum_depth":250,
 }
+
+def date_from_str(date_str):
+    return datetime.strptime(date_str, "%Y-%m-%d")
 
 def parse_args ():
     """
     parse command line arguments: 
     --variable: the variable to download:
+    --frequency: choose the frequency of the download: monthly or annualy:
     --output-dir: directory to save the download file
     """
     parser = argparse.ArgumentParser(
-        description="dowload annual data for a chosen variable"  
-    )
-    parser.add_argument(
-        "--variable",
+        description="dowload monthly data for a chosen variable")
+
+    parser.add_argument(   
+        "--variable",  
         type=str,
         required=True,
         help="Name of the variable to download"
     )
     parser.add_argument(
+        "--start-date",
+        type=date_from_str,
+        required=True,
+        help="Starting date for the download (format YYYY-MM-DD)"
+    )
+    parser.add_argument(
+        "--end-date",
+        type=date_from_str,
+        required=True,
+        help="End date of the download"
+    )
+    parser.add_argument( 
+        "--frequency",
+        type=str,
+        choices=["monthly", "daily"],
+        required=True,
+        help="frequency of the download"
+    )
+    parser.add_argument(      #input the directory to save the file
         "--output-dir",
         type=str,
         default=".",
@@ -49,9 +81,9 @@ def parse_args ():
     )
     return parser.parse_args()
 
-def download_data (variable, output_dir):
+def download_data (variable, output_dir, frequency, start, end):
 
-    """ Download annual data for the chosen variables. 
+    """ Download and organize data by year, month and day,  for the chosen variables. 
     Steps: 1) Search in the 'products' dictionnary for the product_id related to the chosen variable
            2) Create the output directory if it does not exist
            3) Define the output file name based on the variable
@@ -59,41 +91,55 @@ def download_data (variable, output_dir):
     
     #1. search for product
     selected_product=None
-    for prod_id, vars_available in products.items():
-        selected_product=prod_id
-        break
+    for prod_id, vars_available in products.items():             #zip: to loop between more keys
+        if variable in vars_available:
+            selected_product=prod_id
+            break
     if selected_product is None:
-        raise ValueError (f"Variable '{variable} is not available in the dictionnary")
-
+        raise ValueError (f"Variable '{variable}' is not available in the dictionnary")
+    
+    print (f"trying to download the variable '{variable}' from the product '{selected_product}'")
+           
     #2. output directory if not available
     os.makedirs(output_dir, exist_ok=True)
     
-    #3. define the output file name (vo_annual.nc)
-    output_filename = os.path.join(output_dir,f"{variable}_annual.nc")
+    #3. define the output file name (exp: monthly.uo_1999-2023.nc)
+    output_dir=os.path.join(output_dir, variable, frequency)
+    output_filename = os.path.join(output_dir,f"'{frequency}''{variable}'_'{start}'-'{end}'.nc")
 
-    print (f"dowloading data for variable '{variable}")
 
-    #4. dowloading data
-    dataset = copernicusmarine.subset(
-        dataset_id=selected_product,
-        variables=[variable],
-        output_filename=output_filename,
-        **parameters,
-        start_datetime=start,
-        end_datetime=end,
-    )
-    print (f"download complete: {output_filename}")
-    return dataset
+    if frequency in ["daily", "monthly"]:
+        start_datetime= date_from_str(start)
+        end_datetime= date_from_str(end)
+    else:
+        raise ValueError(f"invalid frequency")
 
-def validate_dataset(filepath, variable):
+    print (f"downloading '{frequency}''{variable}' from '{start}' to '{end}'")
+
+    #4 
+    try:
+        copernicusmarine.subset(
+            dataset_id=selected_product,
+            variables=[variable],
+            start_datetime=start,
+            end_datetime=end,
+            output_filename=output_filename,
+            **parameters
+        )
+    except Exception as e:
+        print(f"download failed: {e}")
+
+def validate_dataset(filepath, variable):        
     """Validates the dataset, by checking for:
     dimensions, variables, and depth coverage."""
+    
     print(f"dataset validated: {filepath}")
 
     dataset= xr.open_dataset(filepath)   #open the dataset using xarray
 
         #check for necessary dimensions
     required_dims=["time", "depth", "latitude", "longitude"]
+    
     for dim in required_dims:
         if dim not in dataset.dims:
             print(f"{dim}: dimension missing, validation failed")
@@ -116,88 +162,16 @@ def validate_dataset(filepath, variable):
     dataset.close()
     return True
 
-def argument():
-    # TODO: Write a sensible description of what this script does
-    parser = argparse.ArgumentParser(
-        description="""
-        Here there is a description of this program
-        """
-    )
-    parser.add_argument(
-        "--domain",
-        "-d",
-        type=str,
-        required=True,
-        help="""
-        The domain of the basin for which the data will be downloaded
-        """,
-    )
-    #
-    # parser.add_argument(
-    #     "--start-date",
-    #     "-s",
-    #     type=str,
-    #     required=True,
-    #     help="""
-    #     The start date of the period for which the data will be downloaded
-    #     """,
-    # )
-    #
-    # parser.add_argument(
-    #     "--end-date",
-    #     "-e",
-    #     type=str,
-    #     required=True,
-    #     help="""
-    #     The end date of the period for which the data will be downloaded
-    #     """,
-    # )
-    #
-    # parser.add_argument(
-    #     "--output-dir",
-    #     "-o",
-    #     type=str,
-    #     required=True,
-    #     help="""
-    #     The path where the data will be downloaded
-    #     """,
-    # )
-    #
-    # parser.add_argument(
-    #     "--variable",
-    #     "-v",
-    #     type=str,
-    #     required=True,
-    #     help="""
-    #     Which variable will be downloaded
-    #     """
-    # )
+def main ():
+    args=parse_args()       #parse the command line arguments
+    download_data(args.variable, args.output_dir, args.frequency, args.start_date, args.end_date)     
 
-    return parser.parse_args()
+    filepath = os.path.join(args.output_dir, f"{args.variable}'{args.frequency}'_'{args.start}'-'{args.end}'.nc")
 
-def main():
-    args = argument()
-
-    # Read the domain file
-
-    with open(args.domain, "r") as f:
-        domain = yaml.safe_load(f)
-
-    copernicusmarine.subset(
-        "med-cmcc-tem-rean-d",
-        minimum_latitude=domain["domain"]["minimum_latitude"],
-        maximum_latitude=domain["domain"]["maximum_latitude"],
-        minimum_longitude=domain["domain"]["minimum_longitude"],
-        maximum_longitude=domain["domain"]["maximum_longitude"],
-        start_datetime=datetime(2020, 1, 1),
-        end_datetime=datetime(2020, 1, 31),
-        variables=["thetao",],
-        output_filename="/dev/shm/test.nc",
-    )
-
-    print("Everything has been downloaded")
-
-
+    if validate_dataset(filepath, args.variable): 
+        print(f"dataset validated for variable: '{args.variable}'")
+    else:
+        print(f"failed dataset validation for variable:'{args.variable}'")
 
 if __name__ == "__main__":
     main()
