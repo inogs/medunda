@@ -48,9 +48,9 @@ def extract_and_plot_layers(filepath: Path, variable: str):
     
     ds = xr.open_dataset(filepath)
     
-    surface = ds[variable].isel(depth=0)      # Surface layer (depth=0)
-    bottom = ds[variable].isel(depth=-1)       # Bottom layer (last depth index)
-    mean_layer = ds[variable].mean(dim="depth", skipna=True)      # Mean over the water column
+    surface = ds[variable].isel(depth=0, time=0)      # Surface layer (depth=0)
+    bottom = ds[variable].isel(depth=-1, time=0)       # Bottom layer (last depth index)
+    mean_layer = ds[variable].isel(time=0).mean(dim="depth", skipna=True)      # Mean over the water column
 
     if not {'depth', 'latitude', 'longitude'}.issubset(ds[variable].dims) and not {'depth', 'lat', 'lon'}.issubset(data.dims):
         raise ValueError("The variable does not have the expected spatial dimensions (depth, lat/lon).")
