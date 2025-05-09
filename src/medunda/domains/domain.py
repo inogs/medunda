@@ -11,10 +11,10 @@ class Domain(BaseModel):
 
 
 GSA9 = Domain(
-    minimum_latitude=41,
-    maximum_latitude=44,
-    minimum_longitude=9,
-    maximum_longitude=13,
+    minimum_latitude=41.29999921500007,
+    maximum_latitude=44.42720294000003,
+    minimum_longitude=7.525000098000021,
+    maximum_longitude=13.003545339000027,
     minimum_depth=0,
     maximum_depth=250
 )
