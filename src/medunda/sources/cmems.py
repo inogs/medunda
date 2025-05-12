@@ -13,14 +13,14 @@
 # }
 
 PRODUCTS={
-    ("thetao"): ["med-cmcc-tem-rean-d", "med-cmcc-tem-rean-m"],
-    ("vo","uo"): ["med-cmcc-cur-rean-d", "med-cmcc-cur-rean-m"],
-    ("so"): ["med-cmcc-cur-rean-d", "med-cmcc-sal-rean-m"],
+    ("thetao",): ["med-cmcc-tem-rean-d", "med-cmcc-tem-rean-m"],
+    ("vo", "uo"): ["med-cmcc-cur-rean-d", "med-cmcc-cur-rean-m"],
+    ("so",): ["med-cmcc-cur-rean-d", "med-cmcc-sal-rean-m"],
 
-    ("pH"): ["med-ogs-car-rean-d", "med-ogs-car-rean-m"],
+    ("pH",): ["med-ogs-car-rean-d", "med-ogs-car-rean-m"],
     ("no3","po4","si"): ["med-ogs-nut-rean-d", "med-ogs-nut-rean-m"],
-    ("chl"): ["med-ogs-pft-rean-d", "med-ogs-pft-rean-m"],
-    ("o2"): ["med-ogs-bio-rean-d", "med-ogs-bio-rean-m"]
+    ("chl",): ["med-ogs-pft-rean-d", "med-ogs-pft-rean-m"],
+    ("o2",): ["med-ogs-bio-rean-d", "med-ogs-bio-rean-m"]
 }
 
 VARIABLES = []
