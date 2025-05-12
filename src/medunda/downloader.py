@@ -103,8 +103,12 @@ def download_data (variable: str, output_dir:Path, frequency:str, start:datetime
     final_output_dir = output_dir / variable / frequency
     final_output_dir.mkdir(exist_ok=True, parents=True)
 
-    output_filename = f"{frequency}{variable}_{start}-{end}.nc"
+    start_str = start.strftime("%Y-%m-%d")
+    end_str = end.strftime("%Y-%m-%d")
+
+    output_filename = f"{frequency}_{variable}_{start_str}_{end_str}.nc"
     output_filepath = final_output_dir / output_filename
+    LOGGER.info("Saving file %s", output_filepath)
 
     LOGGER.info(f"downloading '{frequency}''{variable}' from '{start}' to '{end}'")
 
