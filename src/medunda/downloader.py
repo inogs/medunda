@@ -69,7 +69,7 @@ def download_data (variable: str, output_dir:Path, frequency:str, start:datetime
         raise ValueError(f"invalid frequency")
 
     #1. search for product
-    selected_product = search_for_product(var_name=variable)
+    selected_product = search_for_product(var_name=variable, frequency=frequency)
     
     print (f"trying to download the variable '{variable}' from the product '{selected_product}'")
            
@@ -80,11 +80,13 @@ def download_data (variable: str, output_dir:Path, frequency:str, start:datetime
     final_output_dir = output_dir / variable / frequency
     final_output_dir.mkdir(exist_ok=True, parents=True)
 
-    output_filename = f"'{frequency}''{variable}'_'{start}'-'{end}'.nc"
+    output_filename = f"{frequency}{variable}_{start}-{end}.nc"
     output_filepath = final_output_dir / output_filename
 
     print (f"downloading '{frequency}''{variable}' from '{start}' to '{end}'")
 
+    print(f"Dataset ID being used: {selected_product}")
+    
     #4 
     copernicusmarine.subset(
         dataset_id=selected_product,
