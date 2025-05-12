@@ -3,12 +3,35 @@ from datetime import datetime
 import argparse
 import xarray as xr
 from pathlib import Path
+import logging
 import matplotlib.pyplot as plt
 
 from domains.domain import GSA9
 from sources.cmems import search_for_product
 from sources.cmems import VARIABLES
 from tools.argparse_utils import date_from_str
+
+
+LOGGER = logging.getLogger()
+
+
+def configure_logger():
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+
+    LOGGER.setLevel(logging.DEBUG)
+
+    logging.getLogger("botocore").setLevel(logging.INFO)
+    logging.getLogger("urllib3").setLevel(logging.ERROR)
+    logging.getLogger("h5py").setLevel(logging.INFO)
+
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(formatter)
+
+    LOGGER.addHandler(handler)
+
 
 
 def parse_args ():
@@ -83,9 +106,9 @@ def download_data (variable: str, output_dir:Path, frequency:str, start:datetime
     output_filename = f"{frequency}{variable}_{start}-{end}.nc"
     output_filepath = final_output_dir / output_filename
 
-    print (f"downloading '{frequency}''{variable}' from '{start}' to '{end}'")
+    LOGGER.info(f"downloading '{frequency}''{variable}' from '{start}' to '{end}'")
 
-    print(f"Dataset ID being used: {selected_product}")
+    LOGGER.info(f"Dataset ID being used: {selected_product}")
     
     #4 
     copernicusmarine.subset(
@@ -104,7 +127,7 @@ def validate_dataset(filepath, variable):
     """Validates the dataset, by checking for:
     dimensions, variables, and depth coverage."""
     
-    print(f"dataset validated: {filepath}")
+    LOGGER.info(f"dataset validated: {filepath}")
 
     with xr.open_dataset(filepath) as dataset:  #open the dataset using xarray
         # check for necessary dimensions
@@ -112,21 +135,21 @@ def validate_dataset(filepath, variable):
         
         for dim in required_dims:
             if dim not in dataset.dims:
-                print(f"{dim}: dimension missing, validation failed")
+                LOGGER.error(f"{dim}: dimension missing, validation failed")
                 return False
             
         if variable not in dataset.data_vars: 
-            print(f"{variable}: variable missing. Validation failed")
+            LOGGER.error(f"{variable}: variable missing. Validation failed")
             return False
         
         if "depth" in dataset.variables: 
             depth_values = dataset["depth"].values
-            print(f"{depth_values}")
+            LOGGER.debug(f"depth values: {depth_values}")
             if depth_values.min()<0 or depth_values.max()>300:
                 print ("depth range is outside the expected bounds. Validation failed.")
                 return False
 
-    print ("Successful Validation")
+    LOGGER.info ("Successful Validation")
     return True
 
 
@@ -137,10 +160,11 @@ def main ():
 
     for filepath in downloaded_files:
         if validate_dataset(filepath, args.variable): 
-            print(f"dataset validated for variable: '{args.variable}'")
+            LOGGER.info(f"dataset validated for variable: '{args.variable}'")
         else:
-            print(f"failed dataset validation for variable:'{args.variable}'")
+            LOGGER.warning(f"failed dataset validation for variable:'{args.variable}'")
 
 
 if __name__ == "__main__":
+    configure_logger()
     main()

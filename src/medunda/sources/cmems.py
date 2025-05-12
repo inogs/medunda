@@ -1,4 +1,8 @@
+import logging
 from enum import Enum
+
+
+LOGGER = logging.getLogger(__name__)
 
 # PRODUCTS = {     
 #        # -> each key represents a product and its associated with a list of available variables.
@@ -42,9 +46,10 @@ def search_for_product(var_name: str, frequency:str) -> str:
     """ Given the name of a variable and a frequency, return the name of the CMEMS product that
     contains such variable with the specified frequency."""
 
-    frequency_index = {"daily": Frequency.DAILY, "monthly": Frequency.MONTHLY}
-    if frequency not in frequency_index:
+    frequency_map = {"daily": Frequency.DAILY, "monthly": Frequency.MONTHLY}
+    if frequency not in frequency_map:
         raise ValueError ("invalid frequency; use 'daily' or 'monthly'.")
+    frequency_index = frequency_map[frequency]
 
     selected_product = None
     for vars_tuple, prod_dict in PRODUCTS.items():    
@@ -55,6 +60,6 @@ def search_for_product(var_name: str, frequency:str) -> str:
     if selected_product is None:
         raise ValueError (f"Variable '{var_name}' is not available in the dictionary")
     
-    print(f"DEBUG: var_name={var_name}, selected_product={selected_product}")
+    LOGGER.debug(f"var_name={var_name}, selected_product={selected_product}")
 
     return selected_product
