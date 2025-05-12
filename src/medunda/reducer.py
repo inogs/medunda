@@ -2,7 +2,7 @@
 import argparse
 import logging
 from pathlib import Path
-
+import xarray as xr
 
 LOGGER = logging.getLogger()
 
@@ -23,6 +23,15 @@ def configure_logger():
     handler.setFormatter(formatter)
 
     LOGGER.addHandler(handler)
+
+
+def compute_average(input_file, output_file): 
+    LOGGER.info(f"reading file:{input_file}")
+    with xr.open_dataset(input_file) as ds :
+        mean_layer = ds.mean(dim="depth", skipna=True)
+        LOGGER.info(f"writing file: {output_file}")
+        ds.to_netcdf(output_file)
+    LOGGER.info("done")
 
 
 
