@@ -30,9 +30,28 @@ def compute_average(input_file, output_file):
     with xr.open_dataset(input_file) as ds :
         mean_layer = ds.mean(dim="depth", skipna=True)
         LOGGER.info(f"writing file: {output_file}")
-        ds.to_netcdf(output_file)
+        mean_layer.to_netcdf(output_file)
     LOGGER.info("done")
 
+
+def extract_bottom (input_file, output_file):
+    LOGGER.info(f"reading the file: {input_file}")
+    with xr.open_dataset(input_file) as ds :
+        #print(ds['depth'].values)
+        bottom_layer = ds.isel(depth=-1)
+        LOGGER.info(f"writing the file: {output_file}")
+        bottom_layer.to_netcdf(output_file)
+    LOGGER.info("done")
+    print(bottom_layer.coords)
+
+ 
+def extract_surface (input_file, output_file):
+    LOGGER.info(f"reading the file: {input_file}")
+    with xr.open_dataset(input_file) as ds:
+        surface_layer = ds.isel(depth=0)
+        LOGGER.info(f"writing the file: {output_file}")
+        surface_layer.to_netcdf(output_file)
+        print(surface_layer)
 
 
 def parse_args ():
@@ -78,6 +97,8 @@ def main ():
             compute_average(input_file, output_file)
         case "extract_bottom":
             extract_bottom(input_file, output_file)
+        case "extract_surface":
+            extract_surface(input_file, output_file)
         case _:
             raise ValueError(
                 f"Unexpected action: {action}"
