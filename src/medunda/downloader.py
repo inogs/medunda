@@ -38,11 +38,11 @@ def parse_args ():
     """
     parse command line arguments: 
     --variable: the variable to download:
-    --frequency: choose the frequency of the download: monthly or annualy:
+    --frequency: choose the frequency of the download: monthly or daily:
     --output-dir: directory to save the download file
     """
     parser = argparse.ArgumentParser(
-        description="dowload monthly data for a chosen variable")
+        description="dowload monthly or daily data for a chosen variable")
 
     parser.add_argument(   
         "--variable",  

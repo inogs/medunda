@@ -75,6 +75,7 @@ def extract_bottom (input_file, output_file):
         
         ds.to_netcdf(output_file)
 
+
 def extract_surface (input_file, output_file):
     LOGGER.info(f"reading the file: {input_file}")
     with xr.open_dataset(input_file) as ds:
@@ -82,6 +83,21 @@ def extract_surface (input_file, output_file):
         LOGGER.info(f"writing the file: {output_file}")
         surface_layer.to_netcdf(output_file)
         print(surface_layer)
+
+
+def averaging_between_layers (input_file, output_file, depth_min, depth_max):
+    with xr.open_dataset(input_file) as ds:
+
+        var_name = list(ds.data_vars)[0]
+        var = ds[var_name]
+
+        selected_layer = var.sel(depth=slice(depth_min, depth_max))
+        vertical_avg = selected_layer.mean(dim="depth", skipna=True)
+
+        output_filename = f"{var_name}_vertical_average_{depth_min}_{depth_max}.nc"
+        output_file = output_filename
+
+        vertical_avg.to_netcdf(output_file)
 
 
 def parse_args ():
@@ -107,11 +123,23 @@ def parse_args ():
     parser.add_argument(
         "--action",
         type=str,
-        choices=("average", "extract_bottom", "extract_surface", "extract_layer"),
+        choices=("average", "extract_bottom", "extract_surface", "extract_layer", "averaging_between_layers"),
         required=True,
         help="End date of the download"
     )
-
+    parser.add_argument(
+        "--depth-min",
+        type=float,
+        required=True,
+        help="minimum limit of the layer"
+        )
+    parser.add_argument(
+        "--depth-max",
+        type=float,
+        required=True,
+        help="maximum limit of the layer"
+        )
+    
     return parser.parse_args()
 
 
@@ -122,6 +150,9 @@ def main ():
     output_file = args.output_file
     action = args.action
 
+    depth_min= args.depth_min
+    depth_max= args.depth_max
+
     match action:
         case "average":
             compute_average(input_file, output_file)
@@ -131,6 +162,8 @@ def main ():
             extract_surface(input_file, output_file)
         case "extract_bottom":
             extract_bottom(input_file, output_file)
+        case "averaging_between_layers":
+            averaging_between_layers(input_file, output_file, depth_min, depth_max)
         case _:
             raise ValueError(
                 f"Unexpected action: {action}"
