@@ -36,11 +36,11 @@ def compute_average(input_file, output_file):
     LOGGER.info("done")
 
 
-def extract_layer (input_file, output_file):
+def extract_layer (input_file, output_file, depth):
     LOGGER.info(f"reading the file: {input_file}")
     with xr.open_dataset(input_file) as ds :
         #print(ds['depth'].values)
-        bottom_layer = ds.isel(depth=-1)
+        bottom_layer = ds.sel(depth=depth, method="nearest")
         LOGGER.info(f"writing the file: {output_file}")
         bottom_layer.to_netcdf(output_file)
     LOGGER.info("done")
@@ -120,20 +120,36 @@ def parse_args ():
         required=True,
         help="Path of the output file"
     )
-    parser.add_argument(
-        "--action",
-        type=str,
-        choices=("average", "extract_bottom", "extract_surface", "extract_layer", "averaging_between_layers"),
-        required=True,
-        help="End date of the download"
+    subparsers = parser.add_subparsers(
+        title="action",
+        dest="action",
+        help="Sets which operation must be executed on the input file"
     )
-    parser.add_argument(
+    subparsers.add_parser('average', help="Compute the average on all the vertical levels")
+    subparsers.add_parser('extract_bottom', help="Extract the values of the cells on the bottom")
+    subparsers.add_parser('extract_surface', help="Extract the values of the cells on the surface")
+    extract_layer_parser = subparsers.add_parser(
+        "extract_layer",
+        help="Extract the values of a specific depth (in metres)"
+    )
+    extract_layer_parser.add_argument(
+        "--depth",
+        type=float,
+        required=True,
+        help="Depth of the layer that must be extracted"
+    )
+
+    averaging_between_layers_parser = subparsers.add_parser(
+        "averaging_between_layers",
+        help="Compute the vertical average between two specific depths"
+    )
+    averaging_between_layers_parser.add_argument(
         "--depth-min",
         type=float,
         required=True,
         help="minimum limit of the layer"
         )
-    parser.add_argument(
+    averaging_between_layers_parser.add_argument(
         "--depth-max",
         type=float,
         required=True,
@@ -150,19 +166,19 @@ def main ():
     output_file = args.output_file
     action = args.action
 
-    depth_min= args.depth_min
-    depth_max= args.depth_max
-
     match action:
         case "average":
             compute_average(input_file, output_file)
         case "extract_layer":
-            extract_layer(input_file, output_file)
+            depth = args.depth
+            extract_layer(input_file, output_file, depth=depth)
         case "extract_surface":
             extract_surface(input_file, output_file)
         case "extract_bottom":
             extract_bottom(input_file, output_file)
         case "averaging_between_layers":
+            depth_min= args.depth_min
+            depth_max= args.depth_max
             averaging_between_layers(input_file, output_file, depth_min, depth_max)
         case _:
             raise ValueError(

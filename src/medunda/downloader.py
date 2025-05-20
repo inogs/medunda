@@ -74,6 +74,7 @@ def parse_args ():
     parser.add_argument(      #input the directory to save the file
         "--output-dir",
         type=Path,
+        required=False,
         default=Path("."),
         help="directory where the downloaded file will be saved",
     )
