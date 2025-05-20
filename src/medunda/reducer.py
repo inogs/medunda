@@ -30,10 +30,17 @@ def configure_logger():
 def compute_average(input_file, output_file): 
     LOGGER.info(f"reading file:{input_file}")
     with xr.open_dataset(input_file) as ds :
-        mean_layer = ds.mean(dim="depth", skipna=True)
+        LOGGER.debug("computing_layer_height")
+        layer_height= compute_layer_height(ds.depth.values)
+        total_height=np.sum(layer_height) 
+        layer_height_extended = xr.DataArray(layer_height, dims=["depth"])
+
+        mean_layer = (ds*layer_height_extended).sum(dim="depth", skipna=True) / total_height
+
         LOGGER.info(f"writing file: {output_file}")
         mean_layer.to_netcdf(output_file)
     LOGGER.info("done")
+
 
 
 def extract_layer (input_file, output_file, depth):
@@ -98,6 +105,18 @@ def averaging_between_layers (input_file, output_file, depth_min, depth_max):
         output_file = output_filename
 
         vertical_avg.to_netcdf(output_file)
+
+
+def compute_layer_height (layer_centers): 
+    layer_height=[] 
+    for i in range (len(layer_centers)):
+    
+        if i==0: 
+            layer_height.append(layer_centers[0]*2) 
+        else: 
+            current_layer=(layer_centers[i]-sum(layer_height[:i]))*2
+            layer_height.append(current_layer)
+    return np.array(layer_height) 
 
 
 def parse_args ():
