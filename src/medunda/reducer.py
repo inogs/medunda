@@ -49,7 +49,6 @@ def compute_average(input_file, output_file):
     LOGGER.info("done")
 
 
-
 def extract_layer (input_file, output_file, depth):
     LOGGER.info(f"reading the file: {input_file}")
     with xr.open_dataset(input_file) as ds :
@@ -103,15 +102,28 @@ def averaging_between_layers (input_file, output_file, depth_min, depth_max):
     with xr.open_dataset(input_file) as ds:
 
         var_name = list(ds.data_vars)[0]
-        var = ds[var_name]
+        #var = ds[var_name]
 
-        selected_layer = var.sel(depth=slice(depth_min, depth_max))
-        vertical_avg = selected_layer.mean(dim="depth", skipna=True)
+        selected_layer = ds[var_name].sel(depth=slice(depth_min, depth_max))
+        selected_depth = selected_layer.depth.values
 
-        output_filename = f"{var_name}_vertical_average_{depth_min}_{depth_max}.nc"
-        output_file = output_filename
+        layer_height = compute_layer_height (selected_depth)
+        layer_height_extended = xr.DataArray (layer_height, dims=["depth"])
 
-        vertical_avg.to_netcdf(output_file)
+        mask =selected_layer.to_masked_array(copy=False).mask[0,:,:,:]
+        mask_extended = xr.DataArray(
+            mask,
+            dims=("depth", "latitude", "longitude")
+        )
+
+        total_height = (layer_height_extended * ~mask_extended).sum(dim="depth")
+
+        weighted_average = (selected_layer*layer_height_extended).sum(dim="depth", skipna=True) / total_height
+
+        #output_filename = f"{var_name}_vertical_average_{depth_min}_{depth_max}.nc"
+        #output_file = output_filename
+
+        weighted_average.to_netcdf(output_file)
 
 
 def compute_layer_height (layer_centers): 
