@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 import xarray as xr
 import numpy as np
+import pandas as pd
 
 
 LOGGER = logging.getLogger()
@@ -138,6 +139,33 @@ def compute_layer_height (layer_centers):
     return np.array(layer_height) 
 
 
+def extract_min_max (input_file, output_file):
+    """Extracts the maximum and the minimum values of a variable for each year"""
+
+    LOGGER.info(f"reading file: {input_file}")
+    with xr.open_dataset(input_file) as ds:
+        var_name=list(ds.data_vars)[0] 
+        var=ds[var_name]
+
+        values = []
+        years = pd.to_datetime(ds.time.values).year 
+        print(pd.to_datetime(ds.time.values))
+        print(years)
+        years_array = np.array(years)
+        for year in sorted(list(set(years_array))) : 
+            indices = np.where(years_array == year)[0]
+            yearly_data = var.isel(time=indices)
+            min_value = float(yearly_data.min().values)
+            max_value = float(yearly_data.max().values)
+            values.append ({
+                "year": year,
+                "minimum value": min_value,
+                "maximum value": max_value,
+            })
+        df=pd.DataFrame(values)
+        df.to_csv(output_file)
+
+
 def parse_args ():
     """
     parse command line arguments: 
@@ -166,6 +194,7 @@ def parse_args ():
     subparsers.add_parser('average', help="Compute the average on all the vertical levels")
     subparsers.add_parser('extract_bottom', help="Extract the values of the cells on the bottom")
     subparsers.add_parser('extract_surface', help="Extract the values of the cells on the surface")
+    subparsers.add_parser('extract_min_max', help="extract the minimum and maximum value of a variable of each year")
     extract_layer_parser = subparsers.add_parser(
         "extract_layer",
         help="Extract the values of a specific depth (in metres)"
@@ -218,6 +247,8 @@ def main ():
             depth_min= args.depth_min
             depth_max= args.depth_max
             averaging_between_layers(input_file, output_file, depth_min, depth_max)
+        case "extract_min_max":
+            extract_min_max(input_file, output_file)
         case _:
             raise ValueError(
                 f"Unexpected action: {action}"
