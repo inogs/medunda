@@ -16,5 +16,5 @@ GSA9 = Domain(
     minimum_longitude=7.525000098000021,
     maximum_longitude=13.003545339000027,
     minimum_depth=0,
-    maximum_depth=250
+    maximum_depth=800,
 )

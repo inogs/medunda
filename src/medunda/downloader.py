@@ -150,7 +150,7 @@ def validate_dataset(filepath, variable):
         if "depth" in dataset.variables: 
             depth_values = dataset["depth"].values
             LOGGER.debug(f"depth values: {depth_values}")
-            if depth_values.min()<0 or depth_values.max()>300:
+            if depth_values.min()<0 or depth_values.max()>800:
                 print ("depth range is outside the expected bounds. Validation failed.")
                 return False
 

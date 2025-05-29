@@ -30,7 +30,7 @@ PRODUCTS={
     ("vo", "uo"): {Frequency.DAILY: "med-cmcc-cur-rean-d", Frequency.MONTHLY:"med-cmcc-cur-rean-m"},
     ("so",): {Frequency.DAILY: "med-cmcc-cur-rean-d", Frequency.MONTHLY: "med-cmcc-sal-rean-m"},
 
-    ("pH",): {Frequency.DAILY: "med-ogs-car-rean-d", Frequency.MONTHLY: "med-ogs-car-rean-m"},
+    ("ph",): {Frequency.DAILY: "med-ogs-car-rean-d", Frequency.MONTHLY: "med-ogs-car-rean-m"},
     ("no3","po4","si"): {Frequency.DAILY: "med-ogs-nut-rean-d", Frequency.MONTHLY: "med-ogs-nut-rean-m"},
     ("chl",): {Frequency.DAILY: "med-ogs-pft-rean-d", Frequency.MONTHLY: "med-ogs-pft-rean-m"},
     ("o2",): {Frequency.DAILY: "med-ogs-bio-rean-d", Frequency.MONTHLY: "med-ogs-bio-rean-m"}
