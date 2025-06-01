@@ -1,0 +1,2 @@
+class ActionNotFound(Exception):
+    pass

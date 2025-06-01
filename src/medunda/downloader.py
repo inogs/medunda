@@ -4,34 +4,15 @@ import argparse
 import xarray as xr
 from pathlib import Path
 import logging
-import matplotlib.pyplot as plt
 
-from domains.domain import GSA9
-from sources.cmems import search_for_product
-from sources.cmems import VARIABLES
-from tools.argparse_utils import date_from_str
+from medunda.domains.domain import GSA9
+from medunda.sources.cmems import search_for_product
+from medunda.sources.cmems import VARIABLES
+from medunda.tools.argparse_utils import date_from_str
+from medunda.tools.logging_utils import configure_logger
 
 
 LOGGER = logging.getLogger()
-
-
-def configure_logger():
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-
-    LOGGER.setLevel(logging.DEBUG)
-
-    logging.getLogger("botocore").setLevel(logging.INFO)
-    logging.getLogger("urllib3").setLevel(logging.ERROR)
-    logging.getLogger("h5py").setLevel(logging.INFO)
-
-    handler = logging.StreamHandler()
-    handler.setLevel(logging.DEBUG)
-    handler.setFormatter(formatter)
-
-    LOGGER.addHandler(handler)
-
 
 
 def parse_args ():
@@ -83,7 +64,7 @@ def parse_args ():
 
 def download_data (variable: str, output_dir:Path, frequency:str, start:datetime, end:datetime):
 
-    """ Download and organize data by year, month and day,  for the chosen variables. 
+    """ Download and organize data by year, month, and day, for the chosen variables.
     Steps: 1) Search in the 'products' dictionary for the product_id related to the chosen variable
            2) Create the output directory if it does not exist
            3) Define the output file name based on the variable
@@ -92,7 +73,7 @@ def download_data (variable: str, output_dir:Path, frequency:str, start:datetime
     if frequency not in ["daily", "monthly"]:
         raise ValueError(f"invalid frequency")
 
-    #1. search for product
+    #1. search for the product
     selected_product = search_for_product(var_name=variable, frequency=frequency)
     
     print (f"trying to download the variable '{variable}' from the product '{selected_product}'")
@@ -171,5 +152,5 @@ def main ():
 
 
 if __name__ == "__main__":
-    configure_logger()
+    configure_logger(LOGGER)
     main()
