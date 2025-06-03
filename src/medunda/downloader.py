@@ -11,6 +11,9 @@ from medunda.sources.cmems import VARIABLES
 from medunda.tools.argparse_utils import date_from_str
 from medunda.tools.logging_utils import configure_logger
 
+from medunda.domains.domain import read_domain
+from medunda.domains.domain import gsa_files
+from medunda.domains.domain import Domain
 
 LOGGER = logging.getLogger()
 
@@ -52,6 +55,13 @@ def parse_args ():
         default="monthly",
         help="frequency of the downloaded data"
     )
+    parser.add_argument(
+        "--domain",
+        type= str,
+        choices=["gsa_nine", "adriatic"],
+        required=True,
+        help="Choose the domain",
+    )
     parser.add_argument(      #input the directory to save the file
         "--output-dir",
         type=Path,
@@ -61,8 +71,14 @@ def parse_args ():
     )
     return parser.parse_args()
 
+def get_domain (domain_name: str):
+    shapefile_path = gsa_files[domain_name]
 
-def download_data (variable: str, output_dir:Path, frequency:str, start:datetime, end:datetime):
+    domain = read_domain(shapefile_path)
+
+    return domain
+
+def download_data (variable: str, output_dir:Path, frequency:str, start:datetime, end:datetime, domain : Domain):
 
     """ Download and organize data by year, month, and day, for the chosen variables.
     Steps: 1) Search in the 'products' dictionary for the product_id related to the chosen variable
@@ -103,7 +119,7 @@ def download_data (variable: str, output_dir:Path, frequency:str, start:datetime
         start_datetime=start,
         end_datetime=end,
         output_filename=output_filepath,
-        **GSA9.model_dump()
+        **domain.model_dump()
     )
 
     return (output_filepath, )
@@ -141,14 +157,18 @@ def validate_dataset(filepath, variable):
 
 def main ():
     args=parse_args()       #parse the command line arguments
-
-    downloaded_files = download_data(args.variable, args.output_dir, args.frequency, args.start_date, args.end_date)
+    
+    domain= get_domain (args.domain)
+    
+    downloaded_files = download_data(args.variable, args.output_dir, args.frequency, args.start_date, args.end_date, domain)
 
     for filepath in downloaded_files:
         if validate_dataset(filepath, args.variable): 
             LOGGER.info(f"dataset validated for variable: '{args.variable}'")
         else:
             LOGGER.warning(f"failed dataset validation for variable:'{args.variable}'")
+    
+    
 
 
 if __name__ == "__main__":
