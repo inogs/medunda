@@ -54,8 +54,7 @@ def read_domain(domain_description: Path) -> Domain:
             "No type specified in the geometry of the file."
             )
     
-    geometry_section = geometry["type"]
-    geo_type = geometry_section.lower()
+    geo_type = geometry['type'].lower()
     if geo_type not in ("rectangle", "shapefile"):
         raise ValueError(
             f"type must be chosen among rectangle or shapefile;" \
@@ -65,13 +64,14 @@ def read_domain(domain_description: Path) -> Domain:
     if geo_type == "rectangle":
         ...
     elif geo_type == "shapefile":
-        shapefile_path = _read_path(geometry_section["file_path"])
+        shapefile_path = _read_path(geometry["file_path"])
         gdf = gpd.read_file(shapefile_path)
 
         # Get the domain from the different ones implemented
         # inside the file
-        key_name = geometry_section["selection_field_name"]
-        key_value = geometry_section["selection_field_value"]
+        key_name = geometry["selection_field_name"]
+        key_value = geometry["selection_field_value"]
+        print(gdf)
         domain_geometry = gdf.loc[gdf[key_name] == key_value].iloc[0]
     
         xmin, ymin, xmax, ymax = domain_geometry.geometry.bounds

@@ -12,7 +12,6 @@ from medunda.tools.argparse_utils import date_from_str
 from medunda.tools.logging_utils import configure_logger
 
 from medunda.domains.domain import read_domain
-from medunda.domains.domain import gsa_files
 from medunda.domains.domain import Domain
 
 LOGGER = logging.getLogger()
@@ -57,8 +56,7 @@ def parse_args ():
     )
     parser.add_argument(
         "--domain",
-        type= str,
-        choices=["gsa_nine", "adriatic"],
+        type= Path,
         required=True,
         help="Choose the domain",
     )
@@ -71,12 +69,7 @@ def parse_args ():
     )
     return parser.parse_args()
 
-def get_domain (domain_name: str):
-    shapefile_path = gsa_files[domain_name]
 
-    domain = read_domain(shapefile_path)
-
-    return domain
 
 def download_data (variable: str, output_dir:Path, frequency:str, start:datetime, end:datetime, domain : Domain):
 
@@ -119,7 +112,7 @@ def download_data (variable: str, output_dir:Path, frequency:str, start:datetime
         start_datetime=start,
         end_datetime=end,
         output_filename=output_filepath,
-        **domain.model_dump()
+        **domain.model_dump(exclude= {"name"})
     )
 
     return (output_filepath, )
@@ -158,7 +151,7 @@ def validate_dataset(filepath, variable):
 def main ():
     args=parse_args()       #parse the command line arguments
     
-    domain= get_domain (args.domain)
+    domain= read_domain (args.domain)
     
     downloaded_files = download_data(args.variable, args.output_dir, args.frequency, args.start_date, args.end_date, domain)
 
