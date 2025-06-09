@@ -1,7 +1,16 @@
+import logging
+import yaml
+from pathlib import Path
+
 from pydantic import BaseModel
 import geopandas as gpd
 
+
+LOGGER = logging.getLogger(__name__)
+
+
 class Domain(BaseModel):
+    name: str
     minimum_latitude: float
     maximum_latitude: float
     minimum_longitude: float
@@ -11,6 +20,7 @@ class Domain(BaseModel):
 
 
 GSA9 = Domain(
+    name="GSA9",
     minimum_latitude=41.29999921500007,
     maximum_latitude=44.42720294000003,
     minimum_longitude=7.525000098000021,
@@ -19,20 +29,69 @@ GSA9 = Domain(
     maximum_depth=800,
 )
 
-gsa_files = {"gsa_nine" : "C:\\Users\\akkar\\Desktop\\get_coords\\gsa_nine\\gsa_nine.shp",
-            "adriatic" : "C:\\Users\\akkar\\Desktop\\get_coords\\adriatic_sea\\adriatic.shp",
-            "gsa_med" : "C:\\Users\\akkar\\Desktop\\get_coords\\gsa_med\\GSAs_simplified_division.shp",
-} 
 
-def read_domain(shapefile_path, maximum_depth=800) -> Domain: 
-    
-    gdf = gpd.read_file(shapefile_path)
-    
-    xmin, ymin, xmax, ymax = gdf.total_bounds
+def _read_path(raw_path: str):
+    return Path(raw_path)
 
-    print(f"Longitude minimale: {xmin}")
-    print(f"Longitude maximale: {xmax}")
-    print(f"Latitude minimale: {ymin}")
-    print(f"Latitude maximale: {ymax}")
+
+
+def read_domain(domain_description: Path) -> Domain:
+    yaml_content = domain_description.read_text()
+    domain_description_raw = yaml.safe_load(yaml_content)
+
+    # Read the name
+    name = domain_description_raw["name"]
+
+    # Read the depth values
+    depth = domain_description_raw["depth"]
+    min_depth = depth.get("min_depth", 0)
+    max_depth = depth["max_depth"]
+
+    # Read the geometry
+    geometry = domain_description_raw["geometry"]
+    if "type" not in geometry:
+        raise ValueError(
+            "No type specified in the geometry of the file."
+            )
     
-    return Domain(minimum_latitude=ymin, maximum_latitude= ymax, minimum_longitude= xmin, maximum_longitude= xmax, minimum_depth=0, maximum_depth=maximum_depth)
+    geometry_section = geometry["type"]
+    geo_type = geometry_section.lower()
+    if geo_type not in ("rectangle", "shapefile"):
+        raise ValueError(
+            f"type must be chosen among rectangle or shapefile;" \
+            f"received {geo_type}"
+        )
+
+    if geo_type == "rectangle":
+        ...
+    elif geo_type == "shapefile":
+        shapefile_path = _read_path(geometry_section["file_path"])
+        gdf = gpd.read_file(shapefile_path)
+
+        # Get the domain from the different ones implemented
+        # inside the file
+        key_name = geometry_section["selection_field_name"]
+        key_value = geometry_section["selection_field_value"]
+        domain_geometry = gdf.loc[gdf[key_name] == key_value].iloc[0]
+    
+        xmin, ymin, xmax, ymax = domain_geometry.geometry.bounds
+
+        LOGGER.debug(f"Longitude minimale: {xmin}")
+        LOGGER.debug(f"Longitude maximale: {xmax}")
+        LOGGER.debug(f"Latitude minimale: {ymin}")
+        LOGGER.debug(f"Latitude maximale: {ymax}")
+    
+        return Domain(
+            name=name,
+            minimum_latitude=ymin,
+            maximum_latitude= ymax,
+            minimum_longitude= xmin,
+            maximum_longitude= xmax,
+            minimum_depth=min_depth,
+            maximum_depth=max_depth,
+        )
+
+    raise Exception(
+        "The geometry type you have chosen should have been implemented "
+        "but, because of a bug of the code, it is not recognized"
+        )

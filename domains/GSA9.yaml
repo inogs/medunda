@@ -1,0 +1,10 @@
+---
+name: GSA9
+geometry:
+  type: shapefile
+  file_path: your_shapefile.shp
+  selection_field_name: SECT_COD
+  selection_field_value: GSA9
+depth:
+  min_depth: 0
+  max_depth: 800
