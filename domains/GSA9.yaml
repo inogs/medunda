@@ -2,7 +2,7 @@
 name: GSA9
 geometry:
   type: shapefile
-  file_path: "C:\\Users\\akkar\\Desktop\\get_coords\\GSAs\\GSAs_simplified_division.shp"
+  file_path: "${MAIN_DIR}/data/GSAs_simplified.zip"
   selection_field_name: SECT_COD
   selection_field_value: GSA09
 depth:

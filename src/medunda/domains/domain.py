@@ -1,9 +1,14 @@
 import logging
 import yaml
+import zipfile
+import tempfile
 from pathlib import Path
 
 from pydantic import BaseModel
 import geopandas as gpd
+
+
+MAIN_DIR = Path(__file__).absolute().parent.parent.parent.parent
 
 
 LOGGER = logging.getLogger(__name__)
@@ -19,20 +24,38 @@ class Domain(BaseModel):
     maximum_depth: float
 
 
-GSA9 = Domain(
-    name="GSA9",
-    minimum_latitude=41.29999921500007,
-    maximum_latitude=44.42720294000003,
-    minimum_longitude=7.525000098000021,
-    maximum_longitude=13.003545339000027,
-    minimum_depth=0,
-    maximum_depth=800,
-)
-
 
 def _read_path(raw_path: str):
+    raw_path = raw_path.replace("${MAIN_DIR}", str(MAIN_DIR))
     return Path(raw_path)
 
+
+def read_zipped_shapefile(compressed_path: Path, temporary_dir:Path):
+    """
+    Read the content of a zipped file that contains
+    only one file (among the others) with an exstension .shp
+    and return the path to the uncompressed shapefile.
+    """
+    with zipfile.ZipFile(compressed_path, 'r') as zip_ref:
+        zip_ref.extractall(temporary_dir)
+
+    shapefiles = []
+    for f in temporary_dir.glob("**"):
+        if not f.is_file():
+            continue
+        if not f.suffix.lower() == ".shp":
+            continue
+        shapefiles.append(f)
+    
+    if len(shapefiles) == 0:
+        raise ValueError(
+            f"The file {compressed_path} does not contain a shapefile"
+        )
+    if len(shapefiles) == 2:
+        raise ValueError(
+            f"The file {compressed_path} contains more than one shapefile"
+        )
+    return shapefiles[0]
 
 
 def read_domain(domain_description: Path) -> Domain:
@@ -90,7 +113,16 @@ def read_domain(domain_description: Path) -> Domain:
 
     elif geo_type == "shapefile":
         shapefile_path = _read_path(geometry["file_path"])
-        gdf = gpd.read_file(shapefile_path)
+        if shapefile_path.suffix.lower() == ".zip":
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                LOGGER.debug("Unzipping file %s", shapefile_path)
+                shapefile_path = read_zipped_shapefile(
+                    shapefile_path, Path(tmp_dir)
+                )
+
+                gdf = gpd.read_file(shapefile_path)
+        else:
+            gdf = gpd.read_file(shapefile_path)
 
         # Get the domain from the different ones implemented
         # inside the file

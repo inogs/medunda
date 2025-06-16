@@ -5,7 +5,6 @@ import xarray as xr
 from pathlib import Path
 import logging
 
-from medunda.domains.domain import GSA9
 from medunda.sources.cmems import search_for_product
 from medunda.sources.cmems import VARIABLES
 from medunda.tools.argparse_utils import date_from_str
