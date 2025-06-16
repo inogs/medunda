@@ -96,7 +96,6 @@ def read_domain(domain_description: Path) -> Domain:
         # inside the file
         key_name = geometry["selection_field_name"]
         key_value = geometry["selection_field_value"]
-        #print(gdf)
         domain_geometry = gdf.loc[gdf[key_name] == key_value].iloc[0]
     
         xmin, ymin, xmax, ymax = domain_geometry.geometry.bounds
