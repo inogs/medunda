@@ -62,7 +62,32 @@ def read_domain(domain_description: Path) -> Domain:
         )
 
     if geo_type == "rectangle":
-        ...
+        required_dim = [
+            "minimum_latitude",
+            "maximum_latitude",
+            "minimum_longitude",
+            "maximum_longitude"]
+        
+        ymin = geometry["min_latitude"]
+        ymax = geometry["max_latitude"]
+        xmin = geometry["min_longitude"]
+        xmax = geometry["max_longitude"]
+
+        LOGGER.debug(f"Longitude minimale: {xmin}")
+        LOGGER.debug(f"Longitude maximale: {xmax}")
+        LOGGER.debug(f"Latitude minimale: {ymin}")
+        LOGGER.debug(f"Latitude maximale: {ymax}")
+    
+        return Domain(
+            name=name,
+            minimum_latitude=ymin,
+            maximum_latitude= ymax,
+            minimum_longitude= xmin,
+            maximum_longitude= xmax,
+            minimum_depth=min_depth,
+            maximum_depth=max_depth,
+        )
+
     elif geo_type == "shapefile":
         shapefile_path = _read_path(geometry["file_path"])
         gdf = gpd.read_file(shapefile_path)
@@ -71,7 +96,7 @@ def read_domain(domain_description: Path) -> Domain:
         # inside the file
         key_name = geometry["selection_field_name"]
         key_value = geometry["selection_field_value"]
-        print(gdf)
+        #print(gdf)
         domain_geometry = gdf.loc[gdf[key_name] == key_value].iloc[0]
     
         xmin, ymin, xmax, ymax = domain_geometry.geometry.bounds

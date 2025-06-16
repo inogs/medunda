@@ -2,10 +2,10 @@
 name: North Adriatic
 geometry:
   type: Rectangle
-  min_latitude: 42
-  max_latitude: 46
-  min_longitude: 12
-  max_longitude: 18
+  min_latitude: 39.609258912544874
+  max_latitude: 45.78273415600006
+  min_longitude: 12.154220053000188
+  max_longitude: 20.19036466397057
 depth:
   min_depth: 0
   max_depth: 250
