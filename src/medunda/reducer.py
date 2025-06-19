@@ -9,6 +9,8 @@ from medunda.actions import extract_bottom
 from medunda.actions import extract_extremes
 from medunda.actions import extract_layer
 from medunda.actions import extract_surface
+from medunda.actions import extract_layer_extremes
+from medunda.actions import calculate_stats 
 from medunda.tools.logging_utils import configure_logger
 
 
@@ -21,8 +23,10 @@ ACTION_MODULES = [
     depth_average,
     extract_bottom,
     extract_extremes,
+    extract_layer_extremes,
     extract_layer,
-    extract_surface
+    extract_surface,
+    calculate_stats
 ]
 
 # This is a dictionary that maps the name of an action to the function that
