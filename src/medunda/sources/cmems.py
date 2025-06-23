@@ -4,19 +4,6 @@ from enum import Enum
 
 LOGGER = logging.getLogger(__name__)
 
-# PRODUCTS = {     
-#        # -> each key represents a product and its associated with a list of available variables.
-#      # physical variables (MEDSEA_MULTIYEAR_PHY_006_004)
-#     "med-cmcc-tem-rean-m": ["thetao"],       # temperature
-#     "med-cmcc-cur-rean-m": ["vo","uo"],      # currents: northward and eastward
-#     "med-cmcc-sal-rean-m": ["so"],           # salinity
-
-#     # biogeochemical variables (MEDSEA_MULTIYEAR_BGC_006_008)
-#     "med-ogs-bio-rean-m": ["o2"],                # dissolved oxygen
-#     "med-ogs-car-rean-m": ["ph"],               # pH
-#     "med-ogs-nut-rean-m": ["no3","po4","si"],   # nutrients: nitrate, phosphate and silicate
-#     "med-ogs-pft-rean-m": ["chl"] ,            # chlorophylle a
-# }
 
 
 class Frequency(Enum):
@@ -26,14 +13,38 @@ class Frequency(Enum):
 
 
 PRODUCTS={
-    ("thetao",): {Frequency.DAILY: "med-cmcc-tem-rean-d", Frequency.MONTHLY: "med-cmcc-tem-rean-m"},
-    ("vo", "uo"): {Frequency.DAILY: "med-cmcc-cur-rean-d", Frequency.MONTHLY:"med-cmcc-cur-rean-m"},
-    ("so",): {Frequency.DAILY: "med-cmcc-cur-rean-d", Frequency.MONTHLY: "med-cmcc-sal-rean-m"},
+    #"MEDSEA_MULTIYEAR_PHY_006_004": 
+    ("thetao",): 
+        {Frequency.DAILY: "med-cmcc-tem-rean-d", 
+        Frequency.MONTHLY: "med-cmcc-tem-rean-m"},
+    ("vo", "uo"): 
+        {Frequency.DAILY: "med-cmcc-cur-rean-d", 
+        Frequency.MONTHLY:"med-cmcc-cur-rean-m"},
+    ("so",): 
+        {Frequency.DAILY: "med-cmcc-cur-rean-d", 
+        Frequency.MONTHLY: "med-cmcc-sal-rean-m"},
 
-    ("ph",): {Frequency.DAILY: "med-ogs-car-rean-d", Frequency.MONTHLY: "med-ogs-car-rean-m"},
-    ("no3","po4","si"): {Frequency.DAILY: "med-ogs-nut-rean-d", Frequency.MONTHLY: "med-ogs-nut-rean-m"},
-    ("chl",): {Frequency.DAILY: "med-ogs-pft-rean-d", Frequency.MONTHLY: "med-ogs-pft-rean-m"},
-    ("o2",): {Frequency.DAILY: "med-ogs-bio-rean-d", Frequency.MONTHLY: "med-ogs-bio-rean-m"}
+    #"MEDSEA_MULTIYEAR_BGC_006_008":
+    ("ph",):
+         {Frequency.DAILY: "med-ogs-car-rean-d", 
+         Frequency.MONTHLY: "med-ogs-car-rean-m"},
+    ("no3","po4","si"): 
+        {Frequency.DAILY: "med-ogs-nut-rean-d", 
+         Frequency.MONTHLY: "med-ogs-nut-rean-m"},
+    ("chl",): 
+        {Frequency.DAILY: "med-ogs-pft-rean-d", 
+         Frequency.MONTHLY: "med-ogs-pft-rean-m"},
+    ("o2",): 
+        {Frequency.DAILY: "med-ogs-bio-rean-d", 
+         Frequency.MONTHLY: "med-ogs-bio-rean-m"},
+    ("nppv"): 
+         {Frequency.DAILY: "med-ogs-bio-rean-d", 
+         Frequency.MONTHLY: "med-ogs-bio-rean-m"},
+
+
+    #"GLOBAL_MULTIYEAR_BGC_001_033":
+    ("zeu","npp","zooc","mnkc_epi", "mnkc_hmlmeso", "mnkc_lmeso", "mnkc_mlmeso", "mnkc_mumeso", "mnkc_umeso"): 
+        {Frequency.DAILY: "cmems_mod_glo_bgc_my_0.083deg-lmtl_PT1D-i"}
 }
 
 VARIABLES = []
