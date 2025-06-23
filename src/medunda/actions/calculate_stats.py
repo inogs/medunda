@@ -33,10 +33,12 @@ class Stats:
         return np.var(self.data, axis=0)
     def median(self):
         return np.median(self.data, axis=0) 
-    # def quartiles(self): 
-    #     q1 = np.percentile(self.data, 25, axis=0)
-    #     q3 = np.percentile(self.data, 75, axis=0)
-    #     return q1, q3
+    def quartiles(self):
+        percentiles = [5, 25, 75, 95]
+        output = {
+            str(k): np.percentile(self.data, k, axis=0) for k in percentiles
+        }
+        return output
 
     
     def calculate (self, operation): 
@@ -45,7 +47,7 @@ class Stats:
             'mean': self.mean,
             'variance': self.variance,
             'median': self.median,
-            #'quartiles': self.quartiles
+            'quartiles': self.quartiles
         }
 
         if operation == "all":
@@ -78,9 +80,16 @@ def calculate_stats (input_file, output_file, operation):
 
     ds_results = xr.Dataset() 
     for operation_name, result_array in results.items():
-        ds_results[f"{var_name}_{operation_name}"]= xr.DataArray(
-            data=result_array,
-            dims=["depth", "latitude", "longitude"])
+        if isinstance(result_array, dict):
+            for method_parameter, method_result in result_array.items():
+                ds_results[f"{var_name}_{operation_name}_{method_parameter}"] = xr.DataArray(
+                    data=method_result,
+                    dims=["depth", "latitude", "longitude"]
+                )
+        else: 
+            ds_results[f"{var_name}_{operation_name}"]= xr.DataArray(
+                data=result_array,
+                dims=["depth", "latitude", "longitude"])
         
     ds_results.to_netcdf(output_file)
 
