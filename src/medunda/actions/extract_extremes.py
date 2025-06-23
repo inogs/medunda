@@ -33,21 +33,24 @@ def extract_min_max (input_file, output_file):
             indices = np.where(years_array == year)[0]
             yearly_data = var.isel(time=indices)
             
-            min_value = float(yearly_data.min().values)
-            max_value = float(yearly_data.max().values)
+            min_value = float(yearly_data.min().item())
+            max_value = float(yearly_data.max().item())
 
-            depth_at_min = yearly_data.depth.where(yearly_data == min_value, drop=True)
-            depth_at_max = yearly_data.depth.where(yearly_data == max_value, drop=True)
-
-            min_depth = float(depth_at_min.values)[0]
-            max_depth = float(depth_at_max.values)[0]
+            min_indices = np.unravel_index(
+                yearly_data.argmin().item(), yearly_data.shape
+            )
+            max_indices = np.unravel_index(
+                yearly_data.argmax().item(), yearly_data.shape
+            )
+            depth_at_min = float(yearly_data.depth[min_indices[1]])
+            depth_at_max = float(yearly_data.depth[max_indices[1]])
 
             values.append ({
                 "year": year, 
                 "minimum value": min_value,
-                "depth at min": min_depth,
+                "depth at min": depth_at_min,
                 "maximum value": max_value,
-                "depth at max": max_depth,
+                "depth at max": depth_at_max,
                 })
             
         df=pd.DataFrame(values)
