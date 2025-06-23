@@ -15,10 +15,10 @@ def configure_parser(subparsers):
     calculate_stats_parser.add_argument(
         "--operation",
         type=str,
-        choices=["mean", "median", "variance", "quartiles", "all"],
+        choices=["mean", "median", "variance", "quartiles", "minimum", "maximum", "all"],
         required=False,
         default = "all",
-        help="Chose the operation(s) required"
+        help="Choose the operation(s) required"
     )
 
 class Stats: 
@@ -33,12 +33,17 @@ class Stats:
         return np.var(self.data, axis=0)
     def median(self):
         return np.median(self.data, axis=0) 
+    def min (self):
+        return np.min(self.data, axis=0)
+    def max (self):
+        return np.max(self.data, axis=0)
+    
     def quartiles(self):
         percentiles = [5, 25, 75, 95]
         output = {
             str(k): np.percentile(self.data, k, axis=0) for k in percentiles
         }
-        return output
+        return output    
 
     
     def calculate (self, operation): 
@@ -47,6 +52,8 @@ class Stats:
             'mean': self.mean,
             'variance': self.variance,
             'median': self.median,
+            'minimum': self.min, 
+            'maximum': self.max,
             'quartiles': self.quartiles
         }
 
