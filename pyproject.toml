@@ -1,0 +1,31 @@
+[project]
+name = "medunda"
+version = "0.1.0"
+description = "A toolkit for donwloading and analyzing oceanographic data on the Mediterranean Sea"
+authors = [
+    {name = "Nada Akkari",email = "akkarinada8@gmail.com"},
+    {name = "Stefano Piani",email = "spiani@ogs.it"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic (>=2.11.7,<3.0.0)",
+    "numpy (>=2.3.0,<3.0.0)",
+    "xarray (>=2025.6.1,<2028.0.0)",
+    "netcdf4 (>=1.7.2,<2.0.0)",
+    "dask (>=2025.5.1,<2028.0.0)",
+    "copernicusmarine (>=2.1.2,<3.0.0)",
+]
+
+[tool.poetry.scripts]
+mdu_downloader = "medunda.downloader:main"
+mdu_reducer = "medunda.reducer:main"
+
+
+[tool.poetry]
+packages = [{include = "medunda", from = "src"}]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
