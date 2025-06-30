@@ -93,26 +93,34 @@ def download_data (variable: str, output_dir:Path, frequency:str, start:datetime
     final_output_dir = output_dir / variable / frequency
     final_output_dir.mkdir(exist_ok=True, parents=True)
 
-    start_str = start.strftime("%Y-%m-%d")
-    end_str = end.strftime("%Y-%m-%d")
+    start_year = start.year
+    end_year = end.year
 
-    output_filename = f"{frequency}_{variable}_{start_str}_{end_str}.nc"
-    output_filepath = final_output_dir / output_filename
-    LOGGER.info("Saving file %s", output_filepath)
+    for year in range (start_year, end_year+1):
+        start_date = datetime (year, 1, 1)
+        end_date = datetime (year+1, 1, 1) 
 
-    LOGGER.info(f"downloading '{frequency}''{variable}' from '{start}' to '{end}'")
+        start_str = start.strftime("%Y-%m-%d")
+        end_str = end.strftime("%Y-%m-%d")
 
-    LOGGER.info(f"Dataset ID being used: {selected_product}")
+        output_filename = f"{frequency}_{variable}_{year}.nc"
+        output_filepath = final_output_dir / output_filename
     
-    #4 
-    copernicusmarine.subset(
-        dataset_id=selected_product,
-        variables=[variable],
-        start_datetime=start,
-        end_datetime=end,
-        output_filename=output_filepath,
-        **domain.model_dump(exclude= {"name"})
-    )
+        LOGGER.info("Saving file %s", output_filepath)
+
+        LOGGER.info(f"downloading '{frequency}''{variable}' from '{start}' to '{end}'")
+
+        LOGGER.info(f"Dataset ID being used: {selected_product}")
+        
+        #4 
+        copernicusmarine.subset(
+            dataset_id=selected_product,
+            variables=[variable],
+            start_datetime=start_date,
+            end_datetime=end_date,
+            output_filename=output_filepath,
+            **domain.model_dump(exclude= {"name"})
+        )
 
     return (output_filepath, )
 
