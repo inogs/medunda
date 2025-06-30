@@ -26,7 +26,7 @@ def get_next_year(current_date: datetime):
     )
 
 
-def split_by_month(start_date: datetime, end_date:datetime) -> list:
+def split_by_month(start_date: datetime, end_date:datetime) -> list[tuple[datetime, datetime]]:
     current_date = start_date
     resolution = timedelta(seconds=1)
     output = []
@@ -38,7 +38,7 @@ def split_by_month(start_date: datetime, end_date:datetime) -> list:
         
 
 
-def split_by_year(start_date: datetime, end_date:datetime) -> list:
+def split_by_year(start_date: datetime, end_date:datetime) -> list[tuple[datetime, datetime]]:
     current_date = start_date
     resolution = timedelta(seconds=1)
     next_year = min(
