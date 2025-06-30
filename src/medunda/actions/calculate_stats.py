@@ -13,8 +13,9 @@ def configure_parser(subparsers):
         help="Calculates the values of some specific statistical operations"
     )
     calculate_stats_parser.add_argument(
-        "--operation",
+        "--operations",
         type=str,
+        nargs='+',
         choices=["mean", "median", "variance", "quartiles", "minimum", "maximum", "all"],
         required=False,
         default = "all",
@@ -46,7 +47,7 @@ class Stats:
         return output    
 
     
-    def calculate (self, operation): 
+    def calculate (self, operations): 
 
         available_operations = {
             'mean': self.mean,
@@ -56,26 +57,35 @@ class Stats:
             'maximum': self.max,
             'quartiles': self.quartiles
         }
+        
+        if not operations:
+            operations = ["all"]
 
-        if operation == "all":
-            selected_op = available_operations.keys()
-        else: 
-            selected_op = [operation]
+        if "all" in operations:
+            if len(operations) > 1: 
+                raise ValueError (f"'all' cannot be used with other operations")
+            selected_op = available_operations.keys() 
+
+        else:
+            if len(set(operations)) != len(operations):
+                raise ValueError (f"Operations cannot be duplicated.")
+            
+            for op in operations:
+                if op not in available_operations:
+                    raise ValueError(f"Unavailable operation: {op}")
+            selected_op = operations 
 
         results={}
 
         for operation in selected_op:
-            if operation in available_operations:
-                results[operation]=available_operations[operation]()
-            else:
-                raise ValueError(f"Unavailable operation: {operation}")
-        
+            results[operation]=available_operations[operation]()
+            
         return results
 
-def calculate_stats (input_file, output_file, operation):
+def calculate_stats (input_file, output_file, operations):
     """ Regroups and compute some statistical operations 
     according to the user's choice """
-    
+
     LOGGER.info(f"reading file: {input_file}")
     with xr.open_dataset(input_file) as ds:
 
@@ -83,7 +93,7 @@ def calculate_stats (input_file, output_file, operation):
         data=ds[var_name].values
 
     stats= Stats(data)
-    results= stats.calculate(operation)
+    results= stats.calculate(operations)
 
     ds_results = xr.Dataset() 
     for operation_name, result_array in results.items():
