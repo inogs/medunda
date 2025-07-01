@@ -141,8 +141,8 @@ def download_data (
 
         for start_date, end_date in time_intervals:
 
-            start_str = start.strftime("%Y-%m-%d")
-            end_str = end.strftime("%Y-%m-%d")
+            start_str = start_date.strftime("%Y-%m-%d")
+            end_str = end_date.strftime("%Y-%m-%d")
             file_time = f"{start_str}--{end_str}"
 
             output_filename = f"{domain.name}_{variable}_{frequency}_{file_time}.nc"
@@ -152,7 +152,7 @@ def download_data (
         
             LOGGER.info("Saving file %s", output_filepath)
 
-            LOGGER.info(f"downloading '{frequency}''{variable}' from '{start}' to '{end}'")
+            LOGGER.info(f"downloading '{frequency}''{variable}' from '{start_date}' to '{end_date}'")
 
             LOGGER.info(f"Dataset ID being used: {selected_product}")
             
@@ -209,6 +209,8 @@ def validate_dataset(filepath, variable):
 
 
 def main ():
+    configure_logger(LOGGER)
+
     args=parse_args()       #parse the command line arguments
     
     domain= read_domain (args.domain)
@@ -234,5 +236,4 @@ def main ():
 
 
 if __name__ == "__main__":
-    configure_logger(LOGGER)
     main()

@@ -17,6 +17,9 @@ dependencies = [
     "copernicusmarine (>=2.1.2,<3.0.0)",
 ]
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+
 [tool.poetry.scripts]
 mdu_downloader = "medunda.downloader:main"
 mdu_reducer = "medunda.reducer:main"
