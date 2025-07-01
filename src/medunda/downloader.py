@@ -93,7 +93,7 @@ def download_data (
         end:datetime,
         domain: Domain,
         split_by: str = "whole",
-        ) -> tuple[Path, ...]:
+        ) -> dict[str, tuple[Path, ...]]:
 
     """ Download and organize data by year, month, and day, for the chosen variables.
     Steps: 1) Search in the 'products' dictionary for the product_id related to the chosen variable
@@ -112,7 +112,7 @@ def download_data (
             f'valid values are {allowed_split_by}'
         )
     
-    downloaded_files = []
+    downloaded_files: dict[str, tuple[Path, ...]] = {}
 
     for variable in variables:
         #1. search for the product
@@ -135,21 +135,24 @@ def download_data (
             time_intervals = split_by_month(start, end)
         else:
             raise ValueError(f"Internal error: invalid parameter: {split_by}")
-        
+
+        # we save here the files that we download for this variable
+        files_for_current_var = []
+
         for start_date, end_date in time_intervals:
 
-            start_str = start.strftime("%Y-%m-%d")
-            end_str = end.strftime("%Y-%m-%d")
+            start_str = start_date.strftime("%Y-%m-%d")
+            end_str = end_date.strftime("%Y-%m-%d")
             file_time = f"{start_str}--{end_str}"
 
             output_filename = f"{domain.name}_{variable}_{frequency}_{file_time}.nc"
-            temp_filename = output_filename + ".tmp"
+            temp_filename = "tmp." + output_filename
             output_filepath = final_output_dir / output_filename
             temp_filepath = final_output_dir / temp_filename 
         
             LOGGER.info("Saving file %s", output_filepath)
 
-            LOGGER.info(f"downloading '{frequency}''{variable}' from '{start}' to '{end}'")
+            LOGGER.info(f"downloading '{frequency}''{variable}' from '{start_date}' to '{end_date}'")
 
             LOGGER.info(f"Dataset ID being used: {selected_product}")
             
@@ -168,9 +171,11 @@ def download_data (
             )
 
             shutil.move(temp_filepath, output_filepath)
-            downloaded_files.append(output_filepath)
+            files_for_current_var.append(output_filepath)
+        
+        downloaded_files[variable] = tuple(files_for_current_var)
 
-        return tuple(downloaded_files)
+    return downloaded_files
 
 
 def validate_dataset(filepath, variable):        
@@ -204,6 +209,8 @@ def validate_dataset(filepath, variable):
 
 
 def main ():
+    configure_logger(LOGGER)
+
     args=parse_args()       #parse the command line arguments
     
     domain= read_domain (args.domain)
@@ -218,15 +225,15 @@ def main ():
         split_by=args.split_by
     )
 
-    for filepath in downloaded_files:
-        if validate_dataset(filepath, args.variable): 
-            LOGGER.info(f"dataset validated for variable: '{args.variable}'")
-        else:
-            LOGGER.warning(f"failed dataset validation for variable:'{args.variable}'")
+    for variable, files_for_var in downloaded_files.items():
+        for filepath in files_for_var:
+            if validate_dataset(filepath, variable): 
+                LOGGER.info(f"dataset validated for variable: '{variable}'")
+            else:
+                LOGGER.warning(f"failed dataset validation for variable:'{variable}'")
     
     
 
 
 if __name__ == "__main__":
-    configure_logger(LOGGER)
     main()
