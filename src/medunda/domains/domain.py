@@ -3,8 +3,10 @@ import yaml
 import zipfile
 import tempfile
 from pathlib import Path
+import re
 
 from pydantic import BaseModel
+from pydantic import field_validator
 import geopandas as gpd
 
 
@@ -23,6 +25,20 @@ class Domain(BaseModel):
     minimum_depth: float
     maximum_depth: float
 
+    @field_validator('name', mode='after')  
+    @classmethod
+    def name_is_conformal(cls, name: str) -> str:
+        """
+        Check that the name does not contain special characters.
+        If it does, raise a ValueError.
+        """
+        standard_name = re.compile(r"^[a-zA-Z0-9-]+$")
+        if not standard_name.match(name):
+            raise ValueError(
+                f'The domain name "{name}" contains special characters, '
+                "which is not allowed."
+            )
+        return name
 
 
 def _read_path(raw_path: str):
