@@ -1,58 +1,64 @@
-from pathlib import Path
 import argparse
+from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 import xarray as xr
 
-from sources.cmems import VARIABLES
-
+from medunda.sources.cmems import VARIABLES
+from medunda.tools.layers import compute_layer_height 
 
 def parse_args ():
     """
     parse command line arguments: 
-    --variable: the variable to download:
-    --frequency: choose the frequency of the download: monthly or annualy:
+    --input-file: path of the input file
     --output-dir: directory to save the download file
     """
     parser = argparse.ArgumentParser(
         description="Read the data downloaded by the downloader.py script and generate a 2D plot")
 
     parser.add_argument(   
-        "--variable",  
-        type=str,
-        choices=VARIABLES,
+        "--input-file",  
+        type=Path,
         required=True,
-        help="Name of the variable to download"
+        help="Path of the input file"
     )
-
-    parser.add_argument( 
-        "--frequency",
-        type=str,
-        choices=["monthly", "daily"],
-        required=False,
-        default="monthly",
-        help="frequency of the downloaded data"
-    )
-
-    parser.add_argument(      #input the directory to save the file
+    parser.add_argument(     
         "--output-dir",
         type=Path,
         default=Path("."),
-        help="directory where the downloaded file will be saved",
+        help="Directory where the downloaded file will be saved",
     )
     return parser.parse_args()
 
+def compute_ch_integral (ds_chl):
+
+    ds = xr.load_dataset(ds_chl)
+
+    layer_height = compute_layer_height(ds.depth.values) 
+
+    chl = ds['chl'] 
+    chl_integrated = (chl * layer_height[:, np.newaxis, np.newaxis]).sum(dim='depth')
+
+    return chl_integrated
+
+
+def plot_timeseries (input_file): 
+    
+    pass
+
+
+def plot_maps (input_file, var):
+
+    pass
 
 def extract_and_plot_layers(filepath: Path, variable: str):
     """Extracts and plots surface, bottom, and average layers of the given variable."""
     
     ds = xr.open_dataset(filepath)
     
-    surface = ds[variable].isel(depth=0, time=0)      # Surface layer (depth=0)
-    bottom = ds[variable].isel(depth=-1, time=0)       # Bottom layer (last depth index)
-    mean_layer = ds[variable].isel(time=0).mean(dim="depth", skipna=True)      # Mean over the water column
-
-    if not {'depth', 'latitude', 'longitude'}.issubset(ds[variable].dims) and not {'depth', 'lat', 'lon'}.issubset(data.dims):
+    if not {'depth', 'latitude', 'longitude'}.issubset(ds[variable].dims) and not {
+        'depth', 'lat', 'lon'}.issubset(data.dims):
         raise ValueError("The variable does not have the expected spatial dimensions (depth, lat/lon).")
 
     data=ds[variable]
@@ -60,15 +66,6 @@ def extract_and_plot_layers(filepath: Path, variable: str):
    
     # Plotting
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-
-    surface.plot(ax=axes[0], cmap="coolwarm")
-    axes[0].set_title("Surface Layer")
-
-    bottom.plot(ax=axes[1], cmap="coolwarm")
-    axes[1].set_title("Bottom Layer")
-
-    mean_layer.plot(ax=axes[2], cmap="coolwarm")
-    axes[2].set_title("Mean over Water Column")
 
     plt.tight_layout()
     plt.show()
@@ -80,10 +77,10 @@ def main ():
     args=parse_args()
 
     output_dir = args.output_dir
-    variable = args.variable
+
     frequency = args.frequency
 
-    data_dir = output_dir / variable / frequency
+    data_dir = output_dir / frequency
 
     if not data_dir.is_dir():
         raise ValueError(f"Unable to find the path {data_dir}")
@@ -96,7 +93,7 @@ def main ():
     # for the file that it needs
     data_file = data_file_list[0]
 
-    extract_and_plot_layers(filepath=data_file, variable=variable)
+    extract_and_plot_layers(filepath=data_file,)
 
 
 if __name__ == '__main__':
