@@ -1,3 +1,4 @@
+.hypothesis/*
 .idea/*
 *.pyc
 **/*.nc

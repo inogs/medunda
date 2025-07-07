@@ -19,6 +19,8 @@ dependencies = [
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
+hypothesis = "^6.135.26"
+
 
 [tool.poetry.scripts]
 mdu_downloader = "medunda.downloader:main"

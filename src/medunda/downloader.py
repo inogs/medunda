@@ -1,19 +1,19 @@
 import argparse
 import logging
-import shutil
-from collections.abc import Sequence
+from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
 
-import copernicusmarine
 import xarray as xr
 
-from medunda.sources.cmems import search_for_product
+from medunda.dataset import Dataset
 from medunda.sources.cmems import VARIABLES
 from medunda.tools.argparse_utils import date_from_str
+from medunda.tools.file_names import get_output_filename
 from medunda.tools.logging_utils import configure_logger
 from medunda.tools.time_tables import split_by_month
 from medunda.tools.time_tables import split_by_year
+from medunda.tools.typing import VarName
 from medunda.domains.domain import read_domain
 from medunda.domains.domain import Domain
 
@@ -84,27 +84,24 @@ def parse_args ():
     return parser.parse_args()
 
 
-
 def download_data (
-        variables: Sequence[str],
+        variables: Iterable[VarName],
         output_dir:Path,
         frequency:str,
         start:datetime,
         end:datetime,
         domain: Domain,
         split_by: str = "whole",
-        ) -> dict[str, tuple[Path, ...]]:
+        ) -> dict[VarName, tuple[Path, ...]]:
 
-    """ Download and organize data by year, month, and day, for the chosen variables.
-    Steps: 1) Search in the 'products' dictionary for the product_id related to the chosen variable
-           2) Create the output directory if it does not exist
-           3) Define the output file name based on the variable
-           4) Call copernicusmarine.subset () using the **parameters"""
-
+    """Download data for the specified variables, frequency, and time range.
+    """
+    # Check if frequency is valid
     allowed_frequency = ("daily", "monthly")
     if frequency not in allowed_frequency:
         raise ValueError(f"invalid frequency")
 
+    # Check if value of split_by is valid
     allowed_split_by = ("month", "year", "whole")
     if split_by not in allowed_split_by:
         raise ValueError(
@@ -112,70 +109,75 @@ def download_data (
             f'valid values are {allowed_split_by}'
         )
     
-    downloaded_files: dict[str, tuple[Path, ...]] = {}
+    # Prepare the time intervals based on the split_by parameter
+    if split_by == "whole":
+        time_intervals = [(start, end)]
+    elif split_by == "year":
+        time_intervals = split_by_year(start, end)
+    elif split_by == "month":
+        time_intervals = split_by_month(start, end)
+    else:
+        raise ValueError(f"Internal error: invalid parameter: {split_by}")
+    
+    # Prepare output directory if not available
+    output_dir.mkdir(exist_ok=True)
+
+    if not output_dir.is_dir():
+        raise ValueError(f"Output directory {output_dir} is not a directory")
+
+    # We want to prepare a Dataset object that will contain the path of all the
+    # files that we will download.
+    downloaded_files: dict[VarName, tuple[Path, ...]] = {}
+
+    # Dataset file
+    dataset_file = output_dir / f"medunda_dataset.json"
+    if dataset_file.exists():
+        raise IOError(
+            f"Dataset file {dataset_file} already exists. "
+            f"This means that the output directory {output_dir} has been "
+            "already used for a previous download. Please choose a different "
+            "output directory or delete the existing dataset file."
+        )
 
     for variable in variables:
-        #1. search for the product
-        selected_product = search_for_product(var_name=variable, frequency=frequency)
-        
-        LOGGER.info(f"Downloading the variable '{variable}' from the product '{selected_product}'")
+        # We save here the files that we download for this variable
+        files_for_current_var: list[Path] = []
 
-        #2. output directory if not available
-        output_dir.mkdir(exist_ok=True)
-
-        #3. define the output file name (exp: monthly.uo_1999-2023.nc)
-        final_output_dir = output_dir / variable / frequency
-        final_output_dir.mkdir(exist_ok=True, parents=True)
-
-        if split_by == "whole":
-            time_intervals = [(start, end)]
-        elif split_by == "year":
-            time_intervals = split_by_year(start, end)
-        elif split_by == "month":
-            time_intervals = split_by_month(start, end)
-        else:
-            raise ValueError(f"Internal error: invalid parameter: {split_by}")
-
-        # we save here the files that we download for this variable
-        files_for_current_var = []
+        var_output_dir = output_dir / variable / frequency
 
         for start_date, end_date in time_intervals:
-
-            start_str = start_date.strftime("%Y-%m-%d")
-            end_str = end_date.strftime("%Y-%m-%d")
-            file_time = f"{start_str}--{end_str}"
-
-            output_filename = f"{domain.name}_{variable}_{frequency}_{file_time}.nc"
-            temp_filename = "tmp." + output_filename
-            output_filepath = final_output_dir / output_filename
-            temp_filepath = final_output_dir / temp_filename 
-        
-            LOGGER.info("Saving file %s", output_filepath)
-
-            LOGGER.info(f"downloading '{frequency}''{variable}' from '{start_date}' to '{end_date}'")
-
-            LOGGER.info(f"Dataset ID being used: {selected_product}")
-            
-            if temp_filepath.is_file():
-                LOGGER.debug("%s already exists. I will delete it!", temp_filepath)
-                temp_filepath.unlink()
-
-            #4 
-            copernicusmarine.subset(
-                dataset_id=selected_product,
-                variables=[variable],
-                start_datetime=start_date,
-                end_datetime=end_date,
-                output_filename=str(temp_filepath),
-                **domain.model_dump(exclude= {"name"})
+            output_file_name = get_output_filename(
+                variable=variable,
+                frequency=frequency,
+                start=start_date,
+                end=end_date,
+                domain_name=domain.name
             )
 
-            shutil.move(temp_filepath, output_filepath)
-            files_for_current_var.append(output_filepath)
-        
-        downloaded_files[variable] = tuple(files_for_current_var)
+            output_file_path = var_output_dir / output_file_name
+            files_for_current_var.append(output_file_path)
 
-    return downloaded_files
+        downloaded_files[variable] = tuple(files_for_current_var)
+    
+    # Create a Dataset object that will describe the data that we are going
+    # to download.
+    dataset = Dataset(
+        domain=domain,
+        start_date=start,
+        end_date=end,
+        data_files=downloaded_files,
+    )
+
+    # Save the dataset information to a JSON file
+    dataset_file.write_text(dataset.model_dump_json(indent=4) + "\n")
+
+    # Download the data for each variable. We delegate the actual download
+    # to the Dataset class, which will handle the downloading of the data
+    # files for each variable.
+    LOGGER.info("Downloading data...")
+    dataset.download_data()
+
+    return dataset.data_files
 
 
 def validate_dataset(filepath, variable):        
