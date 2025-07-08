@@ -17,6 +17,7 @@ def compute_layer_height(layer_centers: ArrayLike) -> np.ndarray:
         thickness of each layer.
     """
     layer_height = []
+    layer_centers = np.asarray(layer_centers)
     for i in range(len(layer_centers)):
         if i == 0:
             layer_height.append(layer_centers[0] * 2)
