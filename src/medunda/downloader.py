@@ -166,6 +166,7 @@ def download_data (
         start_date=start,
         end_date=end,
         data_files=downloaded_files,
+        frequency=frequency,
     )
 
     # Save the dataset information to a JSON file
