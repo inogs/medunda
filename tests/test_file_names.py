@@ -57,7 +57,6 @@ def test_creating_and_reading_filenames_consistency(start_end_dates):
     frequencies = ["daily", "monthly"]
     domain_name = "domain"
     start_date, end_date = start_end_dates
-    print(start_date, end_date)
 
     for variable, frequency in cart_prod(variables, frequencies):
         # Generate the output filename
