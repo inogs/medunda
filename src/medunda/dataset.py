@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timezone
 from logging import getLogger
 from pathlib import Path
 import shutil
@@ -85,6 +86,12 @@ class Dataset(BaseModel):
                     temp_file_path.unlink()
 
                 start, end = from_file_path_to_time_range(file_path)
+
+                # Copernicusmarine API interprets datetimes as UTC,
+                # so we need to ensure that the start and end datetimes
+                # are timezone-aware and set to UTC.
+                start = start.replace(tzinfo=timezone.utc)
+                end = end.replace(tzinfo=timezone.utc)
                 copernicusmarine.subset(
                     dataset_id=product_id,
                     variables=[var_name],
