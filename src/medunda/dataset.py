@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from datetime import datetime
 from datetime import timezone
 from logging import getLogger
@@ -5,6 +6,7 @@ from pathlib import Path
 import shutil
 
 import copernicusmarine
+import xarray as xr
 from pydantic import BaseModel
 
 from medunda.domains.domain import Domain
@@ -105,3 +107,84 @@ class Dataset(BaseModel):
                     'Moving file "%s" to "%s"', temp_file_path, file_path
                 )
                 shutil.move(temp_file_path, file_path)
+    
+    def get_variables(self) -> tuple[VarName, ...]:
+        """
+        Returns the variable names in the dataset.
+        
+        Returns:
+            A tuple of variable names (VarName) present in the dataset.
+        """
+        return tuple(self.data_files.keys())
+
+
+    def get_data(self, variables: Iterable[VarName] | None = None) -> xr.Dataset:
+        """
+        Returns an xarray Dataset for the specified variable.
+        
+        Args:
+            variables: An iterable of variable names (VarName) to include in the
+                dataset. If None, all variables in the dataset will be included.
+        
+        Raises:
+            ValueError: If no variables are specified.
+            
+        Returns:
+            An xarray Dataset containing the data for the specified variables.
+        """ 
+        var_datasets = []
+
+        if variables is None:
+            LOGGER.debug(
+                "No specific variables requested, using all variables"
+            )
+            variables = self.get_variables()
+        variables = tuple(variables)
+
+        if len(variables) == 0:
+            raise ValueError("No variables specified for dataset retrieval.")
+
+        for variable in variables:
+            LOGGER.debug('Processing variable "%s"', variable)
+            variable_data_files = self.data_files[variable]
+            LOGGER.debug(
+                "There are %s data files associated with variable %s",
+                len(variable_data_files),
+                variable
+            )
+            var_dataset = xr.open_mfdataset(variable_data_files)
+            LOGGER.debug("Variable %s dataset opened successfully", variable)
+            var_datasets.append(var_dataset)
+        LOGGER.debug("Merging datasets for all variables")
+        dataset_data = xr.merge(var_datasets)
+        return dataset_data
+
+
+def read_dataset(dataset_path: Path) -> Dataset:
+    """
+    Reads a dataset from the specified path.
+    
+    Args:
+        dataset_path: The path to the dataset file.
+        
+    Returns:
+        A Dataset object containing the data from the file.
+    """
+    LOGGER.info('Reading dataset from "%s"', dataset_path)
+    
+    if not dataset_path.exists():
+        raise FileNotFoundError(
+            f'Dataset file "{dataset_path}" does not exist.'
+        )
+    
+    if dataset_path.is_dir():
+        LOGGER.debug(
+            'Dataset path "%s" is a directory, reading medunda file',
+            dataset_path
+        )
+        dataset_path = dataset_path / "medunda_dataset.json"
+
+    dataset = Dataset.model_validate_json(dataset_path.read_text())
+    LOGGER.debug('Dataset read successfully: %s', dataset)
+
+    return dataset
