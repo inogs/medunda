@@ -21,7 +21,7 @@ PRODUCTS={
         {Frequency.DAILY: "med-cmcc-cur-rean-d", 
         Frequency.MONTHLY:"med-cmcc-cur-rean-m"},
     ("so",): 
-        {Frequency.DAILY: "med-cmcc-cur-rean-d", 
+        {Frequency.DAILY: "med-cmcc-sal-rean-d", 
         Frequency.MONTHLY: "med-cmcc-sal-rean-m"},
 
     #"MEDSEA_MULTIYEAR_BGC_006_008":
