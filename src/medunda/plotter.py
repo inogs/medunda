@@ -1,21 +1,49 @@
 import argparse
+import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import cmocean
 import numpy as np
 import xarray as xr
 
+
 from medunda.sources.cmems import VARIABLES
-from medunda.tools.layers import compute_layer_height 
+from medunda.tools.argparse_utils import date_from_str
+from medunda.tools.layers import compute_layer_height
+from medunda.tools.logging_utils import configure_logger
+
+LOGGER = logging.getLogger(__name__)
+
+VAR_METADATA = {
+    "o2": {'label': 'Oxygen',                 
+            'unit':'µmol/m³',
+            'cmap': cmocean.cm.deep},
+    "chl": {'label': 'Chlorophyll-a',       
+            'unit':'mg/m³',
+            'cmap':cmocean.cm.algae},
+    "nppv": {'label': 'Net Primary Production',
+            'unit':'mg C/m²/day',   
+            'cmap':cmocean.cm.matter},
+    "thetao": {'label': 'Temperature', 
+               'unit':'°C', 
+               'cmap':'coolwarm'},
+    "so": {'label': 'Salinity', 
+           'unit': 'PSU',
+           'cmap':'viridis'},
+}
+
 
 def parse_args ():
     """
     parse command line arguments: 
     --input-file: path of the input file
+    --variable: name of the variable to plot
+    --mode: type of the plot that can be either 'time series' or 'maps'
     --output-dir: directory to save the download file
     """
     parser = argparse.ArgumentParser(
-        description="Read the data downloaded by the downloader.py script and generate a 2D plot")
+        description="plots timeseries and maps")    ######
 
     parser.add_argument(   
         "--input-file",  
@@ -23,17 +51,47 @@ def parse_args ():
         required=True,
         help="Path of the input file"
     )
+    parser.add_argument(   
+        "--variable",  
+        type=str,
+        choices=VARIABLES,
+        required=True,
+        help="Name of the variable to plot"
+    )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        choices=["timeseries", "maps"],
+        required=True,
+        help="Type of the plot that can be either 'time series' or 'maps' "
+    )
+    parser.add_argument(   
+        "--time",
+        type=date_from_str,
+        required=True,
+        help="The time of the plot"
+    )
     parser.add_argument(     
         "--output-dir",
         type=Path,
         default=Path("."),
-        help="Directory where the downloaded file will be saved",
+        help="Directory where the downloaded files are saved",
     )
     return parser.parse_args()
 
-def compute_ch_integral (ds_chl):
 
-    ds = xr.load_dataset(ds_chl)
+def check_variable (ds, var):
+
+    if var not in ds:
+        raise ValueError(f"Variable '{var}' not found in dataset")
+    if var not in VAR_METADATA:
+        raise ValueError(f"Metadata for variable '{var}' is missing")
+    return ds[var], VAR_METADATA[var]
+
+
+def compute_ch_integral (ds):
+
+    ds = xr.load_dataset(ds)
 
     layer_height = compute_layer_height(ds.depth.values) 
 
@@ -43,58 +101,100 @@ def compute_ch_integral (ds_chl):
     return chl_integrated
 
 
-def plot_timeseries (input_file): 
+def plot_timeseries (data:xr.DataArray, metadata: dict):
+
+    # Aggregate spatial dims by mean over lat and lon if they exist
+    spatial_dims = [dim for dim in ['lat', 'latitude', 'lon', 'longitude'] if dim in data.dims]
+    if spatial_dims:
+        time_series = data.mean(dim=spatial_dims)
+    else:
+        time_series = data  #has one dimension already 
     
-    pass
+    cmap= metadata['cmap']
+    if isinstance(cmap, str):
+        cmap=plt.get_cmap(cmap)
 
-
-def plot_maps (input_file, var):
-
-    pass
-
-def extract_and_plot_layers(filepath: Path, variable: str):
-    """Extracts and plots surface, bottom, and average layers of the given variable."""
-    
-    ds = xr.open_dataset(filepath)
-    
-    if not {'depth', 'latitude', 'longitude'}.issubset(ds[variable].dims) and not {
-        'depth', 'lat', 'lon'}.issubset(data.dims):
-        raise ValueError("The variable does not have the expected spatial dimensions (depth, lat/lon).")
-
-    data=ds[variable]
-    data=data.rename({'lat': 'latitude', 'lon':'longitude'}) if 'lat' in data else data
-   
-    # Plotting
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-
-    plt.tight_layout()
+    plt.figure(figsize=(10,5))
+    plt.plot(time_series['time'], time_series,)
+    plt.title(f"Time Series of {metadata['label']}")
+    plt.xlabel('Time')
+    plt.ylabel(f"{metadata['label']} [{metadata['unit']}]")
     plt.show()
 
-    ds.close()
+
+def plot_maps (data: xr.DataArray, metadata: dict, time):
+    
+    # Select the time slice for mapping (default first time step)
+    if 'time' in data.dims:
+        data_slice = data.sel(time=time)
+    else:
+        data_slice = data
+
+    plt.figure(figsize=(8,6))
+    cmap = metadata['cmap']
+    # If cmap is a string (e.g. 'viridis'), convert to plt colormap
+    if isinstance(cmap, str):
+        cmap = plt.get_cmap(cmap)
+        
+    im = plt.imshow(data_slice, cmap=cmap)
+    plt.title(f"{metadata['label']}) at time {time}")
+    cbar = plt.colorbar(im)
+    cbar.set_label(metadata['unit'])
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+    plt.show()
+
+
+def extract_and_plot_layers(filepath: Path, variable: str, mode:str, time):
+    """Extracts and plots surface, bottom, and average layers of the given variable."""
+    
+    with xr.open_dataset(filepath) as ds: 
+        data_var, metadata = check_variable(ds, variable)
+
+        if mode == 'timeseries':
+            if 'time' not in ds[variable].dims:
+                raise ValueError (f"Variable '{variable} does not have the time dimension")
+        
+        if variable == 'chl': ######
+
+            """ this should be able to call for the function to 
+            compute the integral, pass it into a temp_file, 
+            then do the plots accordingly"""
+            
+            chl_integrated = compute_ch_integral(filepath)
+            plot_timeseries(chl_integrated, metadata)
+    
+        else: 
+            """for any variable other than chlorophyll"""
+            if mode == "timeseries": 
+                plot_timeseries(data_var, metadata)
+            elif mode == "maps":
+                plot_maps(data_var, metadata, time)
+            else: 
+                raise ValueError(f"Invalid mode")
 
 
 def main ():
-    args=parse_args()
 
+    args = parse_args()
     output_dir = args.output_dir
+    variable = args.variable
+    mode = args.mode
+    time = args.time
 
-    frequency = args.frequency
+    if not output_dir.is_dir():
+        raise ValueError(f"The path '{output_dir}' does not exist or is not a directory.")
 
-    data_dir = output_dir / frequency
+    data_file_list = list(output_dir.glob("*.nc"))
+    if not data_file_list:
+        raise FileNotFoundError(f"No NetCDF (.nc) files found in '{output_dir}'.")
 
-    if not data_dir.is_dir():
-        raise ValueError(f"Unable to find the path {data_dir}")
-
-    # Generate a list of all the files that are inside the data_dir
-    data_file_list = list(data_dir.iterdir())
-
-    # The file that we want is the only file inside the directory
-    # TODO: change the logic so that the code is more robust and looks exactly
-    # for the file that it needs
     data_file = data_file_list[0]
+    LOGGER.info(f"Selected file: {data_file.name}")
 
-    extract_and_plot_layers(filepath=data_file,)
+    extract_and_plot_layers(filepath=data_file, variable=variable, mode=mode, time=time)
 
+    LOGGER.info(f"Plotting completed for variable '{variable}' in mode '{mode}'")
 
 if __name__ == '__main__':
     main()
