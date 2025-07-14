@@ -27,4 +27,3 @@ def extract_layer (data: xr.Dataset, output_file, depth):
     LOGGER.info(f"writing the file: {output_file}")
     bottom_layer.to_netcdf(output_file)
     LOGGER.info("done")
-    print(bottom_layer.coords)
