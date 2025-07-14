@@ -2,7 +2,7 @@ import logging
 
 import xarray as xr
 
-from medunda.tools.layers import compute_layer_height
+from medunda.actions.averaging_between_layers import averaging_between_layers
 
 
 LOGGER = logging.getLogger(__name__)
@@ -17,23 +17,15 @@ def configure_parser(subparsers):
 
 
 def compute_depth_average(data: xr.Dataset, output_file):
-    LOGGER.info(f"reading file:{data}")
+    """    Compute the average on all the vertical levels of the dataset.
+
+    Args:
+        data (xr.Dataset): Input dataset with depth as one of the dimensions.
+        output_file (str): Path to save the output dataset.
+    """
+    LOGGER.info("Computing depth average")
+    depth_min = data.depth.min().item()
+    depth_max = data.depth.max().item()
     
-    LOGGER.debug("computing_layer_height")
-    layer_height = compute_layer_height(data.depth.values)
-    layer_height_extended = xr.DataArray(layer_height, dims=["depth"])
-
-    var_name = list(data.data_vars)[0]
-    mask = data[var_name].to_masked_array(copy=False).mask[0, :, :, :]
-    mask_extended = xr.DataArray(
-        mask,
-        dims=("depth", "latitude", "longitude")
-    )
-    total_height = (layer_height_extended * ~mask_extended).sum(dim="depth")
-
-    mean_layer = (data * layer_height_extended).sum(dim="depth",
-                                                      skipna=True) / total_height
-
-    LOGGER.info(f"writing file: {output_file}")
-    mean_layer.to_netcdf(output_file)
-    LOGGER.info("done")
+    averaging_between_layers(data, output_file, depth_min - 1, depth_max + 1)
+    LOGGER.info("Depth average computed and saved to %s", output_file)

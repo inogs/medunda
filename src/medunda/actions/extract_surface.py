@@ -19,4 +19,3 @@ def extract_surface (data: xr.Dataset, output_file):
     surface_layer = data.isel(depth=0)
     LOGGER.info(f"writing the file: {output_file}")
     surface_layer.to_netcdf(output_file)
-    print(surface_layer)

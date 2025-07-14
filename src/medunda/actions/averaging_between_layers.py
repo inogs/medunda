@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import xarray as xr
 
 from medunda.tools.layers import compute_layer_height
@@ -29,26 +30,28 @@ def configure_parser(subparsers):
 
 
 def averaging_between_layers (data: xr.Dataset, output_file, depth_min, depth_max):
-    var_name = list(data.data_vars)[0]
-    #var = ds[var_name]
+    averaged_variables = {}
+    for variable in data.data_vars:
+        if variable in ["depth", "latitude", "longitude", "time"]:
+            continue
 
-    selected_layer = data[var_name].sel(depth=slice(depth_min, depth_max))
-    selected_depth = selected_layer.depth.values
+        selected_layer = data[variable].sel(depth=slice(depth_min, depth_max))
+        selected_depth = selected_layer.depth.values
 
-    layer_height = compute_layer_height (selected_depth)
-    layer_height_extended = xr.DataArray (layer_height, dims=["depth"])
+        layer_height = compute_layer_height (selected_depth)
+        layer_height_extended = xr.DataArray (layer_height, dims=["depth"])
 
-    mask =selected_layer.to_masked_array(copy=False).mask[0,:,:,:]
-    mask_extended = xr.DataArray(
-        mask,
-        dims=("depth", "latitude", "longitude")
-    )
+        mask = np.ma.getmaskarray(selected_layer.to_masked_array(copy=False))[0,:,:,:]
+        mask_extended = xr.DataArray(
+            mask,
+            dims=("depth", "latitude", "longitude")
+        )
 
-    total_height = (layer_height_extended * ~mask_extended).sum(dim="depth")
+        total_height = (layer_height_extended * ~mask_extended).sum(dim="depth")
 
-    weighted_average = (selected_layer*layer_height_extended).sum(dim="depth", skipna=True) / total_height
+        weighted_average = (selected_layer*layer_height_extended).sum(dim="depth", skipna=True) / total_height
+        averaged_variables[variable] = weighted_average
 
-    #output_filename = f"{var_name}_vertical_average_{depth_min}_{depth_max}.nc"
-    #output_file = output_filename
 
-    weighted_average.to_netcdf(output_file)
+    final_dataset = xr.Dataset(averaged_variables)
+    final_dataset.to_netcdf(output_file)

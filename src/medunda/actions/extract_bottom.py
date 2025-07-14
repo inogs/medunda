@@ -18,27 +18,32 @@ def configure_parser(subparsers):
 
 def extract_bottom(data: xr.Dataset, output_file: Path):
     LOGGER.info(f"reading the file: {data}")
-    
-    var_name = list(data.data_vars)[0]
-    mask = data[var_name].to_masked_array(copy=False).mask
-    fixed_time_mask = mask[0, :, :, :]
-    index_map = np.count_nonzero(~fixed_time_mask, axis=0)
 
-    current_data = data[var_name]
+    variables = {}
+    for var_name in data.data_vars:
+        if var_name in ["depth", "latitude", "longitude", "time"]:
+            continue
 
-    new_shape = current_data.shape[:1] + current_data.shape[2:]
+        mask = np.ma.getmaskarray(data[var_name].to_masked_array(copy=False))
+        fixed_time_mask = mask[0, :, :, :]
+        index_map = np.count_nonzero(~fixed_time_mask, axis=0)
 
-    new_data_array = np.empty(shape=new_shape, dtype=current_data.dtype)
+        current_data = data[var_name]
 
-    for i in range(current_data.shape[2]):
-        for j in range(current_data.shape[3]):
-            blue_cells = index_map[i, j]
+        new_shape = current_data.shape[:1] + current_data.shape[2:]
 
-            current_value = current_data[:, blue_cells - 1, i, j]
-            new_data_array[:, i, j] = current_value
+        new_data_array = np.empty(shape=new_shape, dtype=current_data.dtype)
+
+        for i in range(current_data.shape[2]):
+            for j in range(current_data.shape[3]):
+                blue_cells = index_map[i, j]
+
+                current_value = current_data[:, blue_cells - 1, i, j]
+                new_data_array[:, i, j] = current_value
 
         new_data = xr.DataArray(dims=["time", "latitude", "longitude"],
                                 data=new_data_array)
-        data[var_name] = new_data
+        variables[var_name] = new_data
 
-        data.to_netcdf(output_file)
+    final_dataset = xr.Dataset(variables)
+    final_dataset.to_netcdf(output_file)
