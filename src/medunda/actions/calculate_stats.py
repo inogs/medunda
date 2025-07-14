@@ -1,4 +1,6 @@
+from collections.abc import Sequence
 import logging
+from typing import Any
 
 import numpy as np
 import xarray as xr
@@ -21,6 +23,7 @@ def configure_parser(subparsers):
         default = "all",
         help="Choose the operation(s) required"
     )
+
 
 class Stats: 
     """This class provides methods to perform basic statistical calculations"""
@@ -47,7 +50,7 @@ class Stats:
         return output    
 
     
-    def calculate (self, operations): 
+    def calculate (self, operations: Sequence[str] | None = None) -> dict[str, Any]: 
 
         available_operations = {
             'mean': self.mean,
@@ -69,44 +72,45 @@ class Stats:
         else:
             if len(set(operations)) != len(operations):
                 raise ValueError (f"Operations cannot be duplicated.")
-            
-            for op in operations:
-                if op not in available_operations:
-                    raise ValueError(f"Unavailable operation: {op}")
             selected_op = operations 
 
+        for op in selected_op:
+            if op not in available_operations:
+                raise ValueError(f"Unavailable operation: {op}")
+            
         results={}
 
         for operation in selected_op:
-            results[operation]=available_operations[operation]()
-            
+            results[operation] = available_operations[operation]()
+
         return results
 
-def calculate_stats (input_file, output_file, operations):
+
+def calculate_stats (data: xr.Dataset, output_file, operations):
     """ Regroups and compute some statistical operations 
     according to the user's choice """
 
-    LOGGER.info(f"reading file: {input_file}")
-    with xr.open_dataset(input_file) as ds:
+    ds_results = xr.Dataset()
+    for var_name in data.data_vars:
+        if var_name in ("depth", "latitude", "longitude", "time"):
+            continue
 
-        var_name=list(ds.data_vars)[0]
-        data=ds[var_name].values
+        data_array = data[var_name].values
 
-    stats= Stats(data)
-    results= stats.calculate(operations)
-
-    ds_results = xr.Dataset() 
-    for operation_name, result_array in results.items():
-        if isinstance(result_array, dict):
-            for method_parameter, method_result in result_array.items():
-                ds_results[f"{var_name}_{operation_name}_{method_parameter}"] = xr.DataArray(
-                    data=method_result,
-                    dims=["depth", "latitude", "longitude"]
-                )
-        else: 
-            ds_results[f"{var_name}_{operation_name}"]= xr.DataArray(
-                data=result_array,
-                dims=["depth", "latitude", "longitude"])
+        stats= Stats(data_array)
+        results = stats.calculate(operations)
+ 
+        for operation_name, result_array in results.items():
+            if isinstance(result_array, dict):
+                for method_parameter, method_result in result_array.items():
+                    ds_results[f"{var_name}_{operation_name}_{method_parameter}"] = xr.DataArray(
+                        data=method_result,
+                        dims=["depth", "latitude", "longitude"]
+                    )
+            else: 
+                ds_results[f"{var_name}_{operation_name}"]= xr.DataArray(
+                    data=result_array,
+                    dims=["depth", "latitude", "longitude"])
         
     ds_results.to_netcdf(output_file)
 
