@@ -7,7 +7,7 @@ authors = [
     {name = "Stefano Piani",email = "spiani@ogs.it"}
 ]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<4.0"
 dependencies = [
     "pydantic (>=2.11.7,<3.0.0)",
     "numpy (>=2.3.0,<3.0.0)",
@@ -16,6 +16,7 @@ dependencies = [
     "dask (>=2025.5.1,<2028.0.0)",
     "copernicusmarine (>=2.1.2,<3.0.0)",
     "geopandas (>=1.1.1,<2.0.0)",
+    "bitsea @ git+https://github.com/inogs/bit.sea.git",
 ]
 
 [tool.poetry.group.dev.dependencies]
