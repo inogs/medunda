@@ -2,6 +2,8 @@ import argparse
 import logging
 from pathlib import Path
 
+import xarray as xr
+
 from medunda.actions import ActionNotFound
 from medunda.actions import averaging_between_layers
 from medunda.actions import depth_average
@@ -10,7 +12,8 @@ from medunda.actions import extract_extremes
 from medunda.actions import extract_layer
 from medunda.actions import extract_surface
 from medunda.actions import extract_layer_extremes
-from medunda.actions import calculate_stats 
+from medunda.actions import calculate_stats
+from medunda.dataset import read_dataset
 from medunda.tools.logging_utils import configure_logger
 
 
@@ -48,10 +51,10 @@ def parse_args ():
         )
 
     parser.add_argument(   
-        "--input-file",  
+        "--input-dataset",  
         type=Path,
         required=True,
-        help="Path of the input file"
+        help="Path of the downloaded Medunda dataset to be processed"
     )
     parser.add_argument(
         "--output-file",
@@ -79,12 +82,19 @@ def parse_args ():
     return parser.parse_args()
 
 
-def reducer(input_file: Path, output_file:Path, action_name: str, args: dict):
+def reducer(dataset_path: Path, output_file:Path, action_name: str, args: dict):
     if action_name not in ACTIONS:
         valid_action_list = ", ".join(ACTIONS.keys())
         raise ActionNotFound(
             f'Invalid action: "{action_name}". The only allowed actions are {valid_action_list}'
         )
+
+    # Read the dataset file
+    LOGGER.info('Reading dataset from "%s"', dataset_path)
+    dataset = read_dataset(dataset_path)
+
+    LOGGER.debug("Reading data from the dataset")
+    data = dataset.get_data()
 
     LOGGER.info(
         'Executing action "%s" with the following arguments: %s',
@@ -93,7 +103,7 @@ def reducer(input_file: Path, output_file:Path, action_name: str, args: dict):
     )
 
     action = ACTIONS[action_name]
-    action(input_file, output_file, **args)
+    action(data, output_file, **args)
 
 
 def main():
@@ -102,7 +112,7 @@ def main():
     # parse the command line arguments
     args=parse_args()
 
-    input_file = args.input_file
+    dataset_path = args.input_dataset
     output_file = args.output_file
     action_name = args.action
 
@@ -110,12 +120,12 @@ def main():
     # that are shared among all the actions. In this way, args_values contains
     # only the arguments that are specific to the action that is being executed.
     args_values = dict(**vars(args))
-    del args_values["input_file"]
+    del args_values["input_dataset"]
     del args_values["output_file"]
     del args_values["action"]
 
     reducer(
-        input_file=input_file,
+        dataset_path=dataset_path,
         output_file=output_file,
         action_name=action_name,
         args=args_values

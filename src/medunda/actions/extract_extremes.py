@@ -16,36 +16,36 @@ def configure_parser(subparsers):
     )
 
 
-def extract_min_max (input_file, output_file):
+def extract_min_max (data: xr.Dataset, output_file):
     """Extracts the maximum and the minimum values of a variable for each year"""
 
-    LOGGER.info(f"reading file: {input_file}")
-    with xr.open_dataset(input_file) as ds:
+    LOGGER.info(f"reading file: {data}")
+    
 
-        var_name=list(ds.data_vars)[0]
-        var=ds[var_name]
+    var_name=list(data.data_vars)[0]
+    var=data[var_name]
         
-        values =[]
-        years = pd.to_datetime(ds.time.values).year
-        years_array = np.array(years)
+    values =[]
+    years = pd.to_datetime(data.time.values).year
+    years_array = np.array(years)
 
-        for year in sorted(list(set(years_array))) :
-            indices = np.where(years_array == year)[0]
-            yearly_data = var.isel(time=indices)
+    for year in sorted(list(set(years_array))) :
+        indices = np.where(years_array == year)[0]
+        yearly_data = var.isel(time=indices)
             
-            min_value = float(yearly_data.min().item())
-            max_value = float(yearly_data.max().item())
+        min_value = float(yearly_data.min().compute().item())
+        max_value = float(yearly_data.max().compute().item())
 
-            min_indices = np.unravel_index(
-                yearly_data.argmin().item(), yearly_data.shape
+        min_indices = np.unravel_index(
+            yearly_data.argmin().compute().item(), yearly_data.shape
             )
-            max_indices = np.unravel_index(
-                yearly_data.argmax().item(), yearly_data.shape
+        max_indices = np.unravel_index(
+                yearly_data.argmax().compute().item(), yearly_data.shape
             )
-            depth_at_min = float(yearly_data.depth[min_indices[1]])
-            depth_at_max = float(yearly_data.depth[max_indices[1]])
+        depth_at_min = float(yearly_data.depth[min_indices[1]])
+        depth_at_max = float(yearly_data.depth[max_indices[1]])
 
-            values.append ({
+        values.append ({
                 "year": year, 
                 "minimum value": min_value,
                 "depth at min": depth_at_min,

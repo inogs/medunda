@@ -13,10 +13,9 @@ def configure_parser(subparsers):
     )
 
 
-def extract_surface (input_file, output_file):
-    LOGGER.info(f"reading the file: {input_file}")
-    with xr.open_dataset(input_file) as ds:
-        surface_layer = ds.isel(depth=0)
-        LOGGER.info(f"writing the file: {output_file}")
-        surface_layer.to_netcdf(output_file)
-        print(surface_layer)
+def extract_surface (data: xr.Dataset, output_file):
+    LOGGER.info(f"reading the file: {data}")
+    
+    surface_layer = data.isel(depth=0)
+    LOGGER.info(f"writing the file: {output_file}")
+    surface_layer.to_netcdf(output_file)

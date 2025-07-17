@@ -20,12 +20,10 @@ def configure_parser(subparsers):
     )
 
 
-def extract_layer (input_file, output_file, depth):
-    LOGGER.info(f"reading the file: {input_file}")
-    with xr.open_dataset(input_file) as ds :
-        #print(ds['depth'].values)
-        bottom_layer = ds.sel(depth=depth, method="nearest")
-        LOGGER.info(f"writing the file: {output_file}")
-        bottom_layer.to_netcdf(output_file)
+def extract_layer (data: xr.Dataset, output_file, depth):
+    LOGGER.info(f"reading the file: {data}")
+    
+    selected_layer = data.sel(depth=depth, method="nearest")
+    LOGGER.info(f"writing the file: {output_file}")
+    selected_layer.to_netcdf(output_file)
     LOGGER.info("done")
-    print(bottom_layer.coords)
