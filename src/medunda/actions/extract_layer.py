@@ -23,7 +23,7 @@ def configure_parser(subparsers):
 def extract_layer (data: xr.Dataset, output_file, depth):
     LOGGER.info(f"reading the file: {data}")
     
-    bottom_layer = data.sel(depth=depth, method="nearest")
+    selected_layer = data.sel(depth=depth, method="nearest")
     LOGGER.info(f"writing the file: {output_file}")
-    bottom_layer.to_netcdf(output_file)
+    selected_layer.to_netcdf(output_file)
     LOGGER.info("done")
