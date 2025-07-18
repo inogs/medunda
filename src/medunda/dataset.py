@@ -2,10 +2,12 @@ from collections.abc import Iterable
 from datetime import datetime
 from datetime import timezone
 from logging import getLogger
+from os import PathLike
 from pathlib import Path
 import shutil
 
 import copernicusmarine
+import numpy as np
 import xarray as xr
 from pydantic import BaseModel
 
@@ -21,7 +23,7 @@ LOGGER = getLogger(__name__)
 class Dataset(BaseModel):
     """
     A class to represent a dataset for a specific domain.
-    
+
     Attributes:
         domain: The domain associated with the dataset.
         start_date: The start date of the dataset.
@@ -41,7 +43,7 @@ class Dataset(BaseModel):
     def download_data(self):
         """
         Downloads the data for the dataset.
-        
+
         This method downloads all the missing data files for the dataset.
         If a file already exists, it will not be downloaded again.
         """
@@ -71,7 +73,7 @@ class Dataset(BaseModel):
                     continue
 
                 LOGGER.info('Downloading file "%s"', file)
-                
+
                 # Ensure the parent directory exists
                 file_path = file.absolute()
                 file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -107,31 +109,115 @@ class Dataset(BaseModel):
                     'Moving file "%s" to "%s"', temp_file_path, file_path
                 )
                 shutil.move(temp_file_path, file_path)
-    
+
     def get_variables(self) -> tuple[VarName, ...]:
         """
         Returns the variable names in the dataset.
-        
+
         Returns:
-            A tuple of variable names (VarName) present in the dataset.
+            A tuple of variable names present in the dataset.
         """
         return tuple(self.data_files.keys())
+
+    def get_mask(self) -> xr.Dataset:
+        """
+        Returns the mask dataset for the domain.
+
+        The mask dataset contains the land-sea mask and other relevant
+        information for the domain.
+
+        Returns:
+            An xarray Dataset containing the mask data.
+        """
+        LOGGER.debug("Retrieving mask for domain %s", self.domain.name)
+        vars_2d = []
+        vars_3d = []
+        for var_name, var_files in self.data_files.items():
+            with xr.open_dataset(var_files[0]) as ds:
+                var_data = ds[var_name]
+                if not ("latitude" in var_data.dims and "longitude" in var_data.dims):
+                    LOGGER.debug(
+                        'Variable "%s" does not have latitude and longitude '
+                        'dimensions, skipping it', var_name
+                    )
+                    continue
+                LOGGER.debug(
+                    'Found variable "%s" with latitude and longitude',
+                    var_name
+                )
+
+                if "depth" in var_data.dims:
+                    LOGGER.debug(
+                        'Variable "%s" has depth dimension, treating it as 3D',
+                        var_name
+                    )
+                    vars_3d.append(var_name)
+                else:
+                    LOGGER.debug(
+                        'Variable "%s" does not have depth dimension, '
+                        'treating it as 2D',
+                        var_name
+                    )
+                    vars_2d.append(var_name)
+
+        if len(vars_2d) == 0 and len(vars_3d) == 0:
+            raise ValueError(
+                "No valid variables found in the dataset for mask retrieval."
+            )
+
+        if len(vars_3d) > 0:
+            LOGGER.debug(
+                "Using 3D variables for mask: %s", vars_3d
+            )
+            mask_var = vars_3d[0]
+            mask_file = self.data_files[mask_var][0]
+        else:
+            LOGGER.debug(
+                "Using 2D variables for mask: %s", vars_2d
+            )
+            mask_var = vars_2d[0]
+            mask_file = self.data_files[mask_var][0]
+
+        LOGGER.debug('Opening mask file "%s"', mask_file)
+        with xr.open_dataset(mask_file) as ds:
+            if "time" in ds.dims:
+                LOGGER.debug(
+                    'Mask file "%s" has a time dimension, using the first '
+                    'time step for the mask',
+                    mask_file
+                )
+                data = ds[mask_var].isel(time=0).drop_vars("time")
+            else:
+                LOGGER.debug(
+                    'Mask file "%s" does not have a time dimension, using '
+                    'the variable directly',
+                    mask_file
+                )
+                data = ds[mask_var]
+            mask = np.ma.getmaskarray(data.to_masked_array(copy=False))
+
+        # We invert (~) the mask, following the convention that True means
+        # water and False means land.
+        LOGGER.debug("Creating mask dataset for domain %s", self.domain.name)
+        mask = xr.Dataset({"tmask": (data.dims, ~mask)}, coords=data.coords)
+
+        return mask
 
 
     def get_data(self, variables: Iterable[VarName] | None = None) -> xr.Dataset:
         """
         Returns an xarray Dataset for the specified variable.
-        
+
         Args:
             variables: An iterable of variable names (VarName) to include in the
                 dataset. If None, all variables in the dataset will be included.
-        
+
         Raises:
             ValueError: If no variables are specified.
-            
+
         Returns:
             An xarray Dataset containing the data for the specified variables.
-        """ 
+        """
         var_datasets = []
 
         if variables is None:
@@ -160,23 +246,24 @@ class Dataset(BaseModel):
         return dataset_data
 
 
-def read_dataset(dataset_path: Path) -> Dataset:
+def read_dataset(dataset_path: PathLike | str) -> Dataset:
     """
     Reads a dataset from the specified path.
-    
+
     Args:
         dataset_path: The path to the dataset file.
-        
+
     Returns:
         A Dataset object containing the data from the file.
     """
     LOGGER.info('Reading dataset from "%s"', dataset_path)
-    
+    dataset_path = Path(dataset_path)
+
     if not dataset_path.exists():
         raise FileNotFoundError(
             f'Dataset file "{dataset_path}" does not exist.'
         )
-    
+
     if dataset_path.is_dir():
         LOGGER.debug(
             'Dataset path "%s" is a directory, reading medunda file',
