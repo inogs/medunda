@@ -8,6 +8,11 @@ def configure_logger(logger):
 
     logger.setLevel(logging.DEBUG)
 
+    # Remove all handlers associated with the copernicusmarine logger
+    copernicusmarine_logger = logging.getLogger("copernicusmarine")
+    while copernicusmarine_logger.hasHandlers():
+        copernicusmarine_logger.handlers.pop()
+
     logging.getLogger("botocore").setLevel(logging.INFO)
     logging.getLogger("urllib3").setLevel(logging.ERROR)
     logging.getLogger("h5py").setLevel(logging.INFO)
