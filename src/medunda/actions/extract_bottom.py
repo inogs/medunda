@@ -16,15 +16,19 @@ def configure_parser(subparsers):
     )
 
 
-def extract_bottom(input_file: Path, output_file: Path):
-    LOGGER.info(f"reading the file: {input_file}")
-    with xr.open_dataset(input_file) as ds:
-        var_name = list(ds.data_vars)[0]
-        mask = ds[var_name].to_masked_array(copy=False).mask
+def extract_bottom(data: xr.Dataset, output_file: Path):
+    LOGGER.info(f"reading the file: {data}")
+
+    variables = {}
+    for var_name in data.data_vars:
+        if var_name in ["depth", "latitude", "longitude", "time"]:
+            continue
+
+        mask = np.ma.getmaskarray(data[var_name].to_masked_array(copy=False))
         fixed_time_mask = mask[0, :, :, :]
         index_map = np.count_nonzero(~fixed_time_mask, axis=0)
 
-        current_data = ds[var_name]
+        current_data = data[var_name]
 
         new_shape = current_data.shape[:1] + current_data.shape[2:]
 
@@ -39,6 +43,7 @@ def extract_bottom(input_file: Path, output_file: Path):
 
         new_data = xr.DataArray(dims=["time", "latitude", "longitude"],
                                 data=new_data_array)
-        ds[var_name] = new_data
+        variables[var_name] = new_data
 
-        ds.to_netcdf(output_file)
+    final_dataset = xr.Dataset(variables)
+    final_dataset.to_netcdf(output_file)
