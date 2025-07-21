@@ -25,7 +25,7 @@ class Domain(BaseModel):
     minimum_depth: float
     maximum_depth: float
 
-    @field_validator('name', mode='after')  
+    @field_validator('name', mode='after')
     @classmethod
     def name_is_conformal(cls, name: str) -> str:
         """
@@ -62,7 +62,7 @@ def read_zipped_shapefile(compressed_path: Path, temporary_dir:Path):
         if not f.suffix.lower() == ".shp":
             continue
         shapefiles.append(f)
-    
+
     if len(shapefiles) == 0:
         raise ValueError(
             f"The file {compressed_path} does not contain a shapefile"
@@ -92,7 +92,7 @@ def read_domain(domain_description: Path) -> Domain:
         raise ValueError(
             "No type specified in the geometry of the file."
             )
-    
+
     geo_type = geometry['type'].lower()
     if geo_type not in ("rectangle", "shapefile"):
         raise ValueError(
@@ -106,7 +106,7 @@ def read_domain(domain_description: Path) -> Domain:
             "maximum_latitude",
             "minimum_longitude",
             "maximum_longitude"]
-        
+
         ymin = geometry["min_latitude"]
         ymax = geometry["max_latitude"]
         xmin = geometry["min_longitude"]
@@ -116,7 +116,7 @@ def read_domain(domain_description: Path) -> Domain:
         LOGGER.debug(f"Longitude maximale: {xmax}")
         LOGGER.debug(f"Latitude minimale: {ymin}")
         LOGGER.debug(f"Latitude maximale: {ymax}")
-    
+
         return Domain(
             name=name,
             minimum_latitude=ymin,
@@ -145,14 +145,14 @@ def read_domain(domain_description: Path) -> Domain:
         key_name = geometry["selection_field_name"]
         key_value = geometry["selection_field_value"]
         domain_geometry = gdf.loc[gdf[key_name] == key_value].iloc[0]
-    
+
         xmin, ymin, xmax, ymax = domain_geometry.geometry.bounds
 
         LOGGER.debug(f"Longitude minimale: {xmin}")
         LOGGER.debug(f"Longitude maximale: {xmax}")
         LOGGER.debug(f"Latitude minimale: {ymin}")
         LOGGER.debug(f"Latitude maximale: {ymax}")
-    
+
         return Domain(
             name=name,
             minimum_latitude=ymin,

@@ -203,7 +203,6 @@ class Dataset(BaseModel):
 
         return mask
 
-
     def get_data(self, variables: Iterable[VarName] | None = None) -> xr.Dataset:
         """
         Returns an xarray Dataset for the specified variable.
@@ -238,11 +237,31 @@ class Dataset(BaseModel):
                 len(variable_data_files),
                 variable
             )
-            var_dataset = xr.open_mfdataset(variable_data_files)
+            var_dataset = xr.open_mfdataset(
+                variable_data_files,
+                chunks="auto"
+            )
             LOGGER.debug("Variable %s dataset opened successfully", variable)
             var_datasets.append(var_dataset)
+
+        # Fixing the 0 value of the longitude! There is a subtle bug in the
+        # Copernicus files: the value of the Greenwich meridian is
+        # 1.4387797e-13 for the physical files and 1.4210855e-13 in the
+        # biochemical ones. We need to put the same value before merging the
+        # datasets, otherwise this value will be repeated twice
+        for var_dataset in var_datasets:
+            var_longitude = var_dataset.coords["longitude"]
+            greenwich_index = np.abs(var_longitude).argmin()
+            if var_longitude[greenwich_index].item() > 1e-6:
+                # This dataset does not contain the Greenwich meridian.
+                # We can skip this process
+                continue
+            new_longitude = var_longitude.values
+            new_longitude[greenwich_index] = 0.
+            var_longitude["longitude"] = new_longitude
+
         LOGGER.debug("Merging datasets for all variables")
-        dataset_data = xr.merge(var_datasets)
+        dataset_data = xr.merge(var_datasets, join="inner")
         return dataset_data
 
 
