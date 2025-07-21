@@ -3,12 +3,18 @@ import xarray as xr
 from pytest import fixture
 
 
-@fixture
-def data4d():
-    depth = np.array([0.5, 2., 5.], dtype=np.float32)
-    latitude = np.array([42, 43, 44, 45], dtype=np.float32)
-    longitude = np.array([30, 30.5, 31, 31.5, 32], dtype=np.float32)
-    time = np.array(["2025-01-01", "2025-01-02"], dtype="datetime64[s]")
+def generate_test_array(depth=None, latitude=None, longitude=None, time=None):
+    if depth is None:
+        depth = np.array([0.5, 2., 5.], dtype=np.float32)
+    
+    if latitude is None:
+        latitude = np.array([42, 43, 44, 45], dtype=np.float32)
+    
+    if longitude is None:
+        longitude = np.array([30, 30.5, 31, 31.5, 32], dtype=np.float32)
+
+    if time is None:
+        time = np.array(["2025-01-01", "2025-01-02"], dtype="datetime64[s]")
 
     var1 = np.empty(
         (len(time), len(depth), len(latitude), len(longitude)),
@@ -32,4 +38,8 @@ def data4d():
         }
     )
 
+
+@fixture
+def data4d():
+    return generate_test_array()
 

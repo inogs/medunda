@@ -38,10 +38,10 @@ def extract_min_max (data: xr.Dataset, output_file):
 
         min_indices = np.unravel_index(
             yearly_data.argmin().compute().item(), yearly_data.shape
-            )
+        )
         max_indices = np.unravel_index(
-                yearly_data.argmax().compute().item(), yearly_data.shape
-            )
+            yearly_data.argmax().compute().item(), yearly_data.shape
+        )
         depth_at_min = float(yearly_data.depth[min_indices[1]])
         depth_at_max = float(yearly_data.depth[max_indices[1]])
 
