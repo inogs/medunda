@@ -130,35 +130,37 @@ class Dataset(BaseModel):
             An xarray Dataset containing the mask data.
         """
         LOGGER.debug("Retrieving mask for domain %s", self.domain.name)
-        vars_2d = []
+
+        data = self.get_data(chunks={"time" : 1})
+
         vars_3d = []
-        for var_name, var_files in self.data_files.items():
-            with xr.open_dataset(var_files[0]) as ds:
-                var_data = ds[var_name]
-                if not ("latitude" in var_data.dims and "longitude" in var_data.dims):
-                    LOGGER.debug(
-                        'Variable "%s" does not have latitude and longitude '
-                        'dimensions, skipping it', var_name
-                    )
-                    continue
+        vars_2d = []
+        for var_name, var_data in data.variables.items():
+            if not ("latitude" in var_data.dims and "longitude" in var_data.dims):
                 LOGGER.debug(
-                    'Found variable "%s" with latitude and longitude',
+                    'Variable "%s" does not have latitude and longitude '
+                    'dimensions, skipping it', var_name
+                )
+                continue
+            LOGGER.debug(
+                'Found variable "%s" with latitude and longitude',
+                var_name
+            )
+
+            if "depth" in var_data.dims:
+                LOGGER.debug(
+                    'Variable "%s" has depth dimension, treating it '
+                    'as a 3D var',
                     var_name
                 )
-
-                if "depth" in var_data.dims:
-                    LOGGER.debug(
-                        'Variable "%s" has depth dimension, treating it as 3D',
-                        var_name
-                    )
-                    vars_3d.append(var_name)
-                else:
-                    LOGGER.debug(
-                        'Variable "%s" does not have depth dimension, '
-                        'treating it as 2D',
-                        var_name
-                    )
-                    vars_2d.append(var_name)
+                vars_3d.append(var_name)
+            else:
+                LOGGER.debug(
+                    'Variable "%s" does not have depth dimension, treating it '
+                    'as a 2D var',
+                    var_name
+                )
+                vars_2d.append(var_name)
 
         if len(vars_2d) == 0 and len(vars_3d) == 0:
             raise ValueError(
@@ -170,40 +172,49 @@ class Dataset(BaseModel):
                 "Using 3D variables for mask: %s", vars_3d
             )
             mask_var = vars_3d[0]
-            mask_file = self.data_files[mask_var][0]
         else:
             LOGGER.debug(
                 "Using 2D variables for mask: %s", vars_2d
             )
             mask_var = vars_2d[0]
-            mask_file = self.data_files[mask_var][0]
 
-        LOGGER.debug('Opening mask file "%s"', mask_file)
-        with xr.open_dataset(mask_file) as ds:
-            if "time" in ds.dims:
-                LOGGER.debug(
-                    'Mask file "%s" has a time dimension, using the first '
-                    'time step for the mask',
-                    mask_file
-                )
-                data = ds[mask_var].isel(time=0).drop_vars("time")
-            else:
-                LOGGER.debug(
-                    'Mask file "%s" does not have a time dimension, using '
-                    'the variable directly',
-                    mask_file
-                )
-                data = ds[mask_var]
-            mask = np.ma.getmaskarray(data.to_masked_array(copy=False))
+        LOGGER.debug('Generating mask file from variable %s', mask_var)
+        if "time" in data[mask_var].dims:
+            LOGGER.debug(
+                'Variable %s has a "time" dimension, using the first '
+                'time step for the mask',
+                mask_var
+            )
+            var_frame = data[mask_var].isel(time=0).drop_vars("time").compute()
+        else:
+            LOGGER.debug(
+                'Variable "%s" does not have a time dimension, using '
+                'the variable directly',
+                mask_var
+            )
+            var_frame = data[mask_var].compute()
+
+        # Ensure that the variable that we have read is aligned with the
+        # other parts of the datasets. In other words, if we have
+        # downloaded variables from different products, we must be sure
+        # that we are working on the grid obtained by intersecting the
+        # different products
+        # var_frame, _ = xr.align(var_frame, data, join="inner")
+
+        mask = np.ma.getmaskarray(var_frame.to_masked_array(copy=False))
+        mask_dims = var_frame.dims
 
         # We invert (~) the mask, following the convention that True means
         # water and False means land.
         LOGGER.debug("Creating mask dataset for domain %s", self.domain.name)
-        mask = xr.Dataset({"tmask": (data.dims, ~mask)}, coords=data.coords)
+        mask = xr.Dataset({"tmask": (mask_dims, ~mask)}, coords=data.coords)
 
         return mask
 
-    def get_data(self, variables: Iterable[VarName] | None = None) -> xr.Dataset:
+    def get_data(self,
+                variables: Iterable[VarName] | None = None,
+                chunks: dict | str | None = "auto"
+        ) -> xr.Dataset:
         """
         Returns an xarray Dataset for the specified variable.
 
@@ -239,7 +250,7 @@ class Dataset(BaseModel):
             )
             var_dataset = xr.open_mfdataset(
                 variable_data_files,
-                chunks="auto"
+                chunks=chunks
             )
             LOGGER.debug("Variable %s dataset opened successfully", variable)
             var_datasets.append(var_dataset)
