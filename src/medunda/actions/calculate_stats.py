@@ -20,7 +20,6 @@ def configure_parser(subparsers):
         nargs='+',
         choices=["mean", "median", "variance", "quartiles", "minimum", "maximum", "all"],
         required=False,
-        default = "all",
         help="Choose the operation(s) required"
     )
 
@@ -66,7 +65,7 @@ class Stats:
 
         if "all" in operations:
             if len(operations) > 1: 
-                raise ValueError (f"'all' cannot be used with other operations")
+                raise ValueError (f"'all' cannot be used with other operations") 
             selected_op = available_operations.keys() 
 
         else:
