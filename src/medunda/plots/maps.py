@@ -36,11 +36,16 @@ def configure_parser(subparsers):
 def plotting_maps (data: xr.DataArray, metadata: dict, time):
     
     selected_time = pd.to_datetime(time)
+    
+    data["time"] = pd.to_datetime(data["time"].values)
 
     try:
-        data_slice = data.sel(time=selected_time, method="nearest")
-    except Exception as e:
-        raise ValueError(f"Could not select time {selected_time}: {e}")
+        data_slice = data.sel(time=selected_time)
+    except:
+        try:
+            data_slice = data.sel(time=selected_time, method="nearest")
+        except Exception as e:
+            raise ValueError(f"Could not select time {selected_time}: {e}")
 
     non_spatial_dims = [dim for dim in data_slice.dims if dim not in ['lat', 'latitude', 'lon', 'longitude']]
     if non_spatial_dims:
