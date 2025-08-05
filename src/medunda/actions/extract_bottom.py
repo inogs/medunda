@@ -41,7 +41,13 @@ def extract_bottom(data: xr.Dataset, output_file: Path):
                 current_value = current_data[:, blue_cells - 1, i, j]
                 new_data_array[:, i, j] = current_value
 
+        time_values = data['time'].values
+
         new_data = xr.DataArray(dims=["time", "latitude", "longitude"],
+                                coords={"time": time_values, 
+                                        "latitude": data["latitude"].values,
+                                        "longitude": data["longitude"].values,
+                                        },
                                 data=new_data_array)
         variables[var_name] = new_data
 

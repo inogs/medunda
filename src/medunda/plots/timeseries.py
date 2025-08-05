@@ -31,6 +31,9 @@ def plotting_timeseries (data:xr.DataArray, metadata: dict, start_time, end_time
     start=start_time
     end=end_time
     
+    if "time" not in data.dims:
+         raise ValueError("This dataset has no 'time' dimension therefore cannot plot time series.")
+
     # Aggregate spatial dims by mean over lat and lon if they exist
     spatial_dims = [dim for dim in ['lat', 'latitude', 'lon', 'longitude'] if dim in data.dims]
     data_mean = data.mean(dim=spatial_dims)
