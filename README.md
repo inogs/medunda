@@ -1,4 +1,4 @@
-# MedUnda
+# Medunda
 
 ## Mediterranean Engine for Downloading, Understanding and Navigating Data and Analysis
 
