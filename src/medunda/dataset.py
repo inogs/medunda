@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from medunda.domains.domain import Domain
 from medunda.sources.cmems import search_for_product
 from medunda.tools.file_names import from_file_path_to_time_range
+from medunda.tools.time_tables import split_by_month
 from medunda.tools.typing import VarName
 
 
@@ -39,6 +40,28 @@ class Dataset(BaseModel):
     data_files: dict[VarName, tuple[Path, ...]] = {}
     frequency: str = "monthly"
     source: str = "cmems"
+
+    def get_n_of_time_steps(self) -> int:
+        """
+        Returns the number of time steps in the dataset.
+
+        This method calculates the number of time steps based on the start and
+        end dates of the dataset.
+
+        Returns:
+            The number of time steps in the dataset.
+        """
+        if self.frequency == "monthly":
+            return len(split_by_month(self.start_date, self.end_date))
+        elif self.frequency == "daily":
+            # Assuming each day is a time step
+            delta = self.end_date - self.start_date
+            return delta.days + 1
+        else:
+            raise ValueError(
+                f"Unsupported frequency '{self.frequency}'. "
+                "Supported frequencies are 'monthly' and 'daily'."
+            )
 
     def download_data(self):
         """

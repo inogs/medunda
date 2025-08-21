@@ -1,1 +1,1 @@
-from medunda.interfaces.bottom_cell_loop import BottomCellLoop
+from medunda.interfaces.bottom_cell_map import BottomCellMap
