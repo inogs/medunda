@@ -1,6 +1,7 @@
 import logging
 from datetime import timedelta
 from typing import Any
+from typing import Sequence
 from typing import Callable
 
 import dask.dataframe
@@ -11,6 +12,7 @@ from bitsea.commons.mask import Mask
 from bitsea.commons.geodistances import compute_geodesic_distance
 from dask.delayed import Delayed
 from dask.delayed import delayed
+from dask.dataframe.dispatch import make_meta
 
 from medunda.dataset import Dataset
 from medunda.tools.typing import VarName
@@ -72,35 +74,49 @@ def _build_callable_wrapper(
     return f_wrapper
 
 
-def _merge_together(results, output_dtypes, original_table):
+def _merge_together(
+        results: Sequence[Delayed],
+        dask_f_meta: pd.DataFrame | None,
+        original_table: pd.DataFrame) -> dask.dataframe.DataFrame:
     """
     Merge the results with the original table into a Dask DataFrame
 
     Args:
         results: List of dictionaries containing the computed results
-        output_dtypes: Dictionary mapping column names to their dtypes
+        dask_f_meta: An empty Pandas DataFrame. The columns for the
+            output of this function will be copied from this input.
+            If it is `None`, dask will use the structure of the
+            first delayed object.
         original_table: Original pandas DataFrame
 
     Returns:
         A Dask DataFrame containing merged results
     """
     # Convert the list of dictionaries into a Dask DataFrame
-    results_df = dask.dataframe.from_delayed([
+    LOGGER.debug("Transforming all the objects into dataframes")
+    delayed_dataframes = [
         delayed(pd.DataFrame)([r], index=[original_table.index[i]])
         for i, r in enumerate(results)
-    ])
+    ]
+
+    LOGGER.debug("Creating a dataframe with all the outputs")
+    results_df = dask.dataframe.from_delayed(
+        delayed_dataframes,
+        meta=dask_f_meta,
+        verify_meta=False
+    )
+    LOGGER.debug(
+        "Created a dataframe with %s partitions", results_df.npartitions
+    )
 
     # Convert the original table to a Dask DataFrame
+    LOGGER.debug("Transforming original inputs into dask dataframe")
     original_ddf = dask.dataframe.from_pandas(
         original_table,
         npartitions=results_df.npartitions
     )
 
-    # Apply dtypes to the results
-    for k, v in output_dtypes.items():
-        results_df[k] = results_df[k].astype(v)
-
-    # Merge the results with the original table
+    LOGGER.debug("Merging the results with the original table")
     output_ddf = dask.dataframe.merge(
         results_df,
         original_ddf,
@@ -135,9 +151,6 @@ class BottomCellMap:
         time_range (timedelta): The time range around each point's time to consider for
             data extraction. For each point, data will be extracted starting from the
             point's time minus this range to the point's time.
-        output_dtypes (dict[str, np.typing.DTypeLike] | None): Optional dictionary
-            mapping output column names to their desired data types. If None, defaults
-            to an empty dictionary, meaning no specific data types are enforced.
         lat_column (str): The name of the column in the point table that contains latitude
             values. Defaults to "latitude".
         lon_column (str): The name of the column in the point table that contains longitude
@@ -148,7 +161,6 @@ class BottomCellMap:
     def __init__(self,
                  dataset: Dataset,
                  time_range: timedelta,
-                 output_dtypes: dict[str, np.typing.DTypeLike] | None = None,
                  lat_column: str = "latitude",
                  lon_column: str = "longitude",
                  time_column: str = "time",
@@ -156,11 +168,6 @@ class BottomCellMap:
         LOGGER.debug("Initializing a new %s instance", self.__class__.__name__)
         self._dataset = dataset
         self._time_range = time_range
-
-        if output_dtypes is None:
-            self._output_dtypes = {}
-        else:
-            self._output_dtypes = output_dtypes
 
         self._lat_column = lat_column
         self._lon_column = lon_column
@@ -220,6 +227,7 @@ class BottomCellMap:
     def map(self,
             func: Callable[[xr.Dataset], dict[str, Any]],
             point_table: pd.DataFrame,
+            func_meta: dict[str, np.typing.DTypeLike] | None = None,
             delayed: bool = False
         ) -> pd.DataFrame | dask.dataframe.DataFrame:
         """
@@ -286,6 +294,13 @@ class BottomCellMap:
                 The DataFrame must contain columns for latitude, longitude,
                 and time, which are used to find the nearest model grid points
                 and extract the corresponding data.
+            func_meta: Here you can specify the dtypes of the output of f. For
+                example, if func returns two columns named A and B and the
+                values of the column A are integers while the values of B are
+                floating point numbers, f_meta must be
+                {"A": int, "B", np.float32}. If it is not submitted, the code
+                will try to guess an approriate meta by executing f on the
+                first point.
             delayed: If True, the method returns a Dask Delayed object that can
                 be computed later. If False, the method computes the results
                 immediately and returns a Pandas DataFrame.
@@ -405,6 +420,12 @@ class BottomCellMap:
             depth=bottom_indices,
         )
 
+        dask_f_meta = None
+        if func_meta is not None:
+            LOGGER.debug("func_meta is: %s", func_meta)
+            dask_f_meta: pd.DataFrame | None = make_meta(func_meta)
+            LOGGER.debug(f"func_meta has been translated as: {dask_f_meta}")
+
         delayed_computations = []
         LOGGER.debug(
             "Generating the dask graph of all the %s tasks that will be " \
@@ -462,6 +483,17 @@ class BottomCellMap:
             )
             point_data = point_data.assign_coords(**point_new_coords)
 
+            if point_indx == 0 and dask_f_meta is None:
+                LOGGER.debug("Using this first point to guess the func_meta")
+                test_output = func(point_data.compute())
+                LOGGER.debug(
+                    f"func returned the following output: {test_output}"
+                )
+                dask_f_meta = pd.DataFrame([test_output], index=[0]).head(0)
+                LOGGER.debug(
+                    f"This is the inferred value of func_meta: {dask_f_meta}"
+                )
+
             LOGGER.debug("Genererating delayed task for point %s", point_indx)
             delayed_task = self._generate_delayed(callable_wrapper, point_data)
             delayed_computations.append(delayed_task)
@@ -469,7 +501,7 @@ class BottomCellMap:
         LOGGER.debug("Merging together all the points")
         final_output = _merge_together(
             delayed_computations,
-            output_dtypes=self._output_dtypes,
+            dask_f_meta=dask_f_meta,
             original_table=point_table[original_columns]
         )
 
