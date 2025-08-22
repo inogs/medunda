@@ -3,6 +3,7 @@ from datetime import timedelta
 from typing import Any
 from typing import Callable
 
+import dask.dataframe
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -71,15 +72,44 @@ def _build_callable_wrapper(
     return f_wrapper
 
 
-@delayed
 def _merge_together(results, output_dtypes, original_table):
-    output_dataframe = pd.DataFrame(results, index=original_table.index)
+    """
+    Merge the results with the original table into a Dask DataFrame
 
+    Args:
+        results: List of dictionaries containing the computed results
+        output_dtypes: Dictionary mapping column names to their dtypes
+        original_table: Original pandas DataFrame
+
+    Returns:
+        A Dask DataFrame containing merged results
+    """
+    # Convert the list of dictionaries into a Dask DataFrame
+    results_df = dask.dataframe.from_delayed([
+        delayed(pd.DataFrame)([r], index=[original_table.index[i]])
+        for i, r in enumerate(results)
+    ])
+
+    # Convert the original table to a Dask DataFrame
+    original_ddf = dask.dataframe.from_pandas(
+        original_table,
+        npartitions=results_df.npartitions
+    )
+
+    # Apply dtypes to the results
     for k, v in output_dtypes.items():
-        output_dataframe[k] = output_dataframe[k].astype(v) # type: ignore
+        results_df[k] = results_df[k].astype(v)
 
-    output_dataframe = output_dataframe.join(original_table, how="left", rsuffix="_original")
-    return output_dataframe
+    # Merge the results with the original table
+    output_ddf = dask.dataframe.merge(
+        results_df,
+        original_ddf,
+        left_index=True,
+        right_index=True,
+        how="left"
+    )
+
+    return output_ddf
 
 
 class BottomCellMap:
@@ -191,7 +221,7 @@ class BottomCellMap:
             func: Callable[[xr.Dataset], dict[str, Any]],
             point_table: pd.DataFrame,
             delayed: bool = False
-        ) -> pd.DataFrame | Delayed:
+        ) -> pd.DataFrame | dask.dataframe.DataFrame:
         """
         Maps the provided function to the bottom cell data corresponding
         to each point in the point table.
@@ -363,7 +393,7 @@ class BottomCellMap:
         data = self._dataset.get_data(chunks=chunks)
         LOGGER.debug(
             "Dataset opened! It has the following dimensions: %s",
-            dict(data.dims)
+            dict(data.sizes)
         )
         LOGGER.debug("The dataset has the following chunks: %s", data.chunks)
 
@@ -395,7 +425,16 @@ class BottomCellMap:
                 point_time - self._time_range,
                 point_time + timedelta(milliseconds=1)
             )
-            point_data = point_ds.isel(points=point_indx).sel(time=time_slice)
+            time_index_slice = point_ds.indexes["time"].slice_indexer(
+                time_slice.start,
+                time_slice.stop
+            )
+            LOGGER.debug(
+                "The temporal slice %s corresponds to the indices %s",
+                time_slice,
+                time_index_slice
+            )
+            point_data = point_ds.isel(points=point_indx, time=time_index_slice)
 
             point_data = point_data.rename(
                 {
