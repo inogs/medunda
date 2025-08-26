@@ -18,6 +18,10 @@ dependencies = [
     "geopandas (>=1.1.1,<2.0.0)",
 ]
 
+[tool.poetry.group.plots.dependencies]
+matplotlib = ">3.7.5"
+cmocean = ">4.0.3"
+
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
 hypothesis = "^6.135.26"
