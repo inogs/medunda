@@ -40,11 +40,6 @@ PRODUCTS={
     ("nppv",): 
          {Frequency.DAILY: "med-ogs-bio-rean-d", 
          Frequency.MONTHLY: "med-ogs-bio-rean-m"},
-
-
-    #"GLOBAL_MULTIYEAR_BGC_001_033":
-    ("zeu","npp","zooc","mnkc_epi", "mnkc_hmlmeso", "mnkc_lmeso", "mnkc_mlmeso", "mnkc_mumeso", "mnkc_umeso"): 
-        {Frequency.DAILY: "cmems_mod_glo_bgc_my_0.083deg-lmtl_PT1D-i"}
 }
 
 VARIABLES = []
