@@ -1,0 +1,11 @@
+---
+name: MediterraneanSea
+geometry:
+  type: Rectangle
+  min_latitude: 30.1875
+  max_latitude: 45.97916793823242
+  min_longitude: -6.0
+  max_longitude: 36.29166793823242
+depth:
+  min_depth: 1.0182366371154785
+  max_depth: 5754.0439453125

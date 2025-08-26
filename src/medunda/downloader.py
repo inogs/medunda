@@ -49,7 +49,7 @@ def parse_args ():
         "--end-date",
         type=date_from_str,
         required=True,
-        help="End date of the download"
+        help="End date of the download (format YYYY-MM-DD)"
     )
     parser.add_argument( 
         "--frequency",
@@ -57,7 +57,7 @@ def parse_args ():
         choices=["monthly", "daily"],
         required=False,
         default="monthly",
-        help="frequency of the downloaded data"
+        help="Frequency of the downloaded data"
     )
     parser.add_argument(
         "--domain",
@@ -72,7 +72,7 @@ def parse_args ():
         required=False,
         choices=["month", "year", "whole"],
         default="whole",
-        help="Choose the domain",
+        help="Split the downloaded dataset by month, year or download all data together",
     )
 
     parser.add_argument(      #input the directory to save the file
@@ -189,7 +189,7 @@ def validate_dataset(filepath, variable):
 
     with xr.open_dataset(filepath) as dataset:  #open the dataset using xarray
         # check for necessary dimensions
-        required_dims=["time", "depth", "latitude", "longitude"]
+        required_dims=["time", "latitude", "longitude"]
         
         for dim in required_dims:
             if dim not in dataset.dims:

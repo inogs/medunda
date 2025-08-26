@@ -37,7 +37,7 @@ PRODUCTS={
     ("o2",): 
         {Frequency.DAILY: "med-ogs-bio-rean-d", 
          Frequency.MONTHLY: "med-ogs-bio-rean-m"},
-    ("nppv"): 
+    ("nppv",): 
          {Frequency.DAILY: "med-ogs-bio-rean-d", 
          Frequency.MONTHLY: "med-ogs-bio-rean-m"},
 
