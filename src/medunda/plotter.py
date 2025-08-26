@@ -35,6 +35,11 @@ VAR_METADATA = {
            'cmap':'viridis'},
 }
 
+DEFAULT_VAR = {
+    "unit": "",
+    "cmap": "viridis",
+}
+
 
 PLOTS=[
     timeseries,
@@ -90,9 +95,14 @@ def check_variable (ds, var):
 
     if var not in ds:
         raise ValueError(f"Variable '{var}' not found in dataset")
-    if var not in VAR_METADATA:
-        raise ValueError(f"Metadata for variable '{var}' is missing")
-    return ds[var], VAR_METADATA[var]
+
+    if var in VAR_METADATA:
+        var_metadata = VAR_METADATA[var]
+    else:
+        var_metadata = DEFAULT_VAR
+        var_metadata["label"] = var
+
+    return ds[var], var_metadata
 
 
 def plotter (filepath: Path, variable: str, mode:str, args):
@@ -134,7 +144,10 @@ def main ():
         raise FileNotFoundError (f"The file '{data_file}' does not exist.")
 
     if data_file.suffix != ".nc":
-        raise ValueError(f"Unexpected file.")
+        raise ValueError(
+            f'File {data_file} is not a valid netcdf file; its suffix does '
+            'not end with ".nc."'
+        )
 
     LOGGER.info(f"Selected file: {data_file.name}")
 

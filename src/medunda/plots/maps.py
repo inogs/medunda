@@ -52,10 +52,10 @@ def plotting_maps (data: xr.DataArray, metadata: dict, time):
         data_slice = data_slice.mean(dim=non_spatial_dims)
 
     fig, ax = plt.subplots(figsize=(10,5))
-    cmap = metadata.get('cmap', 'viridis')
-    cmap_obj = plt.get_cmap(cmap) if isinstance(cmap, str) else cmap
 
-    im = ax.pcolormesh(data_slice, cmap=metadata.get("cmap", "viridis"))
+    cmap = metadata.get('cmap', 'viridis')
+
+    im = ax.pcolormesh(data_slice, cmap=cmap)
 
     title_str = f"{metadata['label']} at {selected_time.strftime('%Y-%m-%d')}"
     ax.set_title(title_str)

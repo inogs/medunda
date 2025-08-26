@@ -43,8 +43,12 @@ def plotting_timeseries (data:xr.DataArray, metadata: dict, start_time, end_time
     fig, ax = plt.subplots(figsize=(12,6))
     ax.plot(ts.time, ts)
 
+    ylabel = f"{metadata['label']}"
+    if len(metadata["unit"]) > 0:
+        ylabel += "[" + metadata["unit"] + "]"
+
     ax.set_title(f"Time Series of {metadata['label']}")
     ax.set_xlabel("Time")
-    ax.set_ylabel(f"{metadata['label']} [{metadata['unit']}]")
+    ax.set_ylabel(ylabel)
 
     plt.show()
