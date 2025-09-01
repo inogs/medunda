@@ -3,6 +3,7 @@ import logging
 from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
+from sys import exit as sys_exit
 
 import xarray as xr
 
@@ -18,18 +19,23 @@ from medunda.domains.domain import read_domain
 from medunda.domains.domain import Domain
 
 
-LOGGER = logging.getLogger()
+if __name__ == "__main__":
+    LOGGER = logging.getLogger()
+else:
+    LOGGER = logging.getLogger(__name__)
 
 
-def parse_args ():
+def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.ArgumentParser:
     """
     parse command line arguments: 
     --variable: the variable to download:
     --frequency: choose the frequency of the download: monthly or daily:
     --output-dir: directory to save the download file
     """
-    parser = argparse.ArgumentParser(
-        description="dowload monthly or daily data for a chosen variable")
+    if parser is None:
+        parser = argparse.ArgumentParser(
+            description="dowload monthly or daily data for a chosen variable"
+        )
 
     parser.add_argument(   
         "--variables",  
@@ -81,7 +87,7 @@ def parse_args ():
         required=True,
         help="directory where the downloaded file will be saved",
     )
-    return parser.parse_args()
+    return parser
 
 
 def download_data (
@@ -211,12 +217,8 @@ def validate_dataset(filepath, variable):
     return True
 
 
-def main ():
-    configure_logger(LOGGER)
-
-    args=parse_args()       #parse the command line arguments
-    
-    domain= read_domain (args.domain)
+def downloader(args):
+    domain = read_domain(args.domain)
     
     downloaded_files = download_data(
         variables=args.variables,
@@ -234,9 +236,14 @@ def main ():
                 LOGGER.info(f"dataset validated for variable: '{variable}'")
             else:
                 LOGGER.warning(f"failed dataset validation for variable:'{variable}'")
-    
-    
+    return 0
+
+
+def main ():
+    configure_logger(LOGGER)
+    args = configure_parser().parse_args()
+    return downloader(args)
 
 
 if __name__ == "__main__":
-    main()
+    sys_exit(main())

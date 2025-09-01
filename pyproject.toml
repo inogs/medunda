@@ -29,8 +29,7 @@ hypothesis = "^6.135.26"
 
 
 [tool.poetry.scripts]
-mdu_downloader = "medunda.downloader:main"
-mdu_reducer = "medunda.reducer:main"
+medunda = "medunda.__main__:main"
 
 
 [tool.poetry]
