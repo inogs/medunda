@@ -2,8 +2,11 @@ import argparse
 import logging
 from sys import exit as sys_exit
 
-from medunda.downloader import downloader
 from medunda.downloader import configure_parser as downloader_config_parser
+from medunda.downloader import downloader
+from medunda.reducer import build_action_args
+from medunda.reducer import configure_parser as reducer_config_parser
+from medunda.reducer import reducer
 from medunda.tools.logging_utils import configure_logger
 
 
@@ -26,10 +29,16 @@ def parse_args() -> argparse.Namespace:
 
     subparsers.add_parser(
         "downloader",
-        help="Download data from the Medunda dataset",
+        help="Download data and create a Medunda dataset",
+    )
+
+    subparsers.add_parser(
+        "reducer",
+        help="Elaborate downloaded data by performing different statistical operations",
     )
 
     downloader_config_parser(subparsers.choices["downloader"])
+    reducer_config_parser(subparsers.choices["reducer"])
 
     return parser.parse_args()
 
@@ -39,12 +48,16 @@ def main():
  
     args = parse_args()
 
-    if args.tool != "downloader":
-        LOGGER.error(f"Unknown tool {args.action}")
-        return 1
-
     if args.tool == "downloader":
         return downloader(args)
+
+    elif args.tool == "reducer":
+        return reducer(
+            dataset_path=args.input_dataset,
+            output_file=args.output_file,
+            action_name=args.action,
+            args=build_action_args(args)
+        )
 
 
 if __name__ == '__main__':
