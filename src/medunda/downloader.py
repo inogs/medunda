@@ -187,7 +187,7 @@ def download_data (
     return dataset.data_files
 
 
-def validate_dataset(filepath, variable):        
+def validate_dataset(filepath, variable, max_depth: float | None):
     """Validates the dataset, by checking for:
     dimensions, variables, and depth coverage."""
     
@@ -209,7 +209,7 @@ def validate_dataset(filepath, variable):
         if "depth" in dataset.variables: 
             depth_values = dataset["depth"].values
             LOGGER.debug(f"depth values: {depth_values}")
-            if depth_values.min()<0 or depth_values.max()>800:
+            if depth_values.min()<0 or max_depth is not None and depth_values.max() > max_depth:
                 print ("depth range is outside the expected bounds. Validation failed.")
                 return False
 
@@ -232,7 +232,7 @@ def downloader(args):
 
     for variable, files_for_var in downloaded_files.items():
         for filepath in files_for_var:
-            if validate_dataset(filepath, variable): 
+            if validate_dataset(filepath, variable, max_depth=domain.maximum_depth):
                 LOGGER.info(f"dataset validated for variable: '{variable}'")
             else:
                 LOGGER.warning(f"failed dataset validation for variable:'{variable}'")

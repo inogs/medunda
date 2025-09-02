@@ -22,8 +22,8 @@ class Domain(BaseModel):
     maximum_latitude: float
     minimum_longitude: float
     maximum_longitude: float
-    minimum_depth: float
-    maximum_depth: float
+    minimum_depth: float | None
+    maximum_depth: float | None
 
     @field_validator('name', mode='after')
     @classmethod
@@ -82,9 +82,9 @@ def read_domain(domain_description: Path) -> Domain:
     name = domain_description_raw["name"]
 
     # Read the depth values
-    depth = domain_description_raw["depth"]
-    min_depth = depth.get("min_depth", 0)
-    max_depth = depth["max_depth"]
+    depth = domain_description_raw.get("depth", {})
+    min_depth = depth.get("min_depth", None)
+    max_depth = depth.get("max_depth", None)
 
     # Read the geometry
     geometry = domain_description_raw["geometry"]
