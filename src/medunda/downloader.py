@@ -3,6 +3,7 @@ import logging
 from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
+from sys import exit as sys_exit
 
 import xarray as xr
 
@@ -18,40 +19,62 @@ from medunda.domains.domain import read_domain
 from medunda.domains.domain import Domain
 
 
-LOGGER = logging.getLogger()
+if __name__ == "__main__":
+    LOGGER = logging.getLogger()
+else:
+    LOGGER = logging.getLogger(__name__)
 
 
-def parse_args ():
+def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.ArgumentParser:
     """
-    parse command line arguments: 
+    parse command line arguments:
     --variable: the variable to download:
     --frequency: choose the frequency of the download: monthly or daily:
     --output-dir: directory to save the download file
     """
-    parser = argparse.ArgumentParser(
-        description="dowload monthly or daily data for a chosen variable")
+    if parser is None:
+        parser = argparse.ArgumentParser(
+            description="dowload monthly or daily data for a chosen variable"
+        )
 
-    parser.add_argument(   
-        "--variables",  
+    subparsers = parser.add_subparsers(
+        title="action",
+        required=True,
+        dest="action",
+        help="Choose if creating a new dataset or reasuming the download of an existing one"
+    )
+
+    create_subparser = subparsers.add_parser(
+        "create",
+        help="Download data and create a Medunda dataset",
+    )
+
+    resume_subparser = subparsers.add_parser(
+        "resume",
+        help="Resume the download of a previously created Medunda dataset",
+    )
+
+    create_subparser.add_argument(
+        "--variables",
         type=str,
         choices=VARIABLES,
         nargs="+",
         required=True,
         help="Name of the variable to download"
     )
-    parser.add_argument(
+    create_subparser.add_argument(
         "--start-date",
         type=date_from_str,
         required=True,
         help="Starting date for the download (format YYYY-MM-DD)"
     )
-    parser.add_argument(
+    create_subparser.add_argument(
         "--end-date",
         type=date_from_str,
         required=True,
         help="End date of the download (format YYYY-MM-DD)"
     )
-    parser.add_argument( 
+    create_subparser.add_argument(
         "--frequency",
         type=str,
         choices=["monthly", "daily"],
@@ -59,14 +82,14 @@ def parse_args ():
         default="monthly",
         help="Frequency of the downloaded data"
     )
-    parser.add_argument(
+    create_subparser.add_argument(
         "--domain",
         type=Path,
         required=True,
         help="Choose the domain",
     )
 
-    parser.add_argument(
+    create_subparser.add_argument(
         "--split-by",
         type=str,
         required=False,
@@ -75,13 +98,21 @@ def parse_args ():
         help="Split the downloaded dataset by month, year or download all data together",
     )
 
-    parser.add_argument(      #input the directory to save the file
+    create_subparser.add_argument(      #input the directory to save the file
         "--output-dir",
         type=Path,
         required=True,
         help="directory where the downloaded file will be saved",
     )
-    return parser.parse_args()
+
+    resume_subparser.add_argument(
+        "--dataset-dir",
+        type=Path,
+        required=True,
+        help="directory where the partially downloaded dataset is saved",
+    )
+
+    return parser
 
 
 def download_data (
@@ -108,7 +139,7 @@ def download_data (
             f'Invalid value for "split_by"; received {split_by} but the only '
             f'valid values are {allowed_split_by}'
         )
-    
+
     # Prepare the time intervals based on the split_by parameter
     if split_by == "whole":
         time_intervals = [(start, end)]
@@ -118,7 +149,7 @@ def download_data (
         time_intervals = split_by_month(start, end)
     else:
         raise ValueError(f"Internal error: invalid parameter: {split_by}")
-    
+
     # Prepare output directory if not available
     output_dir.mkdir(exist_ok=True)
 
@@ -158,7 +189,7 @@ def download_data (
             files_for_current_var.append(output_file_path)
 
         downloaded_files[variable] = tuple(files_for_current_var)
-    
+
     # Create a Dataset object that will describe the data that we are going
     # to download.
     dataset = Dataset(
@@ -181,29 +212,29 @@ def download_data (
     return dataset.data_files
 
 
-def validate_dataset(filepath, variable):        
+def validate_dataset(filepath, variable, max_depth: float | None):
     """Validates the dataset, by checking for:
     dimensions, variables, and depth coverage."""
-    
+
     LOGGER.info(f"dataset validated: {filepath}")
 
     with xr.open_dataset(filepath) as dataset:  #open the dataset using xarray
         # check for necessary dimensions
         required_dims=["time", "latitude", "longitude"]
-        
+
         for dim in required_dims:
             if dim not in dataset.dims:
                 LOGGER.error(f"{dim}: dimension missing, validation failed")
                 return False
-            
-        if variable not in dataset.data_vars: 
+
+        if variable not in dataset.data_vars:
             LOGGER.error(f"{variable}: variable missing. Validation failed")
             return False
-        
-        if "depth" in dataset.variables: 
+
+        if "depth" in dataset.variables:
             depth_values = dataset["depth"].values
             LOGGER.debug(f"depth values: {depth_values}")
-            if depth_values.min()<0 or depth_values.max()>800:
+            if depth_values.min()<0 or max_depth is not None and depth_values.max() > max_depth:
                 print ("depth range is outside the expected bounds. Validation failed.")
                 return False
 
@@ -211,32 +242,38 @@ def validate_dataset(filepath, variable):
     return True
 
 
+def downloader(args):
+    if args.action == "create":
+        domain = read_domain(args.domain)
+
+        downloaded_files = download_data(
+            variables=args.variables,
+            output_dir=args.output_dir,
+            frequency=args.frequency,
+            start=args.start_date,
+            end=args.end_date,
+            domain=domain,
+            split_by=args.split_by
+        )
+
+        for variable, files_for_var in downloaded_files.items():
+            for filepath in files_for_var:
+                if validate_dataset(filepath, variable, max_depth=domain.maximum_depth):
+                    LOGGER.info(f"dataset validated for variable: '{variable}'")
+                else:
+                    LOGGER.warning(f"failed dataset validation for variable:'{variable}'")
+
+    else:
+        raise NotImplementedError("Sorry, but the resume action is not implemented yet")
+
+    return 0
+
+
 def main ():
     configure_logger(LOGGER)
-
-    args=parse_args()       #parse the command line arguments
-    
-    domain= read_domain (args.domain)
-    
-    downloaded_files = download_data(
-        variables=args.variables,
-        output_dir=args.output_dir,
-        frequency=args.frequency,
-        start=args.start_date,
-        end=args.end_date,
-        domain=domain,
-        split_by=args.split_by
-    )
-
-    for variable, files_for_var in downloaded_files.items():
-        for filepath in files_for_var:
-            if validate_dataset(filepath, variable): 
-                LOGGER.info(f"dataset validated for variable: '{variable}'")
-            else:
-                LOGGER.warning(f"failed dataset validation for variable:'{variable}'")
-    
-    
+    args = configure_parser().parse_args()
+    return downloader(args)
 
 
 if __name__ == "__main__":
-    main()
+    sys_exit(main())

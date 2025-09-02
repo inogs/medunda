@@ -7,5 +7,5 @@ geometry:
   min_longitude: 12.154220053000188
   max_longitude: 20.19036466397057
 depth:
-  min_depth: 0
+  min_depth: 1.0182366371154785
   max_depth: 1250

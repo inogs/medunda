@@ -1,8 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
-
-import xarray as xr
+from typing import Any
 
 from medunda.actions import ActionNotFound
 from medunda.actions import averaging_between_layers
@@ -17,7 +16,11 @@ from medunda.dataset import read_dataset
 from medunda.tools.logging_utils import configure_logger
 
 
-LOGGER = logging.getLogger(__name__)
+if __name__ == "__main__":
+    LOGGER = logging.getLogger()
+else:
+    LOGGER = logging.getLogger(__name__)
+
 
 # This is a list of all the modules that define an action that can be
 # executed by the reducer.
@@ -42,13 +45,14 @@ ACTIONS = {
 }
 
 
-def parse_args ():
+def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.ArgumentParser:
     """
     Parse command line arguments and return parsed arguments object.
     """
-    parser = argparse.ArgumentParser(
-        description="elaborate downloaded data by performing different statistical operations"
-        )
+    if parser is None:
+        parser = argparse.ArgumentParser(
+            description="elaborate downloaded data by performing different statistical operations"
+            )
 
     parser.add_argument(   
         "--input-dataset",  
@@ -79,7 +83,22 @@ def parse_args ():
         LOGGER.debug("Letting module %s configure its parser", module.__name__)
         module.configure_parser(subparsers)
 
-    return parser.parse_args()
+    return parser
+
+
+def build_action_args(args: argparse.Namespace) -> dict[str, Any]:
+    # We transform the args object into a dictionary and delete the arguments
+    # that are shared among all the actions. In this way, args_values contains
+    # only the arguments that are specific to the action that is being executed.
+    args_values = dict(**vars(args))
+    del args_values["input_dataset"]
+    del args_values["output_file"]
+    del args_values["action"]
+
+    if "tool" in args_values:
+        del args_values["tool"]
+
+    return args_values
 
 
 def reducer(dataset_path: Path, output_file:Path, action_name: str, args: dict):
@@ -105,30 +124,24 @@ def reducer(dataset_path: Path, output_file:Path, action_name: str, args: dict):
     action = ACTIONS[action_name]
     action(data, output_file, **args)
 
+    return 0
+
 
 def main():
     configure_logger(LOGGER)
 
     # parse the command line arguments
-    args=parse_args()
+    args = configure_parser().parse_args()
 
     dataset_path = args.input_dataset
     output_file = args.output_file
     action_name = args.action
 
-    # We transform the args object into a dictionary and delete the arguments
-    # that are shared among all the actions. In this way, args_values contains
-    # only the arguments that are specific to the action that is being executed.
-    args_values = dict(**vars(args))
-    del args_values["input_dataset"]
-    del args_values["output_file"]
-    del args_values["action"]
-
-    reducer(
+    return reducer(
         dataset_path=dataset_path,
         output_file=output_file,
         action_name=action_name,
-        args=args_values
+        args=build_action_args(args)
     )
 
 

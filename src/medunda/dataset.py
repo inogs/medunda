@@ -125,7 +125,7 @@ class Dataset(BaseModel):
                     start_datetime=start,
                     end_datetime=end,
                     output_filename=str(temp_file_path),
-                    **self.domain.model_dump(exclude={"name"})
+                    **self.domain.model_dump(exclude={"name"}, exclude_none=True)
                 )
 
                 LOGGER.debug(
