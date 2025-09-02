@@ -6,13 +6,14 @@ import xarray as xr
 
 from medunda.actions import ActionNotFound
 from medunda.actions import averaging_between_layers
+from medunda.actions import calculate_stats
+from medunda.actions import climatology
 from medunda.actions import depth_average
 from medunda.actions import extract_bottom
 from medunda.actions import extract_extremes
 from medunda.actions import extract_layer
-from medunda.actions import extract_surface
 from medunda.actions import extract_layer_extremes
-from medunda.actions import calculate_stats
+from medunda.actions import extract_surface
 from medunda.dataset import read_dataset
 from medunda.tools.logging_utils import configure_logger
 
@@ -29,7 +30,8 @@ ACTION_MODULES = [
     extract_layer_extremes,
     extract_layer,
     extract_surface,
-    calculate_stats
+    calculate_stats,
+    climatology
 ]
 
 # This is a dictionary that maps the name of an action to the function that
