@@ -124,6 +124,8 @@ def reducer(dataset_path: Path, output_file:Path, action_name: str, args: dict):
     action = ACTIONS[action_name]
     action(data, output_file, **args)
 
+    return 0
+
 
 def main():
     configure_logger(LOGGER)
@@ -135,7 +137,7 @@ def main():
     output_file = args.output_file
     action_name = args.action
 
-    reducer(
+    return reducer(
         dataset_path=dataset_path,
         output_file=output_file,
         action_name=action_name,

@@ -4,6 +4,8 @@ from sys import exit as sys_exit
 
 from medunda.downloader import configure_parser as downloader_config_parser
 from medunda.downloader import downloader
+from medunda.plotter import configure_parser as plotter_config_parser
+from medunda.plotter import plotter
 from medunda.reducer import build_action_args
 from medunda.reducer import configure_parser as reducer_config_parser
 from medunda.reducer import reducer
@@ -37,8 +39,14 @@ def parse_args() -> argparse.Namespace:
         help="Elaborate downloaded data by performing different statistical operations",
     )
 
+    subparsers.add_parser(
+        "plotter",
+        help="Plot data from a Medunda dataset",
+    )
+
     downloader_config_parser(subparsers.choices["downloader"])
     reducer_config_parser(subparsers.choices["reducer"])
+    plotter_config_parser(subparsers.choices["plotter"])
 
     return parser.parse_args()
 
@@ -50,13 +58,19 @@ def main():
 
     if args.tool == "downloader":
         return downloader(args)
-
     elif args.tool == "reducer":
         return reducer(
             dataset_path=args.input_dataset,
             output_file=args.output_file,
             action_name=args.action,
             args=build_action_args(args)
+        )
+    elif args.tool == "plotter":
+        return plotter(
+            filepath=args.input_file,
+            variable=args.variable,
+            mode=args.mode,
+            args=args
         )
 
 
