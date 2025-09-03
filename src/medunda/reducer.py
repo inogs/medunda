@@ -5,13 +5,14 @@ from typing import Any
 
 from medunda.actions import ActionNotFound
 from medunda.actions import averaging_between_layers
+from medunda.actions import calculate_stats
 from medunda.actions import depth_average
 from medunda.actions import extract_bottom
 from medunda.actions import extract_extremes
 from medunda.actions import extract_layer
-from medunda.actions import extract_surface
 from medunda.actions import extract_layer_extremes
-from medunda.actions import calculate_stats
+from medunda.actions import extract_surface
+from medunda.actions import integration
 from medunda.dataset import read_dataset
 from medunda.tools.logging_utils import configure_logger
 
@@ -26,13 +27,15 @@ else:
 # executed by the reducer.
 ACTION_MODULES = [
     averaging_between_layers,
+    calculate_stats,
     depth_average,
     extract_bottom,
     extract_extremes,
-    extract_layer_extremes,
     extract_layer,
+    extract_layer_extremes,
     extract_surface,
-    calculate_stats
+    integration,
+    
 ]
 
 # This is a dictionary that maps the name of an action to the function that
@@ -66,6 +69,13 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
         required=True,
         help="Path of the output file"
     )
+    parser.add_argument(
+        "--format",
+        type=str,
+        required=True,
+        choices=["netcdf","csv"],
+        help="Format of the output-file"
+    )
 
     # Create a subparser for each available action, allowing each action
     # to have its own set of command line arguments.
@@ -93,6 +103,7 @@ def build_action_args(args: argparse.Namespace) -> dict[str, Any]:
     args_values = dict(**vars(args))
     del args_values["input_dataset"]
     del args_values["output_file"]
+    del args_values["format"]
     del args_values["action"]
 
     if "tool" in args_values:
@@ -101,7 +112,7 @@ def build_action_args(args: argparse.Namespace) -> dict[str, Any]:
     return args_values
 
 
-def reducer(dataset_path: Path, output_file:Path, action_name: str, args: dict):
+def reducer(dataset_path: Path, output_file:Path, format:str, action_name: str, args: dict):
     if action_name not in ACTIONS:
         valid_action_list = ", ".join(ACTIONS.keys())
         raise ActionNotFound(
@@ -122,7 +133,16 @@ def reducer(dataset_path: Path, output_file:Path, action_name: str, args: dict):
     )
 
     action = ACTIONS[action_name]
-    action(data, output_file, **args)
+    dataset_result = action(data, **args)
+
+    LOGGER.info('Writing result to "%s" as %s format', output_file, format)
+
+    if format == "netcdf":
+        dataset_result.to_netcdf(output_file)
+    elif format == "csv":
+        dataset_result.to_csv(output_file)
+    else:
+        raise ValueError(f"{format} is unsupported format for now.")
 
     return 0
 
@@ -135,11 +155,13 @@ def main():
 
     dataset_path = args.input_dataset
     output_file = args.output_file
+    format = args.format
     action_name = args.action
 
     return reducer(
         dataset_path=dataset_path,
         output_file=output_file,
+        format=format,
         action_name=action_name,
         args=build_action_args(args)
     )
