@@ -16,16 +16,17 @@ def configure_parser(subparsers):
     )
 
 
-def compute_depth_average(data: xr.Dataset, output_file):
+def compute_depth_average(data: xr.Dataset) -> xr.Dataset :
     """    Compute the average on all the vertical levels of the dataset.
 
     Args:
         data (xr.Dataset): Input dataset with depth as one of the dimensions.
-        output_file (str): Path to save the output dataset.
     """
     LOGGER.info("Computing depth average")
     depth_min = data.depth.min().item()
     depth_max = data.depth.max().item()
     
-    averaging_between_layers(data, output_file, depth_min - 1, depth_max + 1)
-    LOGGER.info("Depth average computed and saved to %s", output_file)
+    depth_average = averaging_between_layers(data, depth_min - 1, depth_max + 1)
+    LOGGER.info("Depth average computed successfully")
+
+    return depth_average
