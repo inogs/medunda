@@ -29,7 +29,10 @@ def configure_parser(subparsers):
     )
 
 
-def averaging_between_layers (data: xr.Dataset, output_file, depth_min, depth_max):
+def averaging_between_layers (data: xr.Dataset, depth_min, depth_max) -> xr.Dataset:
+    """ Computes the vertical average of variables between two specified depths.
+        Returns a dataset containing the weighted average of this strata.
+    """
     averaged_variables = {}
     for variable in data.data_vars:
         if variable in ["depth", "latitude", "longitude", "time"]:
@@ -54,4 +57,5 @@ def averaging_between_layers (data: xr.Dataset, output_file, depth_min, depth_ma
 
 
     final_dataset = xr.Dataset(averaged_variables)
-    final_dataset.to_netcdf(output_file)
+    
+    return final_dataset

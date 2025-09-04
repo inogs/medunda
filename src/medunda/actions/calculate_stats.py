@@ -85,7 +85,7 @@ class Stats:
         return results
 
 
-def calculate_stats (data: xr.Dataset, output_file, operations):
+def calculate_stats (data: xr.Dataset, operations) -> xr.Dataset:
     """ Regroups and compute some statistical operations 
     according to the user's choice """
 
@@ -110,7 +110,5 @@ def calculate_stats (data: xr.Dataset, output_file, operations):
                 ds_results[f"{var_name}_{operation_name}"]= xr.DataArray(
                     data=result_array,
                     dims=["depth", "latitude", "longitude"])
-        
-    ds_results.to_netcdf(output_file)
 
-    return output_file 
+    return ds_results

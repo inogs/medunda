@@ -16,7 +16,7 @@ def configure_parser(subparsers):
     )
 
 
-def extract_bottom(data: xr.Dataset, output_file: Path):
+def extract_bottom(data: xr.Dataset) -> xr.Dataset :
     LOGGER.info(f"reading the file: {data}")
 
     variables = {}
@@ -52,4 +52,5 @@ def extract_bottom(data: xr.Dataset, output_file: Path):
         variables[var_name] = new_data
 
     final_dataset = xr.Dataset(variables)
-    final_dataset.to_netcdf(output_file)
+    
+    return final_dataset

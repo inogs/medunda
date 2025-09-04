@@ -20,10 +20,15 @@ def configure_parser(subparsers):
     )
 
 
-def extract_layer (data: xr.Dataset, output_file, depth):
+def extract_layer (data: xr.Dataset, depth) -> xr.Dataset:
+    """Extracts the layer nearest to the specified depth from the dataset.
+    Returns a dataset containing only the layer extracted.
+    """
+    
     LOGGER.info(f"reading the file: {data}")
     
     selected_layer = data.sel(depth=depth, method="nearest")
-    LOGGER.info(f"writing the file: {output_file}")
-    selected_layer.to_netcdf(output_file)
-    LOGGER.info("done")
+    
+    LOGGER.info("Layer extraction completed.")
+
+    return selected_layer
