@@ -3,10 +3,8 @@ import xarray as xr
 
 from medunda.actions.extract_layer import extract_layer
 
-def test_extract_layer(data4d, tmp_path):
+def test_extract_layer(data4d):
     """Test the extract_layer function with a valid depth level."""
-
-    output_file = Path(tmp_path) / "layer_extraction.nc"
 
     test_depth = float(data4d.depth.values[1])
 
@@ -20,19 +18,15 @@ def test_extract_layer(data4d, tmp_path):
     latitude_levels = data4d.latitude.shape[0]
     longitude_levels = data4d.longitude.shape[0]
 
-    extract_layer(data=data4d, output_file=output_file, depth=test_depth)
+    ds = extract_layer(data=data4d, depth=test_depth)
 
-    assert output_file.exists(), "Output file was not created."
+    assert "T" in ds.data_vars, "Variable 'T' not found in output dataset."
+    assert "S" in ds.data_vars, "Variable 'S' not found in output dataset."
 
-    with xr.open_dataset(output_file) as ds:
+    assert ds.T.shape == (time_levels, latitude_levels, longitude_levels), \
+        "Shape of 'T' variable is incorrect."
+    assert ds.S.shape ==  (time_levels, latitude_levels, longitude_levels), \
+        "Shape of 'S' variable is incorrect."
 
-        assert "T" in ds.data_vars, "Variable 'T' not found in output dataset."
-        assert "S" in ds.data_vars, "Variable 'S' not found in output dataset."
-
-        assert ds.T.shape == (time_levels, latitude_levels, longitude_levels), \
-            "Shape of 'T' variable is incorrect."
-        assert ds.S.shape ==  (time_levels, latitude_levels, longitude_levels), \
-            "Shape of 'S' variable is incorrect."
-
-        assert ds.T.min() == 1, "Minimum value of 'T' variable is incorrect."
-        assert ds.S.min() == 11, "Minimum value of 'S' variable is incorrect."
+    assert ds.T.min() == 1, "Minimum value of 'T' variable is incorrect."
+    assert ds.S.min() == 11, "Minimum value of 'S' variable is incorrect."

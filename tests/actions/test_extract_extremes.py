@@ -9,8 +9,7 @@ from medunda.actions.extract_extremes import extract_min_max
 from conftest import generate_test_array
 
 
-def test_extract_extremes(tmp_path):
-    output_file = Path(tmp_path) / "min_max_values.csv"
+def test_extract_extremes(data4d):
 
     dates_str = [f"2024-{i:0>2}-01" for i in range(1, 13)]
     dates_str.extend([f"2025-{i:0>2}-01" for i in range(1, 13)])
@@ -26,9 +25,6 @@ def test_extract_extremes(tmp_path):
             data4d.T.isel(time=t, depth=d)[:] = t + d
             data4d.S.isel(time=t, depth=d)[:] = 10 - t - 2 * d
 
-    extract_min_max(data=data4d, output_file=output_file)
+    ds = extract_min_max(data=data4d)
 
-    assert output_file.exists(), "Output file was not created."
-
-    output_content = pd.read_csv(output_file)
-    assert len(output_content) == 2
+    assert len(ds) == 2
