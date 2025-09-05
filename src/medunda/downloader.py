@@ -17,6 +17,7 @@ from medunda.tools.time_tables import split_by_year
 from medunda.tools.typing import VarName
 from medunda.domains.domain import read_domain
 from medunda.domains.domain import Domain
+from medunda.dataset import read_dataset
 
 
 if __name__ == "__main__":
@@ -264,13 +265,10 @@ def downloader(args):
                     LOGGER.warning(f"failed dataset validation for variable:'{variable}'")
 
     else:
-        metadata = args.dataset_dir / "medunda_dataset.json"
-        if not metadata.exists():
-            raise FileNotFoundError(f"No dataset found in {args.dataset_dir}")
-
-        dataset = Dataset.model_validate_json(metadata.read_text())
+        dataset = read_dataset(args.dataset_dir)
 
         LOGGER.info("Resuming the download...")
+        
         dataset.download_data()
 
     return 0
