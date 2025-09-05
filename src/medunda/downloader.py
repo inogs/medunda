@@ -264,7 +264,14 @@ def downloader(args):
                     LOGGER.warning(f"failed dataset validation for variable:'{variable}'")
 
     else:
-        raise NotImplementedError("Sorry, but the resume action is not implemented yet")
+        metadata = args.dataset_dir / "medunda_dataset.json"
+        if not metadata.exists():
+            raise FileNotFoundError(f"No dataset found in {args.dataset_dir}")
+
+        dataset = Dataset.model_validate_json(metadata.read_text())
+
+        LOGGER.info("Resuming the download...")
+        dataset.download_data()
 
     return 0
 
