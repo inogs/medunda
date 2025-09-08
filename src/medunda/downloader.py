@@ -7,8 +7,11 @@ from sys import exit as sys_exit
 
 import xarray as xr
 
-from medunda.dataset import Dataset
-from medunda.sources.cmems import VARIABLES
+from medunda.components.data_files import DataFile
+from medunda.components.dataset import Dataset
+from medunda.components.dataset import read_dataset
+from medunda.components.frequencies import Frequency
+from medunda.providers.cmems import VARIABLES
 from medunda.tools.argparse_utils import date_from_str
 from medunda.tools.file_names import get_output_filename
 from medunda.tools.logging_utils import configure_logger
@@ -17,7 +20,6 @@ from medunda.tools.time_tables import split_by_year
 from medunda.tools.typing import VarName
 from medunda.domains.domain import read_domain
 from medunda.domains.domain import Domain
-from medunda.dataset import read_dataset
 
 
 if __name__ == "__main__":
@@ -106,6 +108,23 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
         help="directory where the downloaded file will be saved",
     )
 
+    create_subparser.add_argument(
+        "--provider",
+        type=str,
+        required=False,
+        choices=["cmems"],
+        default="cmems",
+        help="The provider from which to download the data (default: cmems)",
+    )
+
+    create_subparser.add_argument(
+        "--provider-config",
+        type=Path,
+        required=False,
+        default=None,
+        help="Path to a configuration file for the selected provider",
+    )
+
     resume_subparser.add_argument(
         "--dataset-dir",
         type=Path,
@@ -119,7 +138,7 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
 def download_data (
         variables: Iterable[VarName],
         output_dir:Path,
-        frequency:str,
+        frequency:Frequency,
         start:datetime,
         end:datetime,
         domain: Domain,
@@ -128,11 +147,6 @@ def download_data (
 
     """Download data for the specified variables, frequency, and time range.
     """
-    # Check if frequency is valid
-    allowed_frequency = ("daily", "monthly")
-    if frequency not in allowed_frequency:
-        raise ValueError(f"invalid frequency")
-
     # Check if value of split_by is valid
     allowed_split_by = ("month", "year", "whole")
     if split_by not in allowed_split_by:
@@ -159,7 +173,7 @@ def download_data (
 
     # We want to prepare a Dataset object that will contain the path of all the
     # files that we will download.
-    downloaded_files: dict[VarName, tuple[Path, ...]] = {}
+    downloaded_files: dict[VarName, tuple[DataFile, ...]] = {}
 
     # Dataset file
     dataset_file = output_dir / f"medunda_dataset.json"
@@ -173,21 +187,27 @@ def download_data (
 
     for variable in variables:
         # We save here the files that we download for this variable
-        files_for_current_var: list[Path] = []
+        files_for_current_var: list[DataFile] = []
 
-        var_output_dir = output_dir / variable / frequency
+        var_output_dir = output_dir / variable / str(frequency)
 
         for start_date, end_date in time_intervals:
             output_file_name = get_output_filename(
                 variable=variable,
-                frequency=frequency,
+                frequency=str(frequency),
                 start=start_date,
                 end=end_date,
                 domain_name=domain.name
             )
 
             output_file_path = var_output_dir / output_file_name
-            files_for_current_var.append(output_file_path)
+            output_file = DataFile(
+                start_date=start_date,
+                end_date=end_date,
+                variable=variable,
+                path=output_file_path
+            )
+            files_for_current_var.append(output_file)
 
         downloaded_files[variable] = tuple(files_for_current_var)
 
@@ -210,7 +230,7 @@ def download_data (
     LOGGER.info("Downloading data...")
     dataset.download_data()
 
-    return dataset.data_files
+    return dataset.get_data_files()
 
 
 def validate_dataset(filepath, variable, max_depth: float | None):
@@ -250,7 +270,7 @@ def downloader(args):
         downloaded_files = download_data(
             variables=args.variables,
             output_dir=args.output_dir,
-            frequency=args.frequency,
+            frequency=Frequency(args.frequency),
             start=args.start_date,
             end=args.end_date,
             domain=domain,

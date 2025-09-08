@@ -13,7 +13,7 @@ from medunda.actions import extract_layer
 from medunda.actions import extract_layer_extremes
 from medunda.actions import extract_surface
 from medunda.actions import integration
-from medunda.dataset import read_dataset
+from medunda.components.dataset import read_dataset
 from medunda.tools.logging_utils import configure_logger
 
 

@@ -14,7 +14,7 @@ from dask.delayed import Delayed
 from dask.delayed import delayed
 from dask.dataframe.dispatch import make_meta
 
-from medunda.dataset import Dataset
+from medunda.components.dataset import Dataset
 from medunda.tools.typing import VarName
 
 
