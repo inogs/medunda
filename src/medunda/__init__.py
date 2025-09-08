@@ -1,2 +1,2 @@
-from medunda.dataset import read_dataset
-from medunda.dataset import Dataset
+from medunda.components.dataset import read_dataset
+from medunda.components.dataset import Dataset

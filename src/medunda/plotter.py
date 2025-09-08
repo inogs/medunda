@@ -7,9 +7,7 @@ import xarray as xr
 
 from medunda.plots import maps
 from medunda.plots import timeseries
-from medunda.sources.cmems import VARIABLES
-from medunda.tools.argparse_utils import date_from_str
-from medunda.tools.layers import compute_layer_height
+from medunda.providers.cmems import VARIABLES
 from medunda.tools.logging_utils import configure_logger
 
 
@@ -145,6 +143,8 @@ def plotter (filepath: Path, variable: str, mode:str, args):
 def main ():
 
     args = configure_parser().parse_args()
+    configure_logger(LOGGER)
+
     output_dir = args.output_dir
     variable = args.variable
     mode = args.mode
@@ -155,6 +155,7 @@ def main ():
     plotter (filepath=data_file, variable=variable, mode=mode, args=args)
 
     LOGGER.info(f"Plotting completed for variable '{variable}' in mode '{mode}'")
+
 
 if __name__ == '__main__':
     main()
