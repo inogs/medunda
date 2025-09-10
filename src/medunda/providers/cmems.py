@@ -47,11 +47,6 @@ PRODUCTS={
          Frequency.MONTHLY: "med-ogs-bio-rean-m"},
 }
 
-VARIABLES = []
-for _var_list in PRODUCTS.keys():
-    VARIABLES.extend(_var_list)
-VARIABLES.sort()
-
 
 def search_for_product(var_name: VarName, frequency:Frequency) -> str:
     """ Given the name of a variable and a frequency, return the name of the CMEMS product that

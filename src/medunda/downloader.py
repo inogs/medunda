@@ -11,7 +11,8 @@ from medunda.components.data_files import DataFile
 from medunda.components.dataset import Dataset
 from medunda.components.dataset import read_dataset
 from medunda.components.frequencies import Frequency
-from medunda.providers.cmems import VARIABLES
+from medunda.components.variables import VariableDataset
+from medunda.providers import get_provider
 from medunda.tools.argparse_utils import date_from_str
 from medunda.tools.file_names import get_output_filename
 from medunda.tools.logging_utils import configure_logger
@@ -60,7 +61,7 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
     create_subparser.add_argument(
         "--variables",
         type=str,
-        choices=VARIABLES,
+        choices=VariableDataset.all_variables().get_variable_names(),
         nargs="+",
         required=True,
         help="Name of the variable to download"
@@ -143,6 +144,8 @@ def download_data (
         end:datetime,
         domain: Domain,
         split_by: str = "whole",
+        provider_name: str = "cmems",
+        provider_config: Path | None = None,
         ) -> dict[VarName, tuple[Path, ...]]:
 
     """Download data for the specified variables, frequency, and time range.
@@ -164,6 +167,15 @@ def download_data (
         time_intervals = split_by_month(start, end)
     else:
         raise ValueError(f"Internal error: invalid parameter: {split_by}")
+
+    # Create the provider instance that will handle the download
+    provider = get_provider(provider_name).create(config_file=provider_config)
+    for variable in variables:
+        if variable not in provider.available_variables(frequency):
+            raise ValueError(
+                f'Variable "{variable}" is not available from provider '
+                f'"{provider_name}" at frequency "{frequency}"'
+            )
 
     # Prepare output directory if not available
     output_dir.mkdir(exist_ok=True)
@@ -274,7 +286,9 @@ def downloader(args):
             start=args.start_date,
             end=args.end_date,
             domain=domain,
-            split_by=args.split_by
+            split_by=args.split_by,
+            provider_name=args.provider,
+            provider_config=args.provider_config,
         )
 
         for variable, files_for_var in downloaded_files.items():

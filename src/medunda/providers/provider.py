@@ -5,6 +5,7 @@ from typing import Mapping
 
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
+from medunda.components.variables import VariableDataset
 from medunda.domains.domain import Domain
 from medunda.tools.typing import VarName
 
@@ -23,3 +24,6 @@ class Provider(ABC):
     @abstractmethod
     def download_data(self, domain: Domain, frequency: Frequency, data_files: Mapping[VarName, tuple[DataFile, ...]]) -> None:
         raise NotImplementedError
+
+    def available_variables(self, frequency: Frequency) -> VariableDataset:
+        return VariableDataset.all_variables()
