@@ -1,13 +1,14 @@
 from collections.abc import Iterable
 from datetime import datetime
-from datetime import timezone
 from logging import getLogger
 from os import PathLike
 from pathlib import Path
 
 import numpy as np
 import xarray as xr
+import yaml
 from pydantic import BaseModel
+from pydantic import field_validator
 
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
@@ -40,6 +41,12 @@ class Dataset(BaseModel):
     frequency: Frequency = Frequency.MONTHLY
     provider: str = "cmems"
     provider_config: Path | None = None
+
+    @field_validator("provider_config")
+    def validate_file_size(cls, file_path):
+        if file_path is not None and not file_path.exists():
+            raise ValueError(f'Provider config file "{file_path}" does not exist.')
+        return file_path.resolve() if file_path is not None else file_path
 
     def get_n_of_time_steps(self) -> int:
         """
@@ -278,7 +285,8 @@ def read_dataset(dataset_path: PathLike | str) -> Dataset:
         )
         dataset_path = dataset_path / "medunda_dataset.json"
 
-    dataset = Dataset.model_validate_json(dataset_path.read_text())
+    dataset_dict = yaml.safe_load(dataset_path.read_text())
+    dataset = Dataset.model_validate(dataset_dict)
     LOGGER.debug('Dataset read successfully: %s', dataset)
 
     return dataset

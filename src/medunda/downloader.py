@@ -12,6 +12,7 @@ from medunda.components.dataset import Dataset
 from medunda.components.dataset import read_dataset
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import VariableDataset
+from medunda.providers import PROVIDERS
 from medunda.providers import get_provider
 from medunda.tools.argparse_utils import date_from_str
 from medunda.tools.file_names import get_output_filename
@@ -113,7 +114,7 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
         "--provider",
         type=str,
         required=False,
-        choices=["cmems"],
+        choices=sorted(list(PROVIDERS.keys())),
         default="cmems",
         help="The provider from which to download the data (default: cmems)",
     )
@@ -144,7 +145,7 @@ def download_data (
         end:datetime,
         domain: Domain,
         split_by: str = "whole",
-        provider_name: str = "cmems",
+        provider_class_name: str = "cmems",
         provider_config: Path | None = None,
         ) -> dict[VarName, tuple[Path, ...]]:
 
@@ -169,7 +170,18 @@ def download_data (
         raise ValueError(f"Internal error: invalid parameter: {split_by}")
 
     # Create the provider instance that will handle the download
-    provider = get_provider(provider_name).create(config_file=provider_config)
+    provider = get_provider(provider_class_name).create(config_file=provider_config)
+    if hasattr(provider, "name"):
+        provider_name = getattr(provider, "name")
+    else:
+        provider_name = provider_class_name
+
+    LOGGER.info(f'Using provider "{provider_name}" for the download')
+    if len(provider.available_variables(frequency)) == 0:
+        raise ValueError(
+            f'Provider "{provider_name}" does not provide any variable at '
+            f'frequency "{frequency}".'
+        )
     for variable in variables:
         if variable not in provider.available_variables(frequency):
             raise ValueError(
@@ -231,6 +243,8 @@ def download_data (
         end_date=end,
         data_files=downloaded_files,
         frequency=frequency,
+        provider=provider_class_name,
+        provider_config=provider_config,
     )
 
     # Save the dataset information to a JSON file
@@ -287,7 +301,7 @@ def downloader(args):
             end=args.end_date,
             domain=domain,
             split_by=args.split_by,
-            provider_name=args.provider,
+            provider_class_name=args.provider,
             provider_config=args.provider_config,
         )
 
