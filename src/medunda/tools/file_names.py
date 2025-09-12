@@ -9,7 +9,6 @@ from pathlib import Path
 
 from medunda.tools.typing import VarName
 
-
 FILE_NAME_MASK = re.compile(
     r"^(?P<domain>[a-zA-Z0-9-]+)_(?P<variable>[\w-]+)_"
     r"(?P<frequency>[a-zA-Z0-9-]+)_(?P<start_date>\d{4}-\d{2}-\d{2})--"

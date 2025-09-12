@@ -16,7 +16,6 @@ from medunda.actions import integration
 from medunda.components.dataset import read_dataset
 from medunda.tools.logging_utils import configure_logger
 
-
 if __name__ == "__main__":
     LOGGER = logging.getLogger()
 else:

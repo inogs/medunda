@@ -3,12 +3,10 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import ClassVar
 
-
 import cmocean
 from matplotlib.colors import Colormap
 
 from medunda.tools.typing import VarName
-
 
 DEFAULT_COLORMAP = Colormap("viridis")
 

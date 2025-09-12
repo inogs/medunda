@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "extract_min_max"
 

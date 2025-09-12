@@ -13,7 +13,6 @@ from medunda.domains.domain import Domain
 from medunda.providers.provider import Provider
 from medunda.tools.typing import VarName
 
-
 LOGGER = logging.getLogger(__name__)
 
 

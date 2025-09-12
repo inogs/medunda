@@ -1,7 +1,4 @@
-from pathlib import Path
-
 import numpy as np
-import xarray as xr
 
 from medunda.actions.extract_bottom import extract_bottom
 

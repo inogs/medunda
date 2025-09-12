@@ -12,6 +12,8 @@ from medunda.components.dataset import Dataset
 from medunda.components.dataset import read_dataset
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import VariableDataset
+from medunda.domains.domain import Domain
+from medunda.domains.domain import read_domain
 from medunda.providers import PROVIDERS
 from medunda.providers import get_provider
 from medunda.tools.argparse_utils import date_from_str
@@ -20,9 +22,6 @@ from medunda.tools.logging_utils import configure_logger
 from medunda.tools.time_tables import split_by_month
 from medunda.tools.time_tables import split_by_year
 from medunda.tools.typing import VarName
-from medunda.domains.domain import read_domain
-from medunda.domains.domain import Domain
-
 
 if __name__ == "__main__":
     LOGGER = logging.getLogger()

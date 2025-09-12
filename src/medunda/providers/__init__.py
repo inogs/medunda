@@ -2,9 +2,8 @@ from collections.abc import Mapping
 from types import MappingProxyType
 
 from medunda.providers.cmems import CMEMSProvider
-from medunda.providers.tar_archive import TarArchiveProvider
 from medunda.providers.provider import Provider
-
+from medunda.providers.tar_archive import TarArchiveProvider
 
 PROVIDERS: Mapping[str, type[Provider]] = MappingProxyType({
     CMEMSProvider.get_name(): CMEMSProvider,

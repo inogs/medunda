@@ -1,9 +1,7 @@
 import logging
-from pathlib import Path
 
 import numpy as np
 import xarray as xr
-
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "extract_bottom"

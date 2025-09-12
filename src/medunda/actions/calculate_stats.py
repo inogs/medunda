@@ -1,10 +1,10 @@
-from collections.abc import Sequence
 import logging
+from collections.abc import Sequence
 from typing import Any
 
 import numpy as np
+import scipy
 import xarray as xr
-import scipy 
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "calculate_stats"

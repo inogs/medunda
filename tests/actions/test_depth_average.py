@@ -1,6 +1,3 @@
-from pathlib import Path
-
-import xarray as xr
 import numpy as np
 
 from medunda.actions.depth_average import compute_depth_average
@@ -36,4 +33,3 @@ def test_depth_average(data4d):
     S_value = ds.S.max()
     assert np.abs(T_value - 10.0) < 1e-6, "Maximum value of 'T' variable is incorrect."
     assert np.abs(S_value - 24.0) < 1e-6, "Maximum value of 'S' variable is incorrect."
-

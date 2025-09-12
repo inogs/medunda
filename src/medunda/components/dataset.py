@@ -17,7 +17,6 @@ from medunda.providers import get_provider
 from medunda.tools.time_tables import split_by_month
 from medunda.tools.typing import VarName
 
-
 LOGGER = getLogger(__name__)
 
 

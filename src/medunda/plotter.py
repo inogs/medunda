@@ -10,7 +10,6 @@ from medunda.plots import maps
 from medunda.plots import timeseries
 from medunda.tools.logging_utils import configure_logger
 
-
 LOGGER = logging.getLogger(__name__)
 
 VAR_METADATA = {
