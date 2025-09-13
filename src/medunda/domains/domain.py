@@ -52,14 +52,23 @@ def read_zipped_shapefile(compressed_path: Path, temporary_dir:Path):
     and return the path to the uncompressed shapefile.
     """
     with zipfile.ZipFile(compressed_path, 'r') as zip_ref:
+        LOGGER.debug(
+            "Unzipping file %s into %s",
+            compressed_path,
+            temporary_dir
+        )
         zip_ref.extractall(temporary_dir)
 
     shapefiles = []
-    for f in temporary_dir.glob("**"):
+    for f in temporary_dir.rglob("*"):
+        LOGGER.debug("Checking if path %s is a shapefile", f)
         if not f.is_file():
+            LOGGER.debug("Skipping path %s because it is not a file", f)
             continue
         if not f.suffix.lower() == ".shp":
+            LOGGER.debug("Skipping path %s because it is not a shapefile", f)
             continue
+        LOGGER.debug("Found shapefile %s", f)
         shapefiles.append(f)
 
     if len(shapefiles) == 0:

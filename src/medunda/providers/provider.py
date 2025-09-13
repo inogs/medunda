@@ -22,7 +22,13 @@ class Provider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def download_data(self, domain: Domain, frequency: Frequency, data_files: Mapping[VarName, tuple[DataFile, ...]]) -> None:
+    def download_data(
+            self,
+            domain: Domain,
+            frequency: Frequency,
+            main_path: Path,
+            data_files: Mapping[VarName, tuple[DataFile, ...]]
+        ) -> None:
         raise NotImplementedError
 
     def available_variables(self, frequency: Frequency) -> VariableDataset:

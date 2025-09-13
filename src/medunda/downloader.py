@@ -38,14 +38,14 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
     """
     if parser is None:
         parser = argparse.ArgumentParser(
-            description="dowload monthly or daily data for a chosen variable"
+            description="download monthly or daily data for a chosen variable"
         )
 
     subparsers = parser.add_subparsers(
         title="action",
         required=True,
         dest="action",
-        help="Choose if creating a new dataset or reasuming the download of an existing one"
+        help="Choose if creating a new dataset or resuming the download of an existing one"
     )
 
     create_subparser = subparsers.add_parser(
@@ -150,7 +150,7 @@ def download_data (
 
     """Download data for the specified variables, frequency, and time range.
     """
-    # Check if value of split_by is valid
+    # Check if the value of split_by is valid
     allowed_split_by = ("month", "year", "whole")
     if split_by not in allowed_split_by:
         raise ValueError(
@@ -188,7 +188,7 @@ def download_data (
                 f'"{provider_name}" at frequency "{frequency}"'
             )
 
-    # Prepare output directory if not available
+    # Prepare the output directory if not available
     output_dir.mkdir(exist_ok=True)
 
     if not output_dir.is_dir():
@@ -212,7 +212,7 @@ def download_data (
         # We save here the files that we download for this variable
         files_for_current_var: list[DataFile] = []
 
-        var_output_dir = output_dir / variable / str(frequency)
+        var_output_dir = Path(variable) / str(frequency)
 
         for start_date, end_date in time_intervals:
             output_file_name = get_output_filename(
@@ -244,6 +244,7 @@ def download_data (
         frequency=frequency,
         provider=provider_class_name,
         provider_config=provider_config,
+        main_path=output_dir.absolute()
     )
 
     # Save the dataset information to a JSON file
@@ -259,7 +260,7 @@ def download_data (
 
 
 def validate_dataset(filepath, variable, max_depth: float | None):
-    """Validates the dataset, by checking for:
+    """Validates the dataset by checking for:
     dimensions, variables, and depth coverage."""
 
     LOGGER.info(f"dataset validated: {filepath}")

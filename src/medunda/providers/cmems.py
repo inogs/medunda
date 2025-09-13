@@ -75,7 +75,13 @@ class CMEMSProvider(Provider):
             raise ValueError("CMEMS provider does not support configuration files")
         return cls()
 
-    def download_data(self, domain: Domain, frequency: Frequency, data_files: Mapping[VarName, tuple[DataFile, ...]]) -> None:
+    def download_data(
+            self,
+            domain: Domain,
+            frequency: Frequency,
+            main_path: Path,
+            data_files: Mapping[VarName, tuple[DataFile, ...]]
+        ) -> None:
         """
         Downloads the data for the dataset.
 
@@ -101,16 +107,22 @@ class CMEMSProvider(Provider):
             )
 
             for file in files:
-                if file.path.exists():
+                # Ensure the path is relative to the main dir
+                if not file.path.is_absolute():
+                    file_path = main_path / file.path
+                else:
+                    file_path = file.path
+
+                if file_path.exists():
                     LOGGER.debug(
-                        'File "%s" already exists. Skipping download.', file.path
+                        'File "%s" already exists. Skipping download.',
+                        file_path
                     )
                     continue
 
-                LOGGER.info('Downloading file "%s"', file.path)
+                LOGGER.info('Downloading file "%s"', file_path)
 
                 # Ensure the parent directory exists
-                file_path = file.path.absolute()
                 file_path.parent.mkdir(parents=True, exist_ok=True)
 
                 output_filename = file_path.name

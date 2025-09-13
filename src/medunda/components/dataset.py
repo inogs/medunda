@@ -9,6 +9,7 @@ import xarray as xr
 import yaml
 from pydantic import BaseModel
 from pydantic import field_validator
+from pydantic import Field
 
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
@@ -40,6 +41,7 @@ class Dataset(BaseModel):
     frequency: Frequency = Frequency.MONTHLY
     provider: str = "cmems"
     provider_config: Path | None = None
+    main_path : Path = Field(default_factory=Path, exclude=True)
 
     @field_validator("provider_config")
     def validate_file_size(cls, file_path):
@@ -76,6 +78,7 @@ class Dataset(BaseModel):
         return provider.download_data(
             domain=self.domain,
             frequency=self.frequency,
+            main_path=self.main_path,
             data_files=self.data_files
         )
 
@@ -282,10 +285,17 @@ def read_dataset(dataset_path: PathLike | str) -> Dataset:
             'Dataset path "%s" is a directory, reading medunda file',
             dataset_path
         )
+        main_dataset_dir = dataset_path.resolve()
         dataset_path = dataset_path / "medunda_dataset.json"
+    else:
+        main_dataset_dir = dataset_path.parent.resolve()
+
 
     dataset_dict = yaml.safe_load(dataset_path.read_text())
     dataset = Dataset.model_validate(dataset_dict)
+
+    dataset.main_path = main_dataset_dir
+
     LOGGER.debug('Dataset read successfully: %s', dataset)
 
     return dataset

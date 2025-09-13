@@ -42,7 +42,13 @@ class TarArchiveProvider(Provider):
         return VariableDataset(self._frequencies[frequency]["variables"])
 
 
-    def download_data(self, domain: Domain, frequency: Frequency, data_files: Mapping[VarName, tuple[DataFile, ...]]) -> None:
+    def download_data(
+            self,
+            domain: Domain,
+            frequency: Frequency,
+            main_path: Path,
+            data_files: Mapping[VarName, tuple[DataFile, ...]]
+    ) -> None:
         for var_name, files in data_files.items():
             if var_name not in self._variables:
                 raise ValueError(
