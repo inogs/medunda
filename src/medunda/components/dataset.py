@@ -191,7 +191,7 @@ class Dataset(BaseModel):
             A dictionary mapping variable names to a tuple of file paths
         """
         return {
-            var_name: tuple(data_file.path for data_file in data_files)
+            var_name: tuple(self.main_path / data_file.path for data_file in data_files)
             for var_name, data_files in self.data_files.items()
         }
 

@@ -47,8 +47,9 @@ PRODUCTS={
 
 
 def search_for_product(var_name: VarName, frequency:Frequency) -> str:
-    """ Given the name of a variable and a frequency, return the name of the CMEMS product that
-    contains such variable with the specified frequency."""
+    """ Given the name of a variable and a frequency, return the name of the
+    CMEMS product that contains such a variable with the specified frequency.
+    """
 
     selected_product = None
     for vars_tuple, prod_dict in PRODUCTS.items():
@@ -57,7 +58,9 @@ def search_for_product(var_name: VarName, frequency:Frequency) -> str:
             break
 
     if selected_product is None:
-        raise ValueError (f"Variable '{var_name}' is not available in the dictionary")
+        raise ValueError(
+            f"Variable '{var_name}' is not available in the dictionary"
+        )
 
     LOGGER.debug(f"var_name={var_name}, selected_product={selected_product}")
 
@@ -72,7 +75,9 @@ class CMEMSProvider(Provider):
     @classmethod
     def create(cls, config_file: Path | None = None) -> "Provider":
         if config_file is not None:
-            raise ValueError("CMEMS provider does not support configuration files")
+            raise ValueError(
+                "CMEMS provider does not support configuration files"
+            )
         return cls()
 
     def download_data(

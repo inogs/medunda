@@ -3,7 +3,10 @@ name: NECTON_local
 start_date: 1999-01-01
 end_date: 2022-12-31
 source:
-  - type: local
+  type: local
+meshmask:
+  type: bitsea
+  path: "/data/meshmasks/meshmask.nc"
 variables:
   - variable: o2
     dataset_name: O2o
@@ -13,9 +16,9 @@ variables:
     unit: "mg/m\u00B3"
   - variable: ph
     dataset_name: pH
-    unit: none
+    unit: null
 frequencies:
-  - frequency: DAILY
+  - frequency: daily
     variables: [o2, chl, ph]
     path: "/home/spiani/NECTON_simulations/AVE_FREQ_1_tar"
   - frequency: monthly
