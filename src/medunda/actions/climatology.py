@@ -72,7 +72,7 @@ def climatology(data: xr.Dataset,
                 frequency:str,
                 start_date=None, 
                 end_date=None,):
-    
+
     #check the variable
     if variable not in data.data_vars:
         available_variables= list(data.data_vars.keys())
@@ -91,43 +91,54 @@ def climatology(data: xr.Dataset,
     
     ds_frequency = configure_data_frequency(data)
     
-    LOGGER.info(f"Computing {type} climatology for variable: {variable}")
+    LOGGER.info(f"Computing {frequency} climatology for variable: {variable}")
 
-    ###computing climatology with monthly datasets
+    #computing climatology with monthly datasets
     if ds_frequency == "monthly":
 
-        if frequency == "monthly":          #1
+        if frequency == "monthly":
             data_var.coords["month"] = data_var["time"].dt.month
             
-            months = data_var["time"].dt.month
             days_in_month = data_var["time"].dt.days_in_month
 
             climatology_data = data_var.groupby("month").apply(
                 weighted_monthly_average,
                 days_in_month=days_in_month
                 )
-            
-        elif frequency == "daily":          #3
+               
+        elif frequency == "daily":
             raise ValueError("Impossible to compute daily climatology with monthly dataset." \
                             "A dataset with daily resolution is required.")
 
         elif frequency == "seasonally":     #5
             pass
     
-    ###computing the climatology with daily datasets
+    #computing the climatology with daily datasets
     elif ds_frequency == "daily":
-        if type == "monthly":          #2
-            pass
-        elif type == "daily":          #4
-            pass
-        elif type == "seasonally":     #6
+        if frequency == "monthly":
+            
+            daily_c = data_var.groupby("time.dayofyear").mean("time", skipna=True)
+
+            months = data_var["time"].dt.month
+            month_for_each_day = months.groupby(data_var["time"].dt.dayofyear).first()
+
+            daily_c = daily_c.assign_coords(
+                month=("dayofyear", month_for_each_day.data)
+            )
+            climatology_data = daily_c.groupby("month").mean()
+             
+        elif frequency == "daily":
+            
+            daily_c = data_var.groupby("time.dayofyear").mean("time", skipna=True)
+
+            month_for_each_day = data_var["time"].dt.month.groupby(data_var["time"].dt.dayofyear).first()
+
+            climatology_data = daily_c.assign_coords(month=("dayofyear", month_for_each_day.data))
+
+        elif frequency == "seasonally":     #6
             pass
     
-    climatology = xr.Dataset({
-                variable: climatology_data
-            })
+    climatology = xr.Dataset({variable: climatology_data})
     
     climatology.to_netcdf(output_file)
     return climatology
-
-    
