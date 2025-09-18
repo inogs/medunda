@@ -50,19 +50,20 @@ def plotting_maps (data: xr.DataArray, metadata: dict, time):
     non_spatial_dims = [dim for dim in data_slice.dims if dim not in ['lat', 'latitude', 'lon', 'longitude']]
     if non_spatial_dims:
         data_slice = data_slice.mean(dim=non_spatial_dims)
+    
+    actual_time = pd.to_datetime(data_slice["time"].values)
 
     fig, ax = plt.subplots(figsize=(10,5))
-
     cmap = metadata.get('cmap', 'viridis')
 
     im = ax.pcolormesh(data_slice, cmap=cmap)
 
-    title_str = f"{metadata['label']} at {selected_time.strftime('%Y-%m-%d')}"
+    title_str = f"{metadata['label']} at {actual_time.strftime('%Y-%m-%d')}"
     ax.set_title(title_str)
     ax.set_xlabel("Longitude")
     ax.set_ylabel("Latitude")
-
+    
     cbar = fig.colorbar(im, ax=ax, orientation="vertical")
-    cbar.set_label(metadata.get('unit', ''))
+    cbar.set_label(f"{metadata['label']} ({metadata.get('unit', '')})")
 
     plt.show()
