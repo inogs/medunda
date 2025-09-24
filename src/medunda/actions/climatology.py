@@ -52,6 +52,14 @@ def configure_data_frequency (data=xr.Dataset):
         "Monthly or Daily datasets are required.")
     return ds_frequency
 
+
+SEASON_MAP = {
+    12: 'DJF', 1: 'DJF', 2: 'DJF',
+    3: 'MAM', 4: 'MAM', 5: 'MAM',
+    6: 'JJA', 7: 'JJA', 8: 'JJA',
+    9: 'SON', 10: 'SON', 11: 'SON',
+}    
+    
 def weighted_monthly_average(group, days_in_month):
     """This function calculates the monthly weighted average
     taking in account the diffrent months lengths"""
@@ -98,9 +106,7 @@ def climatology(data: xr.Dataset,
 
         if frequency == "monthly":
             data_var.coords["month"] = data_var["time"].dt.month
-            
             days_in_month = data_var["time"].dt.days_in_month
-
             climatology_data = data_var.groupby("month").apply(
                 weighted_monthly_average,
                 days_in_month=days_in_month
@@ -111,32 +117,37 @@ def climatology(data: xr.Dataset,
                             "A dataset with daily resolution is required.")
 
         elif frequency == "seasonally":     #5
-            pass
+
+            months = data_var["time"].dt.month
+            seasons = months.to_pandas().map(SEASON_MAP).values
+            data_var.coords["season"] = ("time", seasons)
+            climatology_data = data_var.groupby("season").mean("time", skipna=True)
     
     #computing the climatology with daily datasets
     elif ds_frequency == "daily":
-        if frequency == "monthly":
-            
-            daily_c = data_var.groupby("time.dayofyear").mean("time", skipna=True)
+        daily_c = data_var.groupby("time.dayofyear").mean("time", skipna=True)
 
+        if frequency == "monthly":
+        
             months = data_var["time"].dt.month
             month_for_each_day = months.groupby(data_var["time"].dt.dayofyear).first()
-
             daily_c = daily_c.assign_coords(
                 month=("dayofyear", month_for_each_day.data)
             )
             climatology_data = daily_c.groupby("month").mean()
              
         elif frequency == "daily":
-            
-            daily_c = data_var.groupby("time.dayofyear").mean("time", skipna=True)
 
             month_for_each_day = data_var["time"].dt.month.groupby(data_var["time"].dt.dayofyear).first()
-
             climatology_data = daily_c.assign_coords(month=("dayofyear", month_for_each_day.data))
 
-        elif frequency == "seasonally":     #6
-            pass
+        elif frequency == "seasonally":
+            
+            month_for_each_day = data_var["time"].dt.month.groupby(data_var["time"].dt.dayofyear).first()
+            daily_c = daily_c.assign_coords(month=("dayofyear", month_for_each_day.data))
+            seasons = daily_c["month"].to_pandas().map(SEASON_MAP).values
+            daily_c.coords["season"]=("dayofyear", seasons)
+            climatology_data = daily_c.groupby("season").mean()
     
     climatology = xr.Dataset({variable: climatology_data})
     
