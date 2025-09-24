@@ -1,0 +1,32 @@
+---
+name: NECTON_local
+start_date: 1999-01-01
+end_date: 2022-12-31
+source:
+  type: local
+meshmask:
+  type: bitsea
+  path: "/g100_scratch/userexternal/spiani00/meshmask_ra24.nc"
+variables:
+  - variable: thetao
+    dataset_name: votemper
+    unit: "C"
+  - variable: so
+    dataset_name: vosaline
+    unit: null
+  - variable: o2
+    dataset_name: O2o
+    unit: "mmol/m\u00B3"
+  - variable: chl
+    dataset_name: P_l
+    unit: "mg/m\u00B3"
+  - variable: ph
+    dataset_name: pH
+    unit: null
+frequencies:
+  - frequency: daily
+    variables: [o2, chl, ph]
+    path: "/g100_scratch/userexternal/plazzari/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_1_tar"
+  - frequency: monthly
+    variables: [o2, chl, ph]
+    path: "/g100_scratch/userexternal/plazzari/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_2_tar"

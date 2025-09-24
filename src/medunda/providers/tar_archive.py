@@ -332,8 +332,8 @@ class TarArchiveProvider(Provider):
     def __init__(self, name: str,
                  variables: dict[VarName, dict[str, str]],
                  frequencies: dict[Frequency, dict],
+                 meshmask: dict[str, str | Path],
                  source: str = "local",
-                 meshmask: dict[str, str | Path] | None = None,
                  start_time: datetime | None = None,
                  end_time: datetime | None = None):
         self.name = name
@@ -360,7 +360,7 @@ class TarArchiveProvider(Provider):
 
             compression = {"zlib": True, "complevel": 9}
 
-            bitsea_meshmask = Mask.from_file(self._meshmask["path"])
+            bitsea_meshmask = Mask.from_file(Path(self._meshmask["path"]))
             xr_meshmask = bitsea_meshmask.to_xarray()
             xr_meshmask.to_netcdf(
                 meshmask_path,
@@ -775,17 +775,18 @@ class TarArchiveProvider(Provider):
             raise ValueError(
                 'The configuration file must contain a "meshmask" section.'
             )
-        if not isinstance(config_content["meshmask"], Mapping):
+        meshmask_dict = config_content["meshmask"]
+        if not isinstance(meshmask_dict, Mapping):
             raise ValueError(
                 'The "meshmask" section must be a dictionary.'
             )
 
-        if "type" not in config_content["meshmask"]:
+        if "type" not in meshmask_dict:
             raise ValueError(
                 'The "meshmask" section must contain a "type" key.'
             )
 
-        if "path" in config_content["meshmask"]:
+        if "path" in meshmask_dict:
             config_content["meshmask"]["path"] = Path(
                 config_content["meshmask"]["path"]
             )
@@ -818,8 +819,8 @@ class TarArchiveProvider(Provider):
             name=config_content.get("name", "tar_archive"),
             variables=variables,
             frequencies=frequencies,
-            source=config_content.get("source", "local"),
             meshmask=meshmask,
+            source=config_content.get("source", "local"),
             start_time=config_content.get("start_time", None),
             end_time=config_content.get("end_time", None)
         )
