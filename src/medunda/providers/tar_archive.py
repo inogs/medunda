@@ -14,7 +14,6 @@ import numpy as np
 import xarray as xr
 import yaml
 from bitsea.commons.mask import Mask
-from multiprocessing import cpu_count
 from multiprocessing import Manager
 from multiprocessing import Pool
 from multiprocessing import Process
@@ -25,7 +24,9 @@ from medunda.components.variables import Variable
 from medunda.components.variables import VariableDataset
 from medunda.domains.domain import Domain
 from medunda.providers.provider import Provider
+from medunda.tools.parallelization import get_n_of_processes
 from medunda.tools.typing import VarName
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -620,7 +621,7 @@ class TarArchiveProvider(Provider):
         # netCDF files from the tar archives. This happens because only one
         # process can write on the same dataset file (netCDF does not support
         # multithreading).
-        n_processors = cpu_count()
+        n_processors = get_n_of_processes()
         simultaneous_tasks = min(len(tasks), n_processors // 2)
         processes_per_task = max(2, n_processors // simultaneous_tasks)
         # We prefer overloading than keeping some cores idle
