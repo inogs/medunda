@@ -622,6 +622,7 @@ class TarArchiveProvider(Provider):
         # process can write on the same dataset file (netCDF does not support
         # multithreading).
         n_processors = get_n_of_processes()
+
         simultaneous_tasks = min(len(tasks), n_processors // 2)
         processes_per_task = max(2, n_processors // simultaneous_tasks)
         # We prefer overloading than keeping some cores idle
