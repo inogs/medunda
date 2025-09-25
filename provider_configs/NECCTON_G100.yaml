@@ -28,5 +28,5 @@ frequencies:
     variables: [o2, chl, ph]
     path: "/g100_scratch/userexternal/plazzari/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_1_tar"
   - frequency: monthly
-    variables: [o2, chl, ph]
+    variables: [thetao, so, o2, chl, ph]
     path: "/g100_scratch/userexternal/plazzari/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_2_tar"

@@ -7,7 +7,6 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from queue import Queue
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import netCDF4
 import numpy as np
@@ -25,6 +24,7 @@ from medunda.components.variables import VariableDataset
 from medunda.domains.domain import Domain
 from medunda.providers.provider import Provider
 from medunda.tools.parallelization import get_n_of_processes
+from medunda.tools.temp_dirs import TemporaryDirectory
 from medunda.tools.typing import VarName
 
 
@@ -133,12 +133,13 @@ def allocate_medunda_data_file(
         meshmask: The meshmask dataset containing spatial coordinate values.
         spatial_slices: A dictionary specifying slices for spatial dimensions
             such as latitude, longitude, and depth.
-        time_steps: Array representing the temporal data to be added to the file.
-        f_pointer (netCDF4.Dataset): The netCDF file pointer where the variables and
-            dimensions will be created.
+        time_steps: Array containing the temporal data to be added to the file.
+        f_pointer (netCDF4.Dataset): The netCDF file pointer where the variables
+            and dimensions will be created.
 
     Raises:
-        ValueError: If there is a mismatch in coordinate dimensions or invalid input data.
+        ValueError: If there is a mismatch in coordinate dimensions or invalid
+            input data.
 
     Returns:
         None
@@ -682,9 +683,12 @@ class TarArchiveProvider(Provider):
 
             for key in frequency.keys():
                 if key not in required_keys:
+                    supported_keys = ", ". join(
+                        [f for f in sorted(list(required_keys))]
+                    )
                     raise ValueError(
                         f'Invalid key "{key}" in frequency {frequency}. '
-                        f'Supported keys are: {", ". join([f for f in sorted(list(required_keys))])}.'
+                        f'Supported keys are: {supported_keys}.'
                     )
 
             try:
@@ -700,12 +704,14 @@ class TarArchiveProvider(Provider):
             frequency_vars = frequency["variables"]
             if not isinstance(frequency_vars, list):
                 raise ValueError(
-                    f'The "variables" key in frequency {frequency} must be a list. Received: {frequency_vars}'
+                    f'The "variables" key in frequency {frequency} must be a '
+                    f'list. Received: {frequency_vars}'
                 )
             for var in frequency_vars:
                 if var not in variables:
                     raise ValueError(
-                        f'Variable "{var}" in frequency {frequency} is not defined in the "variables" section.'
+                        f'Variable "{var}" in frequency {frequency} is not '
+                        f'defined in the "variables" section.'
                     )
 
             if frequency_value in output:
