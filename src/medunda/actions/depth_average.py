@@ -4,7 +4,6 @@ import xarray as xr
 
 from medunda.actions.averaging_between_layers import averaging_between_layers
 
-
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "compute_depth_average"
 

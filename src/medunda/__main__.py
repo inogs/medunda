@@ -11,7 +11,6 @@ from medunda.reducer import configure_parser as reducer_config_parser
 from medunda.reducer import reducer
 from medunda.tools.logging_utils import configure_logger
 
-
 LOGGER = logging.getLogger()
 
 

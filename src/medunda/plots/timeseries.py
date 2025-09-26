@@ -1,7 +1,7 @@
 import logging
 
 import matplotlib.pyplot as plt
-import xarray as xr 
+import xarray as xr
 
 from medunda.tools.argparse_utils import date_from_str
 

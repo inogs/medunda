@@ -1,5 +1,15 @@
+from collections.abc import Mapping
+from types import MappingProxyType
+
 from medunda.providers.cmems import CMEMSProvider
 from medunda.providers.provider import Provider
+from medunda.providers.tar_archive import TarArchiveProvider
+
+PROVIDERS: Mapping[str, type[Provider]] = MappingProxyType({
+    CMEMSProvider.get_name(): CMEMSProvider,
+    TarArchiveProvider.get_name(): TarArchiveProvider,
+    # Add other providers here as needed
+})
 
 
 def get_provider(name: str) -> type[Provider]:
@@ -15,12 +25,7 @@ def get_provider(name: str) -> type[Provider]:
     Raises:
         ValueError: If the provider name is not recognized.
     """
-    providers: dict[str, type[Provider]] = {
-        CMEMSProvider.get_name(): CMEMSProvider,
-        # Add other providers here as needed
-    }
-
-    if name not in providers:
+    if name not in PROVIDERS:
         raise ValueError(f"Provider '{name}' is not recognized.")
 
-    return providers[name]
+    return PROVIDERS[name]

@@ -5,7 +5,6 @@ import xarray as xr
 
 from medunda.tools.layers import compute_layer_height
 
-
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "averaging_between_layers"
 
