@@ -17,6 +17,15 @@ variables:
   - variable: o2
     dataset_name: O2o
     unit: "mmol/m\u00B3"
+  - variable: no3
+    dataset_name: N3n
+    unit: "mmol/m\u00B3"
+  - variable: po4
+    dataset_name: N1p
+    unit: "mmol/m\u00B3"
+  - variable: si
+    dataset_name: N5s
+    unit: "mmol/m\u00B3"
   - variable: chl
     dataset_name: P_l
     unit: "mg/m\u00B3"
@@ -25,8 +34,8 @@ variables:
     unit: null
 frequencies:
   - frequency: daily
-    variables: [o2, chl, ph]
+    variables: [o2, no3, po4, si, chl, ph]
     path: "/g100_scratch/userexternal/plazzari/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_1_tar"
   - frequency: monthly
-    variables: [thetao, so, o2, chl, ph]
+    variables: [thetao, so, o2, no3, po4, si, chl, ph]
     path: "/g100_scratch/userexternal/plazzari/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_2_tar"

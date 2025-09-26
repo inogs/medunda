@@ -22,10 +22,11 @@ class TemporaryDirectory:
     directory.
     """
     def __init__(self):
-        self._temp_dir = None
+        self._temp_dir: _TemporaryDirectory | None = None
         self._scratch_path = None
-        if os.getenv("SCRATCH") is not None:
-            self._scratch_path = Path(os.getenv("SCRATCH")) / ".medunda_temp"
+        scratch_dir = os.getenv("SCRATCH")
+        if scratch_dir is not None:
+            self._scratch_path = Path(scratch_dir) / ".medunda_temp"
             self._scratch_path.mkdir(exist_ok=True)
 
     def __enter__(self):
@@ -36,5 +37,6 @@ class TemporaryDirectory:
         return Path(self._temp_dir.__enter__())
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._temp_dir.cleanup()
+        if self._temp_dir is not None:
+            self._temp_dir.cleanup()
         self._temp_dir = None

@@ -6,10 +6,25 @@ source:
   type: local
 meshmask:
   type: bitsea
-  path: "/data/meshmasks/meshmask.nc"
+  path: "/data/RA_24/meshmask.nc"
 variables:
+  - variable: thetao
+    dataset_name: votemper
+    unit: "°C"
+  - variable: so
+    dataset_name: vosaline
+    unit: null
   - variable: o2
     dataset_name: O2o
+    unit: "mmol/m\u00B3"
+  - variable: no3
+    dataset_name: N3n
+    unit: "mmol/m\u00B3"
+  - variable: po4
+    dataset_name: N1p
+    unit: "mmol/m\u00B3"
+  - variable: si
+    dataset_name: N5s
     unit: "mmol/m\u00B3"
   - variable: chl
     dataset_name: P_l
@@ -19,8 +34,8 @@ variables:
     unit: null
 frequencies:
   - frequency: daily
-    variables: [o2, chl, ph]
+    variables: [o2, no3, po4, si, chl, ph]
     path: "/home/spiani/NECTON_simulations/AVE_FREQ_1_tar"
   - frequency: monthly
-    variables: [o2, chl, ph]
+    variables: [thetao, so, o2, no3, po4, si, chl, ph]
     path: "/home/spiani/NECTON_simulations/AVE_FREQ_2_tar"
