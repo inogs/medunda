@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from itertools import product as cart_prod
 from pathlib import Path
 
@@ -7,7 +7,6 @@ from hypothesis import strategies
 
 from medunda.tools.file_names import from_file_path_to_time_range
 from medunda.tools.file_names import get_output_filename
-from datetime import datetime, time
 
 
 def date_interval(min_value: datetime, max_value:datetime):

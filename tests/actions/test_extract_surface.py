@@ -1,7 +1,3 @@
-from pathlib import Path
-
-import xarray as xr
-
 from medunda.actions.extract_surface import extract_surface
 
 

@@ -5,11 +5,10 @@ from pathlib import Path
 import cmocean
 import xarray as xr
 
+from medunda.components.variables import VariableDataset
 from medunda.plots import maps
 from medunda.plots import timeseries
-from medunda.providers.cmems import VARIABLES
 from medunda.tools.logging_utils import configure_logger
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -63,7 +62,7 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
     parser.add_argument(   
         "--variable",  
         type=str,
-        choices=VARIABLES,
+        choices=VariableDataset.all_variables().get_variable_names(),
         required=True,
         help="Name of the variable to plot"
     )

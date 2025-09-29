@@ -2,7 +2,6 @@ import logging
 
 import xarray as xr
 
-
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "extract_layer"
 

@@ -1,12 +1,7 @@
-from pathlib import Path
-
 import numpy as np
-import pandas as pd
-import xarray as xr
+from conftest import generate_test_array
 
 from medunda.actions.extract_extremes import extract_min_max
-
-from conftest import generate_test_array
 
 
 def test_extract_extremes(data4d):

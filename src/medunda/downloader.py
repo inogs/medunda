@@ -11,16 +11,17 @@ from medunda.components.data_files import DataFile
 from medunda.components.dataset import Dataset
 from medunda.components.dataset import read_dataset
 from medunda.components.frequencies import Frequency
-from medunda.providers.cmems import VARIABLES
+from medunda.components.variables import VariableDataset
+from medunda.domains.domain import Domain
+from medunda.domains.domain import read_domain
+from medunda.providers import PROVIDERS
+from medunda.providers import get_provider
 from medunda.tools.argparse_utils import date_from_str
 from medunda.tools.file_names import get_output_filename
 from medunda.tools.logging_utils import configure_logger
 from medunda.tools.time_tables import split_by_month
 from medunda.tools.time_tables import split_by_year
 from medunda.tools.typing import VarName
-from medunda.domains.domain import read_domain
-from medunda.domains.domain import Domain
-
 
 if __name__ == "__main__":
     LOGGER = logging.getLogger()
@@ -37,14 +38,14 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
     """
     if parser is None:
         parser = argparse.ArgumentParser(
-            description="dowload monthly or daily data for a chosen variable"
+            description="download monthly or daily data for a chosen variable"
         )
 
     subparsers = parser.add_subparsers(
         title="action",
         required=True,
         dest="action",
-        help="Choose if creating a new dataset or reasuming the download of an existing one"
+        help="Choose if creating a new dataset or resuming the download of an existing one"
     )
 
     create_subparser = subparsers.add_parser(
@@ -60,7 +61,7 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
     create_subparser.add_argument(
         "--variables",
         type=str,
-        choices=VARIABLES,
+        choices=VariableDataset.all_variables().get_variable_names(),
         nargs="+",
         required=True,
         help="Name of the variable to download"
@@ -112,7 +113,7 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
         "--provider",
         type=str,
         required=False,
-        choices=["cmems"],
+        choices=sorted(list(PROVIDERS.keys())),
         default="cmems",
         help="The provider from which to download the data (default: cmems)",
     )
@@ -143,11 +144,13 @@ def download_data (
         end:datetime,
         domain: Domain,
         split_by: str = "whole",
+        provider_class_name: str = "cmems",
+        provider_config: Path | None = None,
         ) -> dict[VarName, tuple[Path, ...]]:
 
     """Download data for the specified variables, frequency, and time range.
     """
-    # Check if value of split_by is valid
+    # Check if the value of split_by is valid
     allowed_split_by = ("month", "year", "whole")
     if split_by not in allowed_split_by:
         raise ValueError(
@@ -165,7 +168,27 @@ def download_data (
     else:
         raise ValueError(f"Internal error: invalid parameter: {split_by}")
 
-    # Prepare output directory if not available
+    # Create the provider instance that will handle the download
+    provider = get_provider(provider_class_name).create(config_file=provider_config)
+    if hasattr(provider, "name"):
+        provider_name = getattr(provider, "name")
+    else:
+        provider_name = provider_class_name
+
+    LOGGER.info(f'Using provider "{provider_name}" for the download')
+    if len(provider.available_variables(frequency)) == 0:
+        raise ValueError(
+            f'Provider "{provider_name}" does not provide any variable at '
+            f'frequency "{frequency}".'
+        )
+    for variable in variables:
+        if variable not in provider.available_variables(frequency):
+            raise ValueError(
+                f'Variable "{variable}" is not available from provider '
+                f'"{provider_name}" at frequency "{frequency}"'
+            )
+
+    # Prepare the output directory if not available
     output_dir.mkdir(exist_ok=True)
 
     if not output_dir.is_dir():
@@ -189,7 +212,7 @@ def download_data (
         # We save here the files that we download for this variable
         files_for_current_var: list[DataFile] = []
 
-        var_output_dir = output_dir / variable / str(frequency)
+        var_output_dir = Path(variable) / str(frequency)
 
         for start_date, end_date in time_intervals:
             output_file_name = get_output_filename(
@@ -219,6 +242,9 @@ def download_data (
         end_date=end,
         data_files=downloaded_files,
         frequency=frequency,
+        provider=provider_class_name,
+        provider_config=provider_config,
+        main_path=output_dir.absolute()
     )
 
     # Save the dataset information to a JSON file
@@ -234,7 +260,7 @@ def download_data (
 
 
 def validate_dataset(filepath, variable, max_depth: float | None):
-    """Validates the dataset, by checking for:
+    """Validates the dataset by checking for:
     dimensions, variables, and depth coverage."""
 
     LOGGER.info(f"dataset validated: {filepath}")
@@ -274,7 +300,9 @@ def downloader(args):
             start=args.start_date,
             end=args.end_date,
             domain=domain,
-            split_by=args.split_by
+            split_by=args.split_by,
+            provider_class_name=args.provider,
+            provider_config=args.provider_config,
         )
 
         for variable, files_for_var in downloaded_files.items():

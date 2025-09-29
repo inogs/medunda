@@ -1,13 +1,15 @@
 from collections.abc import Iterable
 from datetime import datetime
-from datetime import timezone
 from logging import getLogger
 from os import PathLike
 from pathlib import Path
 
 import numpy as np
 import xarray as xr
+import yaml
 from pydantic import BaseModel
+from pydantic import field_validator
+from pydantic import Field
 
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
@@ -15,7 +17,6 @@ from medunda.domains.domain import Domain
 from medunda.providers import get_provider
 from medunda.tools.time_tables import split_by_month
 from medunda.tools.typing import VarName
-
 
 LOGGER = getLogger(__name__)
 
@@ -40,6 +41,13 @@ class Dataset(BaseModel):
     frequency: Frequency = Frequency.MONTHLY
     provider: str = "cmems"
     provider_config: Path | None = None
+    main_path : Path = Field(default_factory=Path, exclude=True)
+
+    @field_validator("provider_config")
+    def validate_file_size(cls, file_path):
+        if file_path is not None and not file_path.exists():
+            raise ValueError(f'Provider config file "{file_path}" does not exist.')
+        return file_path.resolve() if file_path is not None else file_path
 
     def get_n_of_time_steps(self) -> int:
         """
@@ -70,6 +78,7 @@ class Dataset(BaseModel):
         return provider.download_data(
             domain=self.domain,
             frequency=self.frequency,
+            main_path=self.main_path,
             data_files=self.data_files
         )
 
@@ -182,7 +191,7 @@ class Dataset(BaseModel):
             A dictionary mapping variable names to a tuple of file paths
         """
         return {
-            var_name: tuple(data_file.path for data_file in data_files)
+            var_name: tuple(self.main_path / data_file.path for data_file in data_files)
             for var_name, data_files in self.data_files.items()
         }
 
@@ -276,9 +285,17 @@ def read_dataset(dataset_path: PathLike | str) -> Dataset:
             'Dataset path "%s" is a directory, reading medunda file',
             dataset_path
         )
+        main_dataset_dir = dataset_path.resolve()
         dataset_path = dataset_path / "medunda_dataset.json"
+    else:
+        main_dataset_dir = dataset_path.parent.resolve()
 
-    dataset = Dataset.model_validate_json(dataset_path.read_text())
+
+    dataset_dict = yaml.safe_load(dataset_path.read_text())
+    dataset = Dataset.model_validate(dataset_dict)
+
+    dataset.main_path = main_dataset_dir
+
     LOGGER.debug('Dataset read successfully: %s', dataset)
 
     return dataset
