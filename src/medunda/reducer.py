@@ -63,6 +63,13 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
         required=True,
         help="Path of the downloaded Medunda dataset to be processed"
     )
+    parser.add_argument(   
+        "--variable",  
+        type=str,
+        nargs="+",
+        required=True,
+        help="Name of the variable"
+    )
     parser.add_argument(
         "--output-file",
         type=Path,
@@ -102,6 +109,7 @@ def build_action_args(args: argparse.Namespace) -> dict[str, Any]:
     # only the arguments that are specific to the action that is being executed.
     args_values = dict(**vars(args))
     del args_values["input_dataset"]
+    del args_values["variable"]
     del args_values["output_file"]
     del args_values["format"]
     del args_values["action"]
@@ -112,7 +120,7 @@ def build_action_args(args: argparse.Namespace) -> dict[str, Any]:
     return args_values
 
 
-def reducer(dataset_path: Path, output_file:Path, format:str, action_name: str, args: dict):
+def reducer(dataset_path: Path, output_file:Path, variable: str, format:str, action_name: str, args: dict):
     if action_name not in ACTIONS:
         valid_action_list = ", ".join(ACTIONS.keys())
         raise ActionNotFound(
@@ -131,6 +139,13 @@ def reducer(dataset_path: Path, output_file:Path, format:str, action_name: str, 
         action_name,
         args
     )
+
+    if variable:
+        
+        variables_to_use = variable
+    
+        data = data[variables_to_use]
+        LOGGER.info("Selected variables for processing: %s", variables_to_use)
 
     action = ACTIONS[action_name]
     dataset_result = action(data, **args)
@@ -154,6 +169,7 @@ def main():
     args = configure_parser().parse_args()
 
     dataset_path = args.input_dataset
+    variable = args.variable
     output_file = args.output_file
     format = args.format
     action_name = args.action
@@ -163,6 +179,7 @@ def main():
         output_file=output_file,
         format=format,
         action_name=action_name,
+        variable=variable,
         args=build_action_args(args)
     )
 
