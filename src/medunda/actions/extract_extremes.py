@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "extract_min_max"
 
@@ -16,8 +15,8 @@ def configure_parser(subparsers):
     )
 
 
-def extract_min_max (data: xr.Dataset, output_file):
-    """Extracts the maximum and the minimum values of a variable for each year"""
+def extract_min_max (data: xr.Dataset) -> xr.Dataset :
+    """Extracts the annual extremes of a variable (maximum and minimum) from the dataset."""
 
     LOGGER.info(f"reading file: {data}")
     
@@ -54,4 +53,5 @@ def extract_min_max (data: xr.Dataset, output_file):
                 })
             
         df=pd.DataFrame(values)
-        df.to_csv(output_file)
+    
+    return df

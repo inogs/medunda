@@ -1,0 +1,41 @@
+---
+name: NECCTON_Leonardo
+start_date: 1999-01-01
+end_date: 2022-12-31
+source:
+  type: local
+meshmask:
+  type: bitsea
+  path: "/leonardo_scratch/large/userexternal/spiani00/meshmask_ra24.nc"
+variables:
+  - variable: thetao
+    dataset_name: votemper
+    unit: "°C"
+  - variable: so
+    dataset_name: vosaline
+    unit: null
+  - variable: o2
+    dataset_name: O2o
+    unit: "mmol/m\u00B3"
+  - variable: no3
+    dataset_name: N3n
+    unit: "mmol/m\u00B3"
+  - variable: po4
+    dataset_name: N1p
+    unit: "mmol/m\u00B3"
+  - variable: si
+    dataset_name: N5s
+    unit: "mmol/m\u00B3"
+  - variable: chl
+    dataset_name: P_l
+    unit: "mg/m\u00B3"
+  - variable: ph
+    dataset_name: pH
+    unit: null
+frequencies:
+  - frequency: daily
+    variables: [o2, no3, po4, si, chl, ph]
+    path: "/leonardo_store/DRES_EchoArch/NECCTON/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_1_tar"
+  - frequency: monthly
+    variables: [thetao, so, o2, no3, po4, si, chl, ph]
+    path: "/leonardo_store/DRES_EchoArch/NECCTON/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_2_tar"

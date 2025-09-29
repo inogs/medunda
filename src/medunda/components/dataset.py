@@ -1,22 +1,22 @@
 from collections.abc import Iterable
 from datetime import datetime
-from datetime import timezone
 from logging import getLogger
 from os import PathLike
 from pathlib import Path
-import shutil
 
-import copernicusmarine
 import numpy as np
 import xarray as xr
+import yaml
 from pydantic import BaseModel
+from pydantic import field_validator
+from pydantic import Field
 
+from medunda.components.data_files import DataFile
+from medunda.components.frequencies import Frequency
 from medunda.domains.domain import Domain
-from medunda.sources.cmems import search_for_product
-from medunda.tools.file_names import from_file_path_to_time_range
+from medunda.providers import get_provider
 from medunda.tools.time_tables import split_by_month
 from medunda.tools.typing import VarName
-
 
 LOGGER = getLogger(__name__)
 
@@ -32,14 +32,22 @@ class Dataset(BaseModel):
         data_files: A dictionary mapping variable names to a tuple of files
             that contain the data for that variable.
         frequency: The frequency of the dataset.
-        source: The source from which the data will be downloaded.
+        provider: The provider from which the data will be downloaded.
     """
     domain: Domain
     start_date: datetime
     end_date: datetime
-    data_files: dict[VarName, tuple[Path, ...]] = {}
-    frequency: str = "monthly"
-    source: str = "cmems"
+    data_files: dict[VarName, tuple[DataFile, ...]] = {}
+    frequency: Frequency = Frequency.MONTHLY
+    provider: str = "cmems"
+    provider_config: Path | None = None
+    main_path : Path = Field(default_factory=Path, exclude=True)
+
+    @field_validator("provider_config")
+    def validate_file_size(cls, file_path):
+        if file_path is not None and not file_path.exists():
+            raise ValueError(f'Provider config file "{file_path}" does not exist.')
+        return file_path.resolve() if file_path is not None else file_path
 
     def get_n_of_time_steps(self) -> int:
         """
@@ -64,74 +72,15 @@ class Dataset(BaseModel):
             )
 
     def download_data(self):
-        """
-        Downloads the data for the dataset.
+        provider_class = get_provider(self.provider)
+        provider = provider_class.create(config_file=self.provider_config)
 
-        This method downloads all the missing data files for the dataset.
-        If a file already exists, it will not be downloaded again.
-        """
-        for var_name, files in self.data_files.items():
-            LOGGER.debug(
-                f'Downloading data for variable "%s": %s files will be '
-                f'downloaded',
-                var_name,
-                len(files)
-            )
-
-            product_id = search_for_product(
-                var_name=var_name,
-                frequency=self.frequency
-            )
-            LOGGER.debug(
-                "The product associated with variable %s is: %s",
-                var_name,
-                product_id
-            )
-
-            for file in files:
-                if file.exists():
-                    LOGGER.debug(
-                        'File "%s" already exists. Skipping download.', file
-                    )
-                    continue
-
-                LOGGER.info('Downloading file "%s"', file)
-
-                # Ensure the parent directory exists
-                file_path = file.absolute()
-                file_path.parent.mkdir(parents=True, exist_ok=True)
-
-                output_filename = file_path.name
-                temp_filename = "tmp." + output_filename
-                temp_file_path = file_path.parent / temp_filename
-
-                if temp_file_path.is_file():
-                    LOGGER.debug(
-                        '"%s" already exists. I will delete it!',
-                        temp_file_path
-                    )
-                    temp_file_path.unlink()
-
-                start, end = from_file_path_to_time_range(file_path)
-
-                # Copernicusmarine API interprets datetimes as UTC,
-                # so we need to ensure that the start and end datetimes
-                # are timezone-aware and set to UTC.
-                start = start.replace(tzinfo=timezone.utc)
-                end = end.replace(tzinfo=timezone.utc)
-                copernicusmarine.subset(
-                    dataset_id=product_id,
-                    variables=[var_name],
-                    start_datetime=start,
-                    end_datetime=end,
-                    output_filename=str(temp_file_path),
-                    **self.domain.model_dump(exclude={"name"})
-                )
-
-                LOGGER.debug(
-                    'Moving file "%s" to "%s"', temp_file_path, file_path
-                )
-                shutil.move(temp_file_path, file_path)
+        return provider.download_data(
+            domain=self.domain,
+            frequency=self.frequency,
+            main_path=self.main_path,
+            data_files=self.data_files
+        )
 
     def get_variables(self) -> tuple[VarName, ...]:
         """
@@ -234,6 +183,18 @@ class Dataset(BaseModel):
 
         return mask
 
+    def get_data_files(self) -> dict[VarName, tuple[Path, ...]]:
+        """
+        Returns the data files associated with the dataset.
+
+        Returns:
+            A dictionary mapping variable names to a tuple of file paths
+        """
+        return {
+            var_name: tuple(self.main_path / data_file.path for data_file in data_files)
+            for var_name, data_files in self.data_files.items()
+        }
+
     def get_data(self,
                 variables: Iterable[VarName] | None = None,
                 chunks: dict | str | None = "auto"
@@ -263,9 +224,11 @@ class Dataset(BaseModel):
         if len(variables) == 0:
             raise ValueError("No variables specified for dataset retrieval.")
 
+        data_files = self.get_data_files()
+
         for variable in variables:
             LOGGER.debug('Processing variable "%s"', variable)
-            variable_data_files = self.data_files[variable]
+            variable_data_files = data_files[variable]
             LOGGER.debug(
                 "There are %s data files associated with variable %s",
                 len(variable_data_files),
@@ -322,9 +285,17 @@ def read_dataset(dataset_path: PathLike | str) -> Dataset:
             'Dataset path "%s" is a directory, reading medunda file',
             dataset_path
         )
+        main_dataset_dir = dataset_path.resolve()
         dataset_path = dataset_path / "medunda_dataset.json"
+    else:
+        main_dataset_dir = dataset_path.parent.resolve()
 
-    dataset = Dataset.model_validate_json(dataset_path.read_text())
+
+    dataset_dict = yaml.safe_load(dataset_path.read_text())
+    dataset = Dataset.model_validate(dataset_dict)
+
+    dataset.main_path = main_dataset_dir
+
     LOGGER.debug('Dataset read successfully: %s', dataset)
 
     return dataset

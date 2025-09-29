@@ -1,9 +1,7 @@
 import logging
 
-import numpy as np
 import pandas as pd
 import xarray as xr
-
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "extract_layer_extremes"
@@ -15,8 +13,12 @@ def configure_parser(subparsers):
         help="extract the minimum and maximum value of a variable for each layer available in the dataset"
     )
 
-def extract_layer_extremes (data: xr.Dataset, output_file):
-    """Extracts the maximum and the minimum values of a variable for each year"""
+def extract_layer_extremes (data: xr.Dataset) -> xr.Dataset:
+    """Extracts the maximum and the minimum values of a variable 
+    across all time and spatial coordinates, for each depth layer.
+    Returns a dataset with the same depth layers, containing both
+    the minimum and the maximum values for each layer.
+    """
 
     LOGGER.info(f"reading file: {data}")
 
@@ -39,4 +41,5 @@ def extract_layer_extremes (data: xr.Dataset, output_file):
         
     df = pd.DataFrame(values_per_depth)
     ds_xr = df.set_index("depth").to_xarray()
-    ds_xr.to_netcdf(output_file) 
+
+    return ds_xr

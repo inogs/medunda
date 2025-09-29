@@ -1,14 +1,13 @@
 import logging
-import yaml
-import zipfile
-import tempfile
-from pathlib import Path
 import re
+import tempfile
+import zipfile
+from pathlib import Path
 
+import geopandas as gpd
+import yaml
 from pydantic import BaseModel
 from pydantic import field_validator
-import geopandas as gpd
-
 
 MAIN_DIR = Path(__file__).absolute().parent.parent.parent.parent
 
@@ -22,8 +21,8 @@ class Domain(BaseModel):
     maximum_latitude: float
     minimum_longitude: float
     maximum_longitude: float
-    minimum_depth: float
-    maximum_depth: float
+    minimum_depth: float | None
+    maximum_depth: float | None
 
     @field_validator('name', mode='after')
     @classmethod
@@ -53,14 +52,23 @@ def read_zipped_shapefile(compressed_path: Path, temporary_dir:Path):
     and return the path to the uncompressed shapefile.
     """
     with zipfile.ZipFile(compressed_path, 'r') as zip_ref:
+        LOGGER.debug(
+            "Unzipping file %s into %s",
+            compressed_path,
+            temporary_dir
+        )
         zip_ref.extractall(temporary_dir)
 
     shapefiles = []
-    for f in temporary_dir.glob("**"):
+    for f in temporary_dir.rglob("*"):
+        LOGGER.debug("Checking if path %s is a shapefile", f)
         if not f.is_file():
+            LOGGER.debug("Skipping path %s because it is not a file", f)
             continue
         if not f.suffix.lower() == ".shp":
+            LOGGER.debug("Skipping path %s because it is not a shapefile", f)
             continue
+        LOGGER.debug("Found shapefile %s", f)
         shapefiles.append(f)
 
     if len(shapefiles) == 0:
@@ -82,9 +90,9 @@ def read_domain(domain_description: Path) -> Domain:
     name = domain_description_raw["name"]
 
     # Read the depth values
-    depth = domain_description_raw["depth"]
-    min_depth = depth.get("min_depth", 0)
-    max_depth = depth["max_depth"]
+    depth = domain_description_raw.get("depth", {})
+    min_depth = depth.get("min_depth", None)
+    max_depth = depth.get("max_depth", None)
 
     # Read the geometry
     geometry = domain_description_raw["geometry"]

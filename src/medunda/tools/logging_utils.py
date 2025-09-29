@@ -1,10 +1,13 @@
 import logging
+import time
 
 
-def configure_logger(logger):
+def configure_logger(logger: logging.Logger):
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
+    # Ensure that this formatter uses local time and not UTC
+    formatter.converter = time.localtime
 
     logger.setLevel(logging.DEBUG)
 

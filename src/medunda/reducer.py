@@ -1,37 +1,41 @@
 import argparse
 import logging
 from pathlib import Path
-
-import xarray as xr
+from typing import Any
 
 from medunda.actions import ActionNotFound
 from medunda.actions import averaging_between_layers
-from medunda.actions import calculate_stats
 from medunda.actions import climatology
+from medunda.actions import calculate_stats
 from medunda.actions import depth_average
 from medunda.actions import extract_bottom
 from medunda.actions import extract_extremes
 from medunda.actions import extract_layer
 from medunda.actions import extract_layer_extremes
 from medunda.actions import extract_surface
-from medunda.dataset import read_dataset
+from medunda.actions import integration
+from medunda.components.dataset import read_dataset
 from medunda.tools.logging_utils import configure_logger
 
+if __name__ == "__main__":
+    LOGGER = logging.getLogger()
+else:
+    LOGGER = logging.getLogger(__name__)
 
-LOGGER = logging.getLogger(__name__)
 
 # This is a list of all the modules that define an action that can be
 # executed by the reducer.
 ACTION_MODULES = [
     averaging_between_layers,
+    calculate_stats,
+    climatology,
     depth_average,
     extract_bottom,
     extract_extremes,
-    extract_layer_extremes,
     extract_layer,
+    extract_layer_extremes,
     extract_surface,
-    calculate_stats,
-    climatology
+    integration,
 ]
 
 # This is a dictionary that maps the name of an action to the function that
@@ -44,13 +48,14 @@ ACTIONS = {
 }
 
 
-def parse_args ():
+def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.ArgumentParser:
     """
     Parse command line arguments and return parsed arguments object.
     """
-    parser = argparse.ArgumentParser(
-        description="elaborate downloaded data by performing different statistical operations"
-        )
+    if parser is None:
+        parser = argparse.ArgumentParser(
+            description="elaborate downloaded data by performing different statistical operations"
+            )
 
     parser.add_argument(   
         "--input-dataset",  
@@ -58,11 +63,25 @@ def parse_args ():
         required=True,
         help="Path of the downloaded Medunda dataset to be processed"
     )
+    parser.add_argument(   
+        "--variable",  
+        type=str,
+        nargs="+",
+        required=True,
+        help="Name of the variable"
+    )
     parser.add_argument(
         "--output-file",
         type=Path,
         required=True,
         help="Path of the output file"
+    )
+    parser.add_argument(
+        "--format",
+        type=str,
+        required=True,
+        choices=["netcdf","csv"],
+        help="Format of the output-file"
     )
 
     # Create a subparser for each available action, allowing each action
@@ -81,10 +100,27 @@ def parse_args ():
         LOGGER.debug("Letting module %s configure its parser", module.__name__)
         module.configure_parser(subparsers)
 
-    return parser.parse_args()
+    return parser
 
 
-def reducer(dataset_path: Path, output_file:Path, action_name: str, args: dict):
+def build_action_args(args: argparse.Namespace) -> dict[str, Any]:
+    # We transform the args object into a dictionary and delete the arguments
+    # that are shared among all the actions. In this way, args_values contains
+    # only the arguments that are specific to the action that is being executed.
+    args_values = dict(**vars(args))
+    del args_values["input_dataset"]
+    del args_values["variable"]
+    del args_values["output_file"]
+    del args_values["format"]
+    del args_values["action"]
+
+    if "tool" in args_values:
+        del args_values["tool"]
+
+    return args_values
+
+
+def reducer(dataset_path: Path, output_file:Path, variable: str, format:str, action_name: str, args: dict):
     if action_name not in ACTIONS:
         valid_action_list = ", ".join(ACTIONS.keys())
         raise ActionNotFound(
@@ -104,33 +140,47 @@ def reducer(dataset_path: Path, output_file:Path, action_name: str, args: dict):
         args
     )
 
+    if variable:
+        
+        variables_to_use = variable
+    
+        data = data[variables_to_use]
+        LOGGER.info("Selected variables for processing: %s", variables_to_use)
+
     action = ACTIONS[action_name]
-    action(data, output_file, **args)
+    dataset_result = action(data, **args)
+
+    LOGGER.info('Writing result to "%s" as %s format', output_file, format)
+
+    if format == "netcdf":
+        dataset_result.to_netcdf(output_file)
+    elif format == "csv":
+        dataset_result.to_csv(output_file)
+    else:
+        raise ValueError(f"{format} is unsupported format for now.")
+
+    return 0
 
 
 def main():
     configure_logger(LOGGER)
 
     # parse the command line arguments
-    args=parse_args()
+    args = configure_parser().parse_args()
 
     dataset_path = args.input_dataset
+    variable = args.variable
     output_file = args.output_file
+    format = args.format
     action_name = args.action
 
-    # We transform the args object into a dictionary and delete the arguments
-    # that are shared among all the actions. In this way, args_values contains
-    # only the arguments that are specific to the action that is being executed.
-    args_values = dict(**vars(args))
-    del args_values["input_dataset"]
-    del args_values["output_file"]
-    del args_values["action"]
-
-    reducer(
+    return reducer(
         dataset_path=dataset_path,
         output_file=output_file,
+        format=format,
         action_name=action_name,
-        args=args_values
+        variable=variable,
+        args=build_action_args(args)
     )
 
 

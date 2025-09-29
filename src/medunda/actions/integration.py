@@ -1,10 +1,19 @@
+import logging
 
-import numpy as np
 import xarray as xr
 
 from medunda.tools.layers import compute_layer_height
 
-def compute_ch_integral (data: xr.Dataset) -> xr.Dataset:
+LOGGER = logging.getLogger(__name__)
+ACTION_NAME = "compute_integral"
+
+def configure_parser(subparsers):
+    subparsers.add_parser(
+        ACTION_NAME,
+        help="Compute the integrated depth value of all variables with a 'depth' dimension"
+    )
+
+def compute_integral (data: xr.Dataset) -> xr.Dataset:
 
     layer_height = compute_layer_height(data.depth.values)
     lh = xr.DataArray(layer_height, dims=['depth'])

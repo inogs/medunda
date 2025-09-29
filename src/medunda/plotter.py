@@ -2,31 +2,26 @@ import argparse
 import logging
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import cmocean
-import numpy as np
 import xarray as xr
 
+from medunda.components.variables import VariableDataset
 from medunda.plots import maps
 from medunda.plots import timeseries
-from medunda.sources.cmems import VARIABLES
-from medunda.tools.argparse_utils import date_from_str
-from medunda.tools.layers import compute_layer_height
 from medunda.tools.logging_utils import configure_logger
-
 
 LOGGER = logging.getLogger(__name__)
 
 VAR_METADATA = {
     "o2": {'label': 'Oxygen',                 
             'unit':'µmol/m³',
-            'cmap': cmocean.cm.deep},
+            'cmap': cmocean.cm.deep}, # pyright: ignore[reportAttributeAccessIssue]
     "chl": {'label': 'Chlorophyll-a',       
             'unit':'mg/m³',
-            'cmap':cmocean.cm.algae},
+            'cmap':cmocean.cm.algae},  # pyright: ignore[reportAttributeAccessIssue]
     "nppv": {'label': 'Net Primary Production',
             'unit':'mg C/m²/day',   
-            'cmap':cmocean.cm.matter},
+            'cmap':cmocean.cm.matter},  # pyright: ignore[reportAttributeAccessIssue]
     "thetao": {'label': 'Temperature', 
                'unit':'°C', 
                'cmap':'coolwarm'},
@@ -47,15 +42,16 @@ PLOTS=[
 ]
 
 
-def parse_args ():
+def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.ArgumentParser:
     """
     parse command line arguments: 
     --input-file: path of the input file
     --variable: name of the variable to plot
     --output-dir: directory to save the download file
     """
-    parser = argparse.ArgumentParser(
-        description="plots timeseries and maps")    ######
+    if parser is None:
+        parser = argparse.ArgumentParser(
+            description="plots timeseries and maps")    ######
 
     parser.add_argument(   
         "--input-file",  
@@ -66,7 +62,7 @@ def parse_args ():
     parser.add_argument(   
         "--variable",  
         type=str,
-        choices=VARIABLES,
+        choices=VariableDataset.all_variables().get_variable_names(),
         required=True,
         help="Name of the variable to plot"
     )
@@ -88,7 +84,7 @@ def parse_args ():
         LOGGER.debug("Letting module %s configure its parser", mode.__name__)
         mode.configure_parser(subparsers)
 
-    return parser.parse_args()
+    return parser
 
 
 def check_variable (ds, var):
@@ -107,7 +103,16 @@ def check_variable (ds, var):
 
 def plotter (filepath: Path, variable: str, mode:str, args):
     """Extracts and plots surface, bottom, and average layers of the given variable."""
-    
+
+    if not filepath.exists():
+        raise FileNotFoundError (f"The file '{filepath}' does not exist.")
+
+    if filepath.suffix != ".nc":
+        raise ValueError(
+            f'File {filepath} is not a valid netcdf file; its suffix does '
+            'not end with ".nc."'
+        )
+
     with xr.open_dataset(filepath) as ds: 
         data_var, metadata = check_variable(ds, variable)
 
@@ -130,30 +135,26 @@ def plotter (filepath: Path, variable: str, mode:str, args):
         
         else: 
             raise ValueError(f"Invalid mode")
+    
+    return 0
 
 
 def main ():
 
-    args = parse_args()
+    args = configure_parser().parse_args()
+    configure_logger(LOGGER)
+
     output_dir = args.output_dir
     variable = args.variable
     mode = args.mode
     data_file = args.input_file 
-
-    if not data_file.exists():
-        raise FileNotFoundError (f"The file '{data_file}' does not exist.")
-
-    if data_file.suffix != ".nc":
-        raise ValueError(
-            f'File {data_file} is not a valid netcdf file; its suffix does '
-            'not end with ".nc."'
-        )
 
     LOGGER.info(f"Selected file: {data_file.name}")
 
     plotter (filepath=data_file, variable=variable, mode=mode, args=args)
 
     LOGGER.info(f"Plotting completed for variable '{variable}' in mode '{mode}'")
+
 
 if __name__ == '__main__':
     main()

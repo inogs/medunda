@@ -1,22 +1,21 @@
 import logging
 from datetime import timedelta
 from typing import Any
-from typing import Sequence
 from typing import Callable
+from typing import Sequence
 
 import dask.dataframe
 import numpy as np
 import pandas as pd
 import xarray as xr
-from bitsea.commons.mask import Mask
 from bitsea.commons.geodistances import compute_geodesic_distance
+from bitsea.commons.mask import Mask
+from dask.dataframe.dispatch import make_meta
 from dask.delayed import Delayed
 from dask.delayed import delayed
-from dask.dataframe.dispatch import make_meta
 
-from medunda.dataset import Dataset
+from medunda.components.dataset import Dataset
 from medunda.tools.typing import VarName
-
 
 LOGGER = logging.getLogger(__name__)
 
