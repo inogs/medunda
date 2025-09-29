@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 import yaml
+import warnings
 from pydantic import BaseModel
 from pydantic import field_validator
 from pydantic import Field
@@ -59,9 +60,9 @@ class Dataset(BaseModel):
         Returns:
             The number of time steps in the dataset.
         """
-        if self.frequency == "monthly":
+        if self.frequency == Frequency.MONTHLY:
             return len(split_by_month(self.start_date, self.end_date))
-        elif self.frequency == "daily":
+        elif self.frequency == Frequency.DAILY:
             # Assuming each day is a time step
             delta = self.end_date - self.start_date
             return delta.days + 1
@@ -234,10 +235,15 @@ class Dataset(BaseModel):
                 len(variable_data_files),
                 variable
             )
-            var_dataset = xr.open_mfdataset(
-                variable_data_files,
-                chunks=chunks
-            )
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="The specified chunks separate the stored chunks"
+                )
+                var_dataset = xr.open_mfdataset(
+                    variable_data_files,
+                    chunks=chunks
+                )
             LOGGER.debug("Variable %s dataset opened successfully", variable)
             var_datasets.append(var_dataset)
 
