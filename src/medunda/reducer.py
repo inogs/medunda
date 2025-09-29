@@ -5,6 +5,7 @@ from typing import Any
 
 from medunda.actions import ActionNotFound
 from medunda.actions import averaging_between_layers
+from medunda.actions import climatology
 from medunda.actions import calculate_stats
 from medunda.actions import depth_average
 from medunda.actions import extract_bottom
@@ -27,6 +28,7 @@ else:
 ACTION_MODULES = [
     averaging_between_layers,
     calculate_stats,
+    climatology,
     depth_average,
     extract_bottom,
     extract_extremes,
@@ -34,7 +36,6 @@ ACTION_MODULES = [
     extract_layer_extremes,
     extract_surface,
     integration,
-    
 ]
 
 # This is a dictionary that maps the name of an action to the function that
