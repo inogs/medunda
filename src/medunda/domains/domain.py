@@ -12,6 +12,7 @@ import geopandas as gpd
 import numpy as np
 import xarray as xr
 import yaml
+from bitsea.basins.basin import Basin
 from bitsea.basins.region import Polygon
 from pydantic import BaseModel
 from pydantic import field_validator
@@ -198,9 +199,9 @@ def read_domain(domain_description: Path) -> Domain:
             )
 
     geo_type = geometry['type'].lower()
-    if geo_type not in ("rectangle", "shapefile", "wkt"):
+    if geo_type not in ("rectangle", "shapefile", "basin", "wkt"):
         raise ValueError(
-            f"type must be chosen among rectangle, wkt or shapefile;" \
+            f"type must be chosen among rectangle, wkt, basin or shapefile;" \
             f"received {geo_type}"
         )
 
@@ -277,6 +278,23 @@ def read_domain(domain_description: Path) -> Domain:
             name=name,
             longitudes=poly.border_longitudes,
             latitudes=poly.border_latitudes,
+        )
+    elif geo_type == "basin":
+        basin_uuid = geometry["uuid"]
+        basin = Basin.load_from_uuid(basin_uuid)
+
+        if not hasattr(basin, "borders"):
+            raise NotImplementedError(
+                f"Medunda only supports SimplePolygonalBasins, your current "
+                f"basin is a {type(basin)}"
+            )
+        longitudes = [p[0] for p in basin.borders]
+        latitudes = [p[1] for p in basin.borders]
+
+        return PolygonalDomain.create_from_coordinates(
+            name=name,
+            longitudes=longitudes,
+            latitudes=latitudes,
         )
 
 

@@ -1,0 +1,6 @@
+---
+name: NorthWestMediterranean
+geometry:
+  type: basin
+  uuid: nwm
+  
