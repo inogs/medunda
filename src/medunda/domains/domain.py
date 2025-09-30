@@ -88,17 +88,14 @@ class PolygonalDomain(Domain):
         return polygon.is_inside(lon=longitudes, lat=latitudes[:, np.newaxis])
 
     @classmethod
-    def create_from_shapely_poly(
-            cls,
+    def create_from_coordinates(
+            cls, *,
             name: str,
-            poly,
+            longitudes: list[float],
+            latitudes: list[float],
             min_depth: float | None = None,
             max_depth: float | None = None
         ):
-        xx, yy = poly.exterior.coords.xy
-        latitudes = yy.tolist()
-        longitudes = xx.tolist()
-
         bounding_box = BoundingBox(
             minimum_longitude=min(longitudes),
             maximum_longitude=max(longitudes),
@@ -111,8 +108,28 @@ class PolygonalDomain(Domain):
         return cls(
             name=name,
             bounding_box=bounding_box,
-            point_latitudes=yy.tolist(),
-            point_longitudes=xx.tolist()
+            point_latitudes=latitudes,
+            point_longitudes=longitudes
+        )
+
+    @classmethod
+    def create_from_shapely_poly(
+            cls,
+            name: str,
+            poly,
+            min_depth: float | None = None,
+            max_depth: float | None = None
+        ):
+        xx, yy = poly.exterior.coords.xy
+        latitudes = yy.tolist()
+        longitudes = xx.tolist()
+
+        return cls.create_from_coordinates(
+            name=name,
+            longitudes=longitudes,
+            latitudes=latitudes,
+            min_depth=min_depth,
+            max_depth=max_depth
         )
 
 
@@ -181,9 +198,9 @@ def read_domain(domain_description: Path) -> Domain:
             )
 
     geo_type = geometry['type'].lower()
-    if geo_type not in ("rectangle", "shapefile"):
+    if geo_type not in ("rectangle", "shapefile", "wkt"):
         raise ValueError(
-            f"type must be chosen among rectangle or shapefile;" \
+            f"type must be chosen among rectangle, wkt or shapefile;" \
             f"received {geo_type}"
         )
 
@@ -239,6 +256,29 @@ def read_domain(domain_description: Path) -> Domain:
             name=name,
             poly=domain_geometry.geometry
         )
+    
+    elif geo_type == "wkt":
+        wkt_file = _read_path(geometry["file_path"])
+        polygon_name = geometry["polygon_name"]
+        with open(wkt_file, "r") as f:
+            available_polys = Polygon.read_WKT_file(f)
+
+        try:
+            poly = available_polys[polygon_name]
+        except KeyError as e:
+            available_polys_str = ('"' + pl + '"' for pl in available_polys)
+            error_message = (
+                f'Polygon "{polygon_name}" not found in {wkt_file}; available '
+                f"choices: {', '.join(available_polys_str)}"
+            )
+            raise KeyError(error_message) from e
+        
+        return PolygonalDomain.create_from_coordinates(
+            name=name,
+            longitudes=poly.border_longitudes,
+            latitudes=poly.border_latitudes,
+        )
+
 
     raise Exception(
         "The geometry type you have chosen should have been implemented "
