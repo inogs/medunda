@@ -14,7 +14,7 @@ from pydantic import Field
 
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
-from medunda.domains.domain import Domain
+from medunda.domains.domain import ConcreteDomain
 from medunda.providers import get_provider
 from medunda.tools.time_tables import split_by_month
 from medunda.tools.typing import VarName
@@ -35,7 +35,7 @@ class Dataset(BaseModel):
         frequency: The frequency of the dataset.
         provider: The provider from which the data will be downloaded.
     """
-    domain: Domain
+    domain: ConcreteDomain
     start_date: datetime
     end_date: datetime
     data_files: dict[VarName, tuple[DataFile, ...]] = {}

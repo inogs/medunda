@@ -307,7 +307,7 @@ def downloader(args):
 
         for variable, files_for_var in downloaded_files.items():
             for filepath in files_for_var:
-                if validate_dataset(filepath, variable, max_depth=domain.maximum_depth):
+                if validate_dataset(filepath, variable, max_depth=domain.bounding_box.maximum_depth):
                     LOGGER.info(f"dataset validated for variable: '{variable}'")
                 else:
                     LOGGER.warning(f"failed dataset validation for variable:'{variable}'")
