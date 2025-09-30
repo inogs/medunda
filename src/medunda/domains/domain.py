@@ -179,7 +179,7 @@ def read_zipped_shapefile(compressed_path: Path, temporary_dir:Path):
     return shapefiles[0]
 
 
-def read_domain(domain_description: Path) -> Domain:
+def read_domain(domain_description: Path) -> ConcreteDomain:
     yaml_content = domain_description.read_text()
     domain_description_raw = yaml.safe_load(yaml_content)
 

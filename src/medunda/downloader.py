@@ -12,7 +12,7 @@ from medunda.components.dataset import Dataset
 from medunda.components.dataset import read_dataset
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import VariableDataset
-from medunda.domains.domain import Domain
+from medunda.domains.domain import ConcreteDomain
 from medunda.domains.domain import read_domain
 from medunda.providers import PROVIDERS
 from medunda.providers import get_provider
@@ -142,7 +142,7 @@ def download_data (
         frequency:Frequency,
         start:datetime,
         end:datetime,
-        domain: Domain,
+        domain: ConcreteDomain,
         split_by: str = "whole",
         provider_class_name: str = "cmems",
         provider_config: Path | None = None,
