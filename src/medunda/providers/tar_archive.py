@@ -587,18 +587,19 @@ class TarArchiveProvider(Provider):
         # mask that contains the indices of the points that are inside the
         # domain. We then use these slices to extract the data from the netcdf
         # files.
+        bounding_box = domain.bounding_box
         data_slices = {
             "latitude": meshmask.indexes["latitude"].slice_indexer(
-                domain.minimum_latitude,
-                domain.maximum_latitude
+                bounding_box.minimum_latitude,
+                bounding_box.maximum_latitude
             ),
             "longitude": meshmask.indexes["longitude"].slice_indexer(
-                domain.minimum_longitude,
-                domain.maximum_longitude
+                bounding_box.minimum_longitude,
+                bounding_box.maximum_longitude
             ),
             "depth": meshmask.indexes["depth"].slice_indexer(
-                domain.minimum_depth,
-                domain.maximum_depth
+                bounding_box.minimum_depth,
+                bounding_box.maximum_depth
             )
         }
         LOGGER.debug("Spatial slices to be used: %s", data_slices)

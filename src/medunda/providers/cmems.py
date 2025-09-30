@@ -152,7 +152,7 @@ class CMEMSProvider(Provider):
                     start_datetime=start,
                     end_datetime=end,
                     output_filename=str(temp_file_path),
-                    **domain.model_dump(exclude={"name"}, exclude_none=True)
+                    **domain.bounding_box.model_dump(exclude_none=True)
                 )
 
                 LOGGER.debug(

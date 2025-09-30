@@ -62,6 +62,7 @@ def main():
             dataset_path=args.input_dataset,
             output_file=args.output_file,
             action_name=args.action,
+            variables=args.variables,
             format=args.format,
             args=build_action_args(args)
         )
