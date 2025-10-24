@@ -75,11 +75,10 @@ def weighted_monthly_average(group, days_in_month):
     return weighted_monthly_average
 
 def climatology(data: xr.Dataset,
-                output_file: Path, 
                 variable:str, 
                 frequency:str,
                 start_date=None, 
-                end_date=None,):
+                end_date=None,) -> xr.Dataset:
 
     #check the variable
     if variable not in data.data_vars:
@@ -116,7 +115,7 @@ def climatology(data: xr.Dataset,
             raise ValueError("Impossible to compute daily climatology with monthly dataset." \
                             "A dataset with daily resolution is required.")
 
-        elif frequency == "seasonally":     #5
+        elif frequency == "seasonally":
 
             months = data_var["time"].dt.month
             seasons = months.to_pandas().map(SEASON_MAP).values
@@ -149,7 +148,5 @@ def climatology(data: xr.Dataset,
             daily_c.coords["season"]=("dayofyear", seasons)
             climatology_data = daily_c.groupby("season").mean()
     
-    climatology = xr.Dataset({variable: climatology_data})
-    
-    climatology.to_netcdf(output_file)
+    climatology = xr.Dataset({variable: climatology_data})    
     return climatology
