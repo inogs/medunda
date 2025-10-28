@@ -60,14 +60,14 @@ class RectangularDomain(Domain):
     type: Literal["RectangularDomain"] = "RectangularDomain"
 
     def compute_selection_mask(self, dataset: xr.Dataset) -> np.ndarray:
-        latitudes = dataset.latitude
-        longitudes = dataset.longitude
+        latitudes = dataset.latitude.values
+        longitudes = dataset.longitude.values
 
         mask = np.ones((latitudes.shape[0], longitudes.shape[0]), dtype=bool)
-        mask[latitudes < self.bounding_box.minimum_latitude] = False
-        mask[latitudes > self.bounding_box.maximum_latitude] = False
-        mask[longitudes < self.bounding_box.minimum_longitude] = False
-        mask[longitudes > self.bounding_box.maximum_longitude] = False
+        mask[latitudes < self.bounding_box.minimum_latitude, :] = False
+        mask[latitudes > self.bounding_box.maximum_latitude, :] = False
+        mask[:, longitudes < self.bounding_box.minimum_longitude] = False
+        mask[:, longitudes > self.bounding_box.maximum_longitude] = False
 
         return mask
 
