@@ -248,14 +248,16 @@ def read_domain(domain_description: Path) -> ConcreteDomain:
 
         xmin, ymin, xmax, ymax = domain_geometry.geometry.bounds
 
-        LOGGER.debug(f"Longitude minimale: {xmin}")
-        LOGGER.debug(f"Longitude maximale: {xmax}")
-        LOGGER.debug(f"Latitude minimale: {ymin}")
-        LOGGER.debug(f"Latitude maximale: {ymax}")
+        LOGGER.debug(f"Minimum longitude: {xmin}")
+        LOGGER.debug(f"Maximum longitude: {xmax}")
+        LOGGER.debug(f"Minimum latitude: {ymin}")
+        LOGGER.debug(f"Maximum latitude: {ymax}")
 
         return PolygonalDomain.create_from_shapely_poly(
             name=name,
-            poly=domain_geometry.geometry
+            poly=domain_geometry.geometry,
+            min_depth=min_depth,
+            max_depth=max_depth
         )
     
     elif geo_type == "wkt":
