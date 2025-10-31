@@ -32,10 +32,60 @@ variables:
   - variable: ph
     dataset_name: pH
     unit: null
+
+  - variable: B1c
+    dataset_name: B1c
+    unit: mg C/m3
+  - variable: B1n
+    dataset_name: B1n
+    unit: mmol N/m3
+  - variable: B1p
+    dataset_name: B1p
+    unit: mmol P/m3
+  
+  - variable: P1c
+    dataset_name: P1c
+    unit: mg C/m3
+  - variable: P2c
+    dataset_name: P2c
+    unit: mg C/m3
+  - variable: P3c
+    dataset_name: P3c
+    unit: mg C/m3
+  - variable: P4c
+    dataset_name: P4c
+    unit: mg C/m3
+  
+  - variable: Z3c
+    dataset_name: Z3c
+    unit: mg C/m3
+  - variable: Z4c
+    dataset_name: Z4c
+    unit: mg C/m3
+  - variable: Z5c
+    dataset_name: Z5c
+    unit: mg C/m3
+  - variable: Z6c
+    dataset_name: Z6c
+    unit: mg C/m3
+  
+  - variable: R1c
+    dataset_name: R1c
+    unit: mg C/m3
+  - variable: R2c
+    dataset_name: R2c
+    unit: mg C/m3
+  - variable: R3c 
+    dataset_name: R3c
+    unit: mg C/m3
+  - variable: R6c
+    dataset_name: R6c
+    unit: mg C/m3
+
 frequencies:
   - frequency: daily
     variables: [o2, no3, po4, si, chl, ph]
     path: "/g100_scratch/userexternal/plazzari/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_1_tar"
   - frequency: monthly
-    variables: [thetao, so, o2, no3, po4, si, chl, ph]
+    variables: [thetao, so, o2, no3, po4, si, chl, ph, B1c, B1n, B1p, P1c, P2c, P3c, P4c, Z3c, Z4c, Z5c, Z6c, R1c, R2c, R3c, R6c]
     path: "/g100_scratch/userexternal/plazzari/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_2_tar"
