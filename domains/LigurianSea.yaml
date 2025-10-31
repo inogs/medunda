@@ -1,0 +1,11 @@
+---
+name: LigurianSea
+geometry:
+  type: Rectangle
+  min_latitude: 42.8644
+  max_latitude: 44.4272
+  min_longitude: 7.539
+  max_longitude: 9.8521
+depth:
+  min_depth: 1.0182366371154785
+  max_depth: 2657
