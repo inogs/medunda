@@ -34,12 +34,8 @@ def extract_bottom(data: xr.Dataset) -> xr.Dataset :
 
         time_values = data['time'].values
 
-        new_data = xr.DataArray(dims=["time", "latitude", "longitude"],
-                                coords={"time": time_values, 
-                                        "latitude": data["latitude"].values,
-                                        "longitude": data["longitude"].values,
-                                        },
-                                data=data[var_name][:, index_map_labeled - 1])
+        new_data = data[var_name][:, index_map_labeled - 1]
+        
         variables[var_name] = new_data
 
     final_dataset = xr.Dataset(variables)
