@@ -113,6 +113,24 @@ Variable("no3", label="Nitrate", cmap=cmocean.cm.matter)  # pyright: ignore[repo
 Variable("po4", label="Phosphate", cmap=cmocean.cm.matter)  # pyright: ignore[reportAttributeAccessIssue]
 Variable("si", label="Silicate", cmap=cmocean.cm.matter)  # pyright: ignore[reportAttributeAccessIssue]
 
+Variable("B1c", label="Aerobic and Anaerobic Bacteria carbon", cmap="viridis")  # pyright: ignore[reportAttributeAccessIssue]
+Variable("B1n", label="Aerobic and Anaerobic Bacteria nitrogen", cmap="viridis")  # pyright: ignore[reportAttributeAccessIssue]
+Variable("B1p", label="Aerobic and Anaerobic Bacteria phosphorous", cmap="viridis")  # pyright: ignore[reportAttributeAccessIssue]
+
+Variable("P1c", label="Diamtoms Biomass_carbon", cmap=cmocean.cm.matter)  # pyright: ignore[reportAttributeAccessIssue
+Variable("P2c", label="Flagellates Biomass_carbon", cmap=cmocean.cm.matter)  # pyright: ignore[reportAttributeAccessIssue
+Variable("P3c", label="PicoPhytoplakton Biomass_carbon", cmap=cmocean.cm.matter)  # pyright: ignore[reportAttributeAccessIssue
+Variable("P4c", label="Large Phytoplankton Biomass_carbon", cmap=cmocean.cm.matter)  # pyright: ignore[reportAttributeAccessIssue
+
+Variable("Z3c", label="Carnivorous Mesozooplankton_carbon", cmap="viridis")  # pyright: ignore[reportAttributeAccessIssue
+Variable("Z4c", label="Omnivorous Mesozooplankton_carbon", cmap="viridis")  # pyright: ignore[reportAttributeAccessIssue
+Variable("Z5c", label="Microzooplankton_carbon", cmap="viridis")  # pyright: ignore[reportAttributeAccessIssue
+Variable("Z6c", label="Heterotrophic Nanoflagellates", cmap="viridis")  # pyright: ignore[reportAttributeAccessIssue
+
+Variable("R1c", label="Dissolved Organic Carbon", cmap=cmocean.cm.matter)  # pyright: ignore[reportAttributeAccessIssue
+Variable("R2c", label="Semi-labile Dissolved Organic Carbon", cmap=cmocean.cm.matter)  # pyright: ignore[reportAttributeAccessIssue
+Variable("R3c", label="Semi-refactory Dissolved Organic Carbon", cmap=cmocean.cm.matter)  # pyright: ignore[reportAttributeAccessIssue
+Variable("R6c", label="Particulate Organic Carbon", cmap=cmocean.cm.matter)  # pyright: ignore[reportAttributeAccessIssue
 
 class VariableDataset(Collection[Variable]):
     """ A Collection of `Variables`.
