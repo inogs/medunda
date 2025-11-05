@@ -16,6 +16,7 @@ from medunda.actions import extract_layer
 from medunda.actions import extract_layer_extremes
 from medunda.actions import extract_surface
 from medunda.actions import integration
+from medunda.actions import integrate_between_layers
 from medunda.components.dataset import read_dataset
 from medunda.tools.logging_utils import configure_logger
 
@@ -38,6 +39,7 @@ ACTION_MODULES = [
     extract_layer_extremes,
     extract_surface,
     integration,
+    integrate_between_layers,
 ]
 
 # This is a dictionary that maps the name of an action to the function that
