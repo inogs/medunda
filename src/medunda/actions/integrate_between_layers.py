@@ -10,17 +10,17 @@ ACTION_NAME = "integrate_between_layers"
 
 
 def configure_parser(subparsers):
-    averaging_between_layers_parser = subparsers.add_parser(
+    integrate_between_layers_parser = subparsers.add_parser(
         ACTION_NAME,
         help="Compute the vertical integral between two specific depths"
     )
-    averaging_between_layers_parser.add_argument(
+    integrate_between_layers_parser.add_argument(
         "--depth-min",
         type=float,
         required=True,
         help="minimum limit of the layer"
     )
-    averaging_between_layers_parser.add_argument(
+    integrate_between_layers_parser.add_argument(
         "--depth-max",
         type=float,
         required=True,
