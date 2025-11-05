@@ -6,7 +6,7 @@ from typing import Any
 import dask.array as da
 
 from medunda.actions import ActionNotFound
-from medunda.actions import averaging_between_layers
+from medunda.actions import average_between_layers
 from medunda.actions import climatology
 from medunda.actions import calculate_stats
 from medunda.actions import depth_average
@@ -29,7 +29,7 @@ else:
 # This is a list of all the modules that define an action that can be
 # executed by the reducer.
 ACTION_MODULES = [
-    averaging_between_layers,
+    average_between_layers,
     calculate_stats,
     climatology,
     depth_average,

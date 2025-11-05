@@ -6,21 +6,21 @@ import xarray as xr
 from medunda.tools.layers import compute_layer_height
 
 LOGGER = logging.getLogger(__name__)
-ACTION_NAME = "averaging_between_layers"
+ACTION_NAME = "average_between_layers"
 
 
 def configure_parser(subparsers):
-    averaging_between_layers_parser = subparsers.add_parser(
+    average_between_layers_parser = subparsers.add_parser(
         ACTION_NAME,
         help="Compute the vertical average between two specific depths"
     )
-    averaging_between_layers_parser.add_argument(
+    average_between_layers_parser.add_argument(
         "--depth-min",
         type=float,
         required=True,
         help="minimum limit of the layer"
     )
-    averaging_between_layers_parser.add_argument(
+    average_between_layers_parser.add_argument(
         "--depth-max",
         type=float,
         required=True,
@@ -28,7 +28,7 @@ def configure_parser(subparsers):
     )
 
 
-def averaging_between_layers (data: xr.Dataset, depth_min, depth_max) -> xr.Dataset:
+def average_between_layers (data: xr.Dataset, depth_min, depth_max) -> xr.Dataset:
     """ Computes the vertical average of variables between two specified depths.
         Returns a dataset containing the weighted average of this strata.
     """
