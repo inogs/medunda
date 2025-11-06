@@ -2,7 +2,7 @@ import logging
 
 import xarray as xr
 
-from medunda.actions.averaging_between_layers import averaging_between_layers
+from medunda.actions.average_between_layers import average_between_layers
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "compute_depth_average"
@@ -25,7 +25,7 @@ def compute_depth_average(data: xr.Dataset) -> xr.Dataset :
     depth_min = data.depth.min().item()
     depth_max = data.depth.max().item()
     
-    depth_average = averaging_between_layers(data, depth_min - 1, depth_max + 1)
+    depth_average = average_between_layers(data, depth_min - 1, depth_max + 1)
     LOGGER.info("Depth average computed successfully")
 
     return depth_average
