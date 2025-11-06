@@ -26,6 +26,9 @@ PRODUCTS={
     ("so",):
         {Frequency.DAILY: "med-cmcc-sal-rean-d",
         Frequency.MONTHLY: "med-cmcc-sal-rean-m"},
+    ("mlotst",):
+        {Frequency.DAILY: "med-cmcc-mld-rean-d",
+        Frequency.MONTHLY: "med-cmcc-mld-rean-m"},
 
     #"MEDSEA_MULTIYEAR_BGC_006_008":
     ("ph",):
