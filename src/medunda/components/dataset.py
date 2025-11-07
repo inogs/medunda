@@ -227,6 +227,24 @@ class Dataset(BaseModel):
 
         data_files = self.get_data_files()
 
+        def clean_longitude_zeros(xr_dataset: xr.Dataset) -> xr.Dataset:
+            # Fixing the 0 value of the longitude! There is a subtle bug in the
+            # Copernicus files: the value of the Greenwich meridian is
+            # 1.4387797e-13 for the physical files and 1.4210855e-13 in the
+            # biochemical ones. We need to put the same value before merging the
+            # datasets, otherwise this value will be repeated twice
+            var_longitude = xr_dataset.coords["longitude"]
+            greenwich_index = np.abs(var_longitude).argmin()
+            if var_longitude[greenwich_index].item() > 1e-6:
+                # This dataset does not contain the Greenwich meridian.
+                # We can skip this process
+                return xr_dataset
+            new_longitude = var_longitude.values
+            new_longitude[greenwich_index] = 0.
+            var_longitude["longitude"] = new_longitude
+            return xr_dataset
+
+        data_paths = []
         for variable in variables:
             LOGGER.debug('Processing variable "%s"', variable)
             variable_data_files = data_files[variable]
@@ -235,36 +253,21 @@ class Dataset(BaseModel):
                 len(variable_data_files),
                 variable
             )
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "ignore",
-                    message="The specified chunks separate the stored chunks"
-                )
-                var_dataset = xr.open_mfdataset(
-                    variable_data_files,
-                    chunks=chunks
-                )
-            LOGGER.debug("Variable %s dataset opened successfully", variable)
-            var_datasets.append(var_dataset)
+            data_paths.extend(variable_data_files)
 
-        # Fixing the 0 value of the longitude! There is a subtle bug in the
-        # Copernicus files: the value of the Greenwich meridian is
-        # 1.4387797e-13 for the physical files and 1.4210855e-13 in the
-        # biochemical ones. We need to put the same value before merging the
-        # datasets, otherwise this value will be repeated twice
-        for var_dataset in var_datasets:
-            var_longitude = var_dataset.coords["longitude"]
-            greenwich_index = np.abs(var_longitude).argmin()
-            if var_longitude[greenwich_index].item() > 1e-6:
-                # This dataset does not contain the Greenwich meridian.
-                # We can skip this process
-                continue
-            new_longitude = var_longitude.values
-            new_longitude[greenwich_index] = 0.
-            var_longitude["longitude"] = new_longitude
+        LOGGER.debug("%s data file will be open", len(data_paths))
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="The specified chunks separate the stored chunks"
+            )
+            dataset_data = xr.open_mfdataset(
+                data_paths,
+                chunks=chunks,
+                preprocess=clean_longitude_zeros,
+            )
+        LOGGER.debug("All files have been opened and merged successfully")
 
-        LOGGER.debug("Merging datasets for all variables")
-        dataset_data = xr.merge(var_datasets, join="inner")
         return dataset_data
 
 
