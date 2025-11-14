@@ -1,0 +1,29 @@
+name: precommit
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  precommit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pipx install poetry==2.2.1
+
+      - name: Install Medunda
+        run: poetry install --with dev
+
+      - name: Run precommit
+        run: poetry run pre-commit run --show-diff-on-failure --color=always --all-files
