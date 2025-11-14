@@ -11,27 +11,26 @@ ACTION_NAME = "extract_min_max"
 def configure_parser(subparsers):
     subparsers.add_parser(
         ACTION_NAME,
-        help="extract the minimum and maximum value of a variable of each year"
+        help="extract the minimum and maximum value of a variable of each year",
     )
 
 
-def extract_min_max (data: xr.Dataset) -> xr.Dataset :
+def extract_min_max(data: xr.Dataset) -> xr.Dataset:
     """Extracts the annual extremes of a variable (maximum and minimum) from the dataset."""
 
     LOGGER.info(f"reading file: {data}")
-    
 
-    var_name=list(data.data_vars)[0]
-    var=data[var_name]
-        
-    values =[]
+    var_name = list(data.data_vars)[0]
+    var = data[var_name]
+
+    values = []
     years = pd.to_datetime(data.time.values).year
     years_array = np.array(years)
 
-    for year in sorted(list(set(years_array))) :
+    for year in sorted(list(set(years_array))):
         indices = np.where(years_array == year)[0]
         yearly_data = var.isel(time=indices)
-            
+
         min_value = float(yearly_data.min().compute().item())
         max_value = float(yearly_data.max().compute().item())
 
@@ -44,14 +43,16 @@ def extract_min_max (data: xr.Dataset) -> xr.Dataset :
         depth_at_min = float(yearly_data.depth[min_indices[1]])
         depth_at_max = float(yearly_data.depth[max_indices[1]])
 
-        values.append ({
-                "year": year, 
+        values.append(
+            {
+                "year": year,
                 "minimum value": min_value,
                 "depth at min": depth_at_min,
                 "maximum value": max_value,
                 "depth at max": depth_at_max,
-                })
-            
-        df=pd.DataFrame(values)
-    
+            }
+        )
+
+        df = pd.DataFrame(values)
+
     return df

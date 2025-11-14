@@ -5,17 +5,17 @@ from collections import deque
 from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from queue import Queue
+from multiprocessing import Manager
+from multiprocessing import Pool
+from multiprocessing import Process
 from pathlib import Path
+from queue import Queue
 
 import netCDF4
 import numpy as np
 import xarray as xr
 import yaml
 from bitsea.commons.mask import Mask
-from multiprocessing import Manager
-from multiprocessing import Pool
-from multiprocessing import Process
 
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
@@ -27,16 +27,19 @@ from medunda.tools.parallelization import get_n_of_processes
 from medunda.tools.temp_dirs import TemporaryDirectory
 from medunda.tools.typing import VarName
 
-
 LOGGER = logging.getLogger(__name__)
 
 AVE_FILE_MASK = re.compile(
     r"^ave\.(?P<date>\d{8}-\d{2}:\d{2}:\d{2})\.(?P<varname>[^.]+)\.nc$"
 )
-TASK = tuple[Path, VarName, str, str | None, np.ndarray, list[tuple[str, Path]]]
+TASK = tuple[
+    Path, VarName, str, str | None, np.ndarray, list[tuple[str, Path]]
+]
 
 
-def reader(args: tuple[Queue, str, Path, str, dict[str, slice], datetime, Path]):
+def reader(
+    args: tuple[Queue, str, Path, str, dict[str, slice], datetime, Path],
+):
     """
     Extracts a single file from a tar archive and puts it in the queue.
 
@@ -68,30 +71,29 @@ def reader(args: tuple[Queue, str, Path, str, dict[str, slice], datetime, Path])
         nc_var_name,
         spatial_slices,
         time_step,
-        temp_dir
+        temp_dir,
     ) = args
 
     LOGGER.debug("Extracting %s from %s", data_file_name, tar_path)
-    with tarfile.open(tar_path, 'r') as tar:
+    with tarfile.open(tar_path, "r") as tar:
         tar.extract(data_file_name, path=temp_dir)
 
     nc_data_file = temp_dir / data_file_name
-    LOGGER.debug("Extracted %s to %s", data_file_name,nc_data_file)
+    LOGGER.debug("Extracted %s to %s", data_file_name, nc_data_file)
 
     slices = (
         slice(None),
         spatial_slices["depth"],
         spatial_slices["latitude"],
-        spatial_slices["longitude"]
+        spatial_slices["longitude"],
     )
 
     LOGGER.debug("Reading %s", nc_data_file)
     try:
         with netCDF4.Dataset(nc_data_file, "r") as ds:
             data = np.asarray(
-                np.ma.getdata(ds[nc_var_name][slices]),
-                dtype=np.float32
-        )
+                np.ma.getdata(ds[nc_var_name][slices]), dtype=np.float32
+            )
     except Exception as e:
         raise IOError(f"Error reading file {nc_data_file}") from e
     LOGGER.debug("Read an array of shape %s", data.shape)
@@ -107,12 +109,12 @@ def reader(args: tuple[Queue, str, Path, str, dict[str, slice], datetime, Path])
 
 
 def allocate_medunda_data_file(
-        var_name: VarName,
-        var_units: str | None,
-        meshmask: xr.Dataset,
-        spatial_slices,
-        time_steps: np.ndarray,
-        f_pointer:netCDF4.Dataset
+    var_name: VarName,
+    var_units: str | None,
+    meshmask: xr.Dataset,
+    spatial_slices,
+    time_steps: np.ndarray,
+    f_pointer: netCDF4.Dataset,
 ):
     """
     Allocates and initializes variables in an empty netCDF file.
@@ -147,19 +149,9 @@ def allocate_medunda_data_file(
     fill_value = 1e20
 
     coords = {
-        "latitude": {
-            "units": "degrees_north",
-            "axis": "Y"
-        },
-        "longitude": {
-            "units": "degrees_east",
-            "axis": "X"
-        },
-        "depth": {
-            "units": "m",
-            "axis": "Z",
-            "long_name": "Depth"
-        }
+        "latitude": {"units": "degrees_north", "axis": "Y"},
+        "longitude": {"units": "degrees_east", "axis": "X"},
+        "depth": {"units": "m", "axis": "Z", "long_name": "Depth"},
     }
     for coord in coords:
         coord_elements = meshmask[coord].values[spatial_slices[coord]]
@@ -189,7 +181,7 @@ def allocate_medunda_data_file(
     time_var.long_name = "Time"
     time_var.standard_name = "time"
     time_var.axis = "T"
-    time_var[:] = time_steps.astype('datetime64[s]').astype(np.int64)
+    time_var[:] = time_steps.astype("datetime64[s]").astype(np.int64)
 
     dtype = np.float32
     dimensions = ("time", "depth", "latitude", "longitude")
@@ -200,7 +192,7 @@ def allocate_medunda_data_file(
         dimensions=dimensions,
         fill_value=fill_value,
         zlib=True,
-        complevel=6
+        complevel=6,
     )
     if var_units is None:
         nc_var.units = "1"
@@ -209,13 +201,13 @@ def allocate_medunda_data_file(
 
 
 def writer(
-        data_queue: Queue,
-        file_path: Path,
-        var_name: VarName,
-        var_units: str | None,
-        meshmask: xr.Dataset,
-        spatial_slices: dict[str, slice],
-        time_steps: np.ndarray,
+    data_queue: Queue,
+    file_path: Path,
+    var_name: VarName,
+    var_units: str | None,
+    meshmask: xr.Dataset,
+    spatial_slices: dict[str, slice],
+    time_steps: np.ndarray,
 ):
     """
     Writes data to a Medunda NetCDF file in a time-stepped manner.
@@ -274,7 +266,7 @@ def writer(
                 time_step,
                 file_path.name,
                 processed_data,
-                time_steps.shape[0]
+                time_steps.shape[0],
             )
 
     temp_file_path.rename(file_path)
@@ -283,7 +275,14 @@ def writer(
 
 def execute_writing_task(args: tuple[TASK, dict, xr.Dataset, int]):
     task, spatial_slices, meshmask, n_processors = args
-    output_file_path, var_name, nc_var_name, var_units, time_steps, file_requirements = task
+    (
+        output_file_path,
+        var_name,
+        nc_var_name,
+        var_units,
+        time_steps,
+        file_requirements,
+    ) = task
     LOGGER.debug("Starting writing task for file %s", output_file_path)
     if n_processors < 2:
         raise ValueError("n_processors must be at least 2")
@@ -295,7 +294,15 @@ def execute_writing_task(args: tuple[TASK, dict, xr.Dataset, int]):
 
         writer_process = Process(
             target=writer,
-            args=(data_queue, output_file_path, var_name, var_units, meshmask, spatial_slices, time_steps)
+            args=(
+                data_queue,
+                output_file_path,
+                var_name,
+                var_units,
+                meshmask,
+                spatial_slices,
+                time_steps,
+            ),
         )
         writer_process.start()
 
@@ -303,7 +310,9 @@ def execute_writing_task(args: tuple[TASK, dict, xr.Dataset, int]):
             temp_dir = Path(t)
             LOGGER.debug(
                 "Created a temporary directory %s for saving the extracted "
-                "nc files for %s", temp_dir, output_file_path
+                "nc files for %s",
+                temp_dir,
+                output_file_path,
             )
 
             reader_args = []
@@ -316,7 +325,7 @@ def execute_writing_task(args: tuple[TASK, dict, xr.Dataset, int]):
                         nc_var_name,
                         spatial_slices,
                         time_steps[i],
-                        temp_dir
+                        temp_dir,
                     )
                 )
 
@@ -331,13 +340,16 @@ def execute_writing_task(args: tuple[TASK, dict, xr.Dataset, int]):
 class TarArchiveProvider(Provider):
     """Provider for tar archives."""
 
-    def __init__(self, name: str,
-                 variables: dict[VarName, dict[str, str]],
-                 frequencies: dict[Frequency, dict],
-                 meshmask: dict[str, str | Path],
-                 source: str = "local",
-                 start_time: datetime | None = None,
-                 end_time: datetime | None = None):
+    def __init__(
+        self,
+        name: str,
+        variables: dict[VarName, dict[str, str]],
+        frequencies: dict[Frequency, dict],
+        meshmask: dict[str, str | Path],
+        source: str = "local",
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+    ):
         self.name = name
         self._variables = variables
         self._frequencies = frequencies
@@ -359,14 +371,13 @@ class TarArchiveProvider(Provider):
         meshmask_path = main_path / "meshmask.nc"
 
         if not meshmask_path.exists():
-
             compression = {"zlib": True, "complevel": 9}
 
             bitsea_meshmask = Mask.from_file(Path(self._meshmask["path"]))
             xr_meshmask = bitsea_meshmask.to_xarray()
             xr_meshmask.to_netcdf(
                 meshmask_path,
-                encoding={v: compression for v in xr_meshmask.data_vars}
+                encoding={v: compression for v in xr_meshmask.data_vars},
             )
             return xr_meshmask
         else:
@@ -421,7 +432,7 @@ class TarArchiveProvider(Provider):
                 LOGGER.debug(f"Ignoring {archive_path} because is on bottom")
                 continue
             LOGGER.debug(f"Checking content of archive {archive_path}")
-            with tarfile.open(archive_path, 'r') as tar:
+            with tarfile.open(archive_path, "r") as tar:
                 tar_members = tar.getmembers()
 
                 for member in tar_members:
@@ -429,10 +440,10 @@ class TarArchiveProvider(Provider):
                     if member_path.suffix != ".nc":
                         LOGGER.debug(
                             "Ignoring file %s because its suffix is not .nc",
-                            member.name
+                            member.name,
                         )
                         continue
-                    if member_path.parent != Path('.'):
+                    if member_path.parent != Path("."):
                         raise ValueError(
                             f"Tar archive {archive_path} contains file "
                             f"'{member.name}' with subfolder path. All files "
@@ -453,23 +464,21 @@ class TarArchiveProvider(Provider):
                             f"{member.name}, inside archive {archive_path}"
                         )
                     ave_date = datetime.strptime(
-                        ave_match.group("date"),
-                        "%Y%m%d-%H:%M:%S"
+                        ave_match.group("date"), "%Y%m%d-%H:%M:%S"
                     )
 
                     nc_files[member.name] = {
                         "date": ave_date,
-                        "tar": archive_path
+                        "tar": archive_path,
                     }
         return nc_files
 
-
     def download_data(
-            self,
-            domain: Domain,
-            frequency: Frequency,
-            main_path: Path,
-            data_files: Mapping[VarName, tuple[DataFile, ...]]
+        self,
+        domain: Domain,
+        frequency: Frequency,
+        main_path: Path,
+        data_files: Mapping[VarName, tuple[DataFile, ...]],
     ) -> None:
         # Get the current meshmask
         LOGGER.debug("Getting meshmask")
@@ -496,9 +505,13 @@ class TarArchiveProvider(Provider):
             to_be_downloaded[var_name] = [
                 f for f in var_files if not (main_path / f.path).exists()
             ]
-        total_downloads = sum(len(files) for files in to_be_downloaded.values())
+        total_downloads = sum(
+            len(files) for files in to_be_downloaded.values()
+        )
         if total_downloads == 0:
-            LOGGER.info("All files are already downloaded. Skipping extraction.")
+            LOGGER.info(
+                "All files are already downloaded. Skipping extraction."
+            )
             return
         else:
             LOGGER.info(
@@ -538,25 +551,36 @@ class TarArchiveProvider(Provider):
                 # file and the path to the tar that stores it.
                 file_requirements: list[tuple[str, Path]] = []
 
-                LOGGER.debug("Checking dependencies of file %s", dataset_file.path)
-                for nc_name in sorted(nc_files.keys(), key=lambda x: nc_files[x]["date"]):
+                LOGGER.debug(
+                    "Checking dependencies of file %s", dataset_file.path
+                )
+                for nc_name in sorted(
+                    nc_files.keys(), key=lambda x: nc_files[x]["date"]
+                ):
                     file_date = nc_files[nc_name]["date"]
-                    if file_date < dataset_file.start_date or file_date > dataset_file.end_date:
+                    if (
+                        file_date < dataset_file.start_date
+                        or file_date > dataset_file.end_date
+                    ):
                         continue
                     LOGGER.debug(
                         "We must read file %s from %s to create file %s",
                         nc_name,
                         nc_files[nc_name]["tar"],
-                        dataset_file.path
+                        dataset_file.path,
                     )
                     dataset_time_steps.append(file_date)
-                    file_requirements.append((nc_name, nc_files[nc_name]["tar"]))
+                    file_requirements.append(
+                        (nc_name, nc_files[nc_name]["tar"])
+                    )
 
-                file_time_steps = np.array(dataset_time_steps, dtype='datetime64[s]')
+                file_time_steps = np.array(
+                    dataset_time_steps, dtype="datetime64[s]"
+                )
                 LOGGER.debug(
                     "File %s will contain %s time steps",
                     dataset_file.path,
-                    file_time_steps.shape[0]
+                    file_time_steps.shape[0],
                 )
 
                 # Ensure that the dataset_file_path are relative to the
@@ -578,7 +602,8 @@ class TarArchiveProvider(Provider):
                         self._variables[var_name]["dataset_name"],
                         self._variables[var_name]["unit"],
                         file_time_steps,
-                        file_requirements)
+                        file_requirements,
+                    )
                 )
 
         # Before reading the data, we need to take into account that we do not
@@ -590,17 +615,14 @@ class TarArchiveProvider(Provider):
         bounding_box = domain.bounding_box
         data_slices = {
             "latitude": meshmask.indexes["latitude"].slice_indexer(
-                bounding_box.minimum_latitude,
-                bounding_box.maximum_latitude
+                bounding_box.minimum_latitude, bounding_box.maximum_latitude
             ),
             "longitude": meshmask.indexes["longitude"].slice_indexer(
-                bounding_box.minimum_longitude,
-                bounding_box.maximum_longitude
+                bounding_box.minimum_longitude, bounding_box.maximum_longitude
             ),
             "depth": meshmask.indexes["depth"].slice_indexer(
-                bounding_box.minimum_depth,
-                bounding_box.maximum_depth
-            )
+                bounding_box.minimum_depth, bounding_box.maximum_depth
+            ),
         }
         LOGGER.debug("Spatial slices to be used: %s", data_slices)
 
@@ -628,36 +650,35 @@ class TarArchiveProvider(Provider):
         simultaneous_tasks = min(len(tasks), n_processors // 2)
         processes_per_task = max(2, n_processors // simultaneous_tasks)
         # We prefer overloading than keeping some cores idle
-        if processes_per_task * simultaneous_tasks < n_processors and simultaneous_tasks < len(tasks):
+        if (
+            processes_per_task * simultaneous_tasks < n_processors
+            and simultaneous_tasks < len(tasks)
+        ):
             simultaneous_tasks += 1
         LOGGER.debug(
             "Running %s task simultaneously, with %s processes each",
             simultaneous_tasks,
-            processes_per_task
+            processes_per_task,
         )
 
         thread_args = [
             (task, data_slices, meshmask, processes_per_task) for task in tasks
         ]
         with ThreadPoolExecutor(max_workers=simultaneous_tasks) as executor:
-            deque(
-                executor.map(execute_writing_task, thread_args),
-                maxlen=0
-            )
+            deque(executor.map(execute_writing_task, thread_args), maxlen=0)
         LOGGER.info("All files downloaded and extracted")
 
-
     @staticmethod
-    def _read_frequencies_in_config(config_content: dict, variables: dict[VarName, dict]) -> dict[Frequency, dict]:
+    def _read_frequencies_in_config(
+        config_content: dict, variables: dict[VarName, dict]
+    ) -> dict[Frequency, dict]:
         output: dict[Frequency, dict] = {}
         if "frequencies" not in config_content:
             raise ValueError(
                 'The configuration file must contain a "frequencies" section.'
             )
         if not isinstance(config_content["frequencies"], list):
-            raise ValueError(
-                'The "frequencies" section must be a list'
-            )
+            raise ValueError('The "frequencies" section must be a list')
 
         required_keys = {"frequency", "variables", "path"}
         for frequency in config_content["frequencies"]:
@@ -666,8 +687,8 @@ class TarArchiveProvider(Provider):
                     'Each frequency in the "frequencies" section must be a '
                     "dictionary with the following keys: {}. "
                     "Received: {}".format(
-                        ", ". join([f for f in sorted(list(required_keys))]),
-                        frequency
+                        ", ".join([f for f in sorted(list(required_keys))]),
+                        frequency,
                     )
                 )
 
@@ -676,20 +697,20 @@ class TarArchiveProvider(Provider):
                 raise ValueError(
                     'Each frequency in the "frequencies" section must contain '
                     "the following keys: {}. Missing keys in {} ---> {}".format(
-                        ", ". join([f for f in sorted(list(required_keys))]),
+                        ", ".join([f for f in sorted(list(required_keys))]),
                         frequency,
-                        ", ".join([f for f in sorted(list(missing_keys))])
+                        ", ".join([f for f in sorted(list(missing_keys))]),
                     )
                 )
 
             for key in frequency.keys():
                 if key not in required_keys:
-                    supported_keys = ", ". join(
+                    supported_keys = ", ".join(
                         [f for f in sorted(list(required_keys))]
                     )
                     raise ValueError(
                         f'Invalid key "{key}" in frequency {frequency}. '
-                        f'Supported keys are: {supported_keys}.'
+                        f"Supported keys are: {supported_keys}."
                     )
 
             try:
@@ -706,7 +727,7 @@ class TarArchiveProvider(Provider):
             if not isinstance(frequency_vars, list):
                 raise ValueError(
                     f'The "variables" key in frequency {frequency} must be a '
-                    f'list. Received: {frequency_vars}'
+                    f"list. Received: {frequency_vars}"
                 )
             for var in frequency_vars:
                 if var not in variables:
@@ -722,23 +743,22 @@ class TarArchiveProvider(Provider):
 
             output[frequency_value] = {
                 "path": frequency_path,
-                "variables": frequency_vars
+                "variables": frequency_vars,
             }
 
         return output
 
-
     @staticmethod
-    def _read_variables_in_config(config_content: dict) -> dict[VarName, dict[str, str]]:
+    def _read_variables_in_config(
+        config_content: dict,
+    ) -> dict[VarName, dict[str, str]]:
         variables_config: dict[VarName, dict[str, str]] = {}
         if "variables" not in config_content:
             raise ValueError(
                 'The configuration file must contain a "variables" section.'
             )
         if not isinstance(config_content["variables"], list):
-            raise ValueError(
-                'The "variables" section must be a list.'
-            )
+            raise ValueError('The "variables" section must be a list.')
 
         for raw_var in config_content["variables"]:
             if not isinstance(raw_var, Mapping):
@@ -752,7 +772,7 @@ class TarArchiveProvider(Provider):
                 raise ValueError(
                     'Each variable in the "variables" section must contain '
                     'the keys "variable" and "unit". Optional keys are: '
-                    f'dataset_name. Received: {raw_var}'
+                    f"dataset_name. Received: {raw_var}"
                 )
             for key in raw_var.keys():
                 if key not in {"variable", "unit", "dataset_name"}:
@@ -772,23 +792,22 @@ class TarArchiveProvider(Provider):
 
             variables_config[var_name] = {
                 "unit": raw_var["unit"],
-                "dataset_name": raw_var.get("dataset_name", current_var.name)
+                "dataset_name": raw_var.get("dataset_name", current_var.name),
             }
 
         return variables_config
 
-
     @staticmethod
-    def _read_meshmask_in_config(config_content: dict) -> dict[str, str | Path]:
+    def _read_meshmask_in_config(
+        config_content: dict,
+    ) -> dict[str, str | Path]:
         if "meshmask" not in config_content:
             raise ValueError(
                 'The configuration file must contain a "meshmask" section.'
             )
         meshmask_dict = config_content["meshmask"]
         if not isinstance(meshmask_dict, Mapping):
-            raise ValueError(
-                'The "meshmask" section must be a dictionary.'
-            )
+            raise ValueError('The "meshmask" section must be a dictionary.')
 
         if "type" not in meshmask_dict:
             raise ValueError(
@@ -801,7 +820,6 @@ class TarArchiveProvider(Provider):
             )
 
         return dict(config_content["meshmask"])
-
 
     @classmethod
     def create(cls, config_file: Path | None = None) -> "Provider":
@@ -820,7 +838,9 @@ class TarArchiveProvider(Provider):
         variables = cls._read_variables_in_config(config_content)
 
         # Validate the frequencies
-        frequencies = cls._read_frequencies_in_config(config_content, variables)
+        frequencies = cls._read_frequencies_in_config(
+            config_content, variables
+        )
 
         meshmask = cls._read_meshmask_in_config(config_content)
 
@@ -831,5 +851,5 @@ class TarArchiveProvider(Provider):
             meshmask=meshmask,
             source=config_content.get("source", "local"),
             start_time=config_content.get("start_time", None),
-            end_time=config_content.get("end_time", None)
+            end_time=config_content.get("end_time", None),
         )

@@ -29,7 +29,9 @@ else:
     LOGGER = logging.getLogger(__name__)
 
 
-def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.ArgumentParser:
+def configure_parser(
+    parser: argparse.ArgumentParser | None = None,
+) -> argparse.ArgumentParser:
     """
     parse command line arguments:
     --variable: the variable to download:
@@ -45,7 +47,7 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
         title="action",
         required=True,
         dest="action",
-        help="Choose if creating a new dataset or resuming the download of an existing one"
+        help="Choose if creating a new dataset or resuming the download of an existing one",
     )
 
     create_subparser = subparsers.add_parser(
@@ -64,19 +66,19 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
         choices=VariableDataset.all_variables().get_variable_names(),
         nargs="+",
         required=True,
-        help="Name of the variable to download"
+        help="Name of the variable to download",
     )
     create_subparser.add_argument(
         "--start-date",
         type=date_from_str,
         required=True,
-        help="Starting date for the download (format YYYY-MM-DD)"
+        help="Starting date for the download (format YYYY-MM-DD)",
     )
     create_subparser.add_argument(
         "--end-date",
         type=date_from_str,
         required=True,
-        help="End date of the download (format YYYY-MM-DD)"
+        help="End date of the download (format YYYY-MM-DD)",
     )
     create_subparser.add_argument(
         "--frequency",
@@ -84,7 +86,7 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
         choices=["monthly", "daily"],
         required=False,
         default="monthly",
-        help="Frequency of the downloaded data"
+        help="Frequency of the downloaded data",
     )
     create_subparser.add_argument(
         "--domain",
@@ -102,7 +104,7 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
         help="Split the downloaded dataset by month, year or download all data together",
     )
 
-    create_subparser.add_argument(      #input the directory to save the file
+    create_subparser.add_argument(  # input the directory to save the file
         "--output-dir",
         type=Path,
         required=True,
@@ -136,26 +138,24 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
     return parser
 
 
-def download_data (
-        variables: Iterable[VarName],
-        output_dir:Path,
-        frequency:Frequency,
-        start:datetime,
-        end:datetime,
-        domain: ConcreteDomain,
-        split_by: str = "whole",
-        provider_class_name: str = "cmems",
-        provider_config: Path | None = None,
-        ) -> dict[VarName, tuple[Path, ...]]:
-
-    """Download data for the specified variables, frequency, and time range.
-    """
+def download_data(
+    variables: Iterable[VarName],
+    output_dir: Path,
+    frequency: Frequency,
+    start: datetime,
+    end: datetime,
+    domain: ConcreteDomain,
+    split_by: str = "whole",
+    provider_class_name: str = "cmems",
+    provider_config: Path | None = None,
+) -> dict[VarName, tuple[Path, ...]]:
+    """Download data for the specified variables, frequency, and time range."""
     # Check if the value of split_by is valid
     allowed_split_by = ("month", "year", "whole")
     if split_by not in allowed_split_by:
         raise ValueError(
             f'Invalid value for "split_by"; received {split_by} but the only '
-            f'valid values are {allowed_split_by}'
+            f"valid values are {allowed_split_by}"
         )
 
     # Prepare the time intervals based on the split_by parameter
@@ -169,7 +169,9 @@ def download_data (
         raise ValueError(f"Internal error: invalid parameter: {split_by}")
 
     # Create the provider instance that will handle the download
-    provider = get_provider(provider_class_name).create(config_file=provider_config)
+    provider = get_provider(provider_class_name).create(
+        config_file=provider_config
+    )
     if hasattr(provider, "name"):
         provider_name = getattr(provider, "name")
     else:
@@ -199,7 +201,7 @@ def download_data (
     downloaded_files: dict[VarName, tuple[DataFile, ...]] = {}
 
     # Dataset file
-    dataset_file = output_dir / f"medunda_dataset.json"
+    dataset_file = output_dir / "medunda_dataset.json"
     if dataset_file.exists():
         raise IOError(
             f"Dataset file {dataset_file} already exists. "
@@ -220,7 +222,7 @@ def download_data (
                 frequency=str(frequency),
                 start=start_date,
                 end=end_date,
-                domain_name=domain.name
+                domain_name=domain.name,
             )
 
             output_file_path = var_output_dir / output_file_name
@@ -228,7 +230,7 @@ def download_data (
                 start_date=start_date,
                 end_date=end_date,
                 variable=variable,
-                path=output_file_path
+                path=output_file_path,
             )
             files_for_current_var.append(output_file)
 
@@ -244,7 +246,7 @@ def download_data (
         frequency=frequency,
         provider=provider_class_name,
         provider_config=provider_config,
-        main_path=output_dir.absolute()
+        main_path=output_dir.absolute(),
     )
 
     # Save the dataset information to a JSON file
@@ -265,9 +267,9 @@ def validate_dataset(filepath, variable, max_depth: float | None):
 
     LOGGER.info(f"dataset validated: {filepath}")
 
-    with xr.open_dataset(filepath) as dataset:  #open the dataset using xarray
+    with xr.open_dataset(filepath) as dataset:  # open the dataset using xarray
         # check for necessary dimensions
-        required_dims=["time", "latitude", "longitude"]
+        required_dims = ["time", "latitude", "longitude"]
 
         for dim in required_dims:
             if dim not in dataset.dims:
@@ -281,11 +283,17 @@ def validate_dataset(filepath, variable, max_depth: float | None):
         if "depth" in dataset.variables:
             depth_values = dataset["depth"].values
             LOGGER.debug(f"depth values: {depth_values}")
-            if depth_values.min()<0 or max_depth is not None and depth_values.max() > max_depth:
-                print ("depth range is outside the expected bounds. Validation failed.")
+            if (
+                depth_values.min() < 0
+                or max_depth is not None
+                and depth_values.max() > max_depth
+            ):
+                print(
+                    "depth range is outside the expected bounds. Validation failed."
+                )
                 return False
 
-    LOGGER.info ("Successful Validation")
+    LOGGER.info("Successful Validation")
     return True
 
 
@@ -307,22 +315,30 @@ def downloader(args):
 
         for variable, files_for_var in downloaded_files.items():
             for filepath in files_for_var:
-                if validate_dataset(filepath, variable, max_depth=domain.bounding_box.maximum_depth):
-                    LOGGER.info(f"dataset validated for variable: '{variable}'")
+                if validate_dataset(
+                    filepath,
+                    variable,
+                    max_depth=domain.bounding_box.maximum_depth,
+                ):
+                    LOGGER.info(
+                        f"dataset validated for variable: '{variable}'"
+                    )
                 else:
-                    LOGGER.warning(f"failed dataset validation for variable:'{variable}'")
+                    LOGGER.warning(
+                        f"failed dataset validation for variable:'{variable}'"
+                    )
 
     else:
         dataset = read_dataset(args.dataset_dir)
 
         LOGGER.info("Resuming the download...")
-        
+
         dataset.download_data()
 
     return 0
 
 
-def main ():
+def main():
     configure_logger(LOGGER)
     args = configure_parser().parse_args()
     return downloader(args)

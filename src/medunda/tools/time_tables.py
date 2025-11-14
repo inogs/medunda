@@ -42,17 +42,15 @@ def get_next_year(current_date: datetime) -> datetime:
     Returns:
         The first day of the next year.
     """
-    return datetime(
-        year=current_date.year + 1, month=1, day=1
-    )
+    return datetime(year=current_date.year + 1, month=1, day=1)
 
 
 def split_into_intervals(
-        start_date: datetime,
-        end_date: datetime,
-        get_next_point: Callable[[datetime], datetime],
-        resolution: timedelta = timedelta(seconds=1)
-        ) -> list[tuple[datetime, datetime]]:
+    start_date: datetime,
+    end_date: datetime,
+    get_next_point: Callable[[datetime], datetime],
+    resolution: timedelta = timedelta(seconds=1),
+) -> list[tuple[datetime, datetime]]:
     """
     Splits a time interval into subintervals using a custom function to
     determine split points.
@@ -77,11 +75,9 @@ def split_into_intervals(
     split_points = [current_date]
 
     while current_date < end_date:
-        current_date = min(
-            get_next_point(current_date), end_date
-        )
+        current_date = min(get_next_point(current_date), end_date)
         split_points.append(current_date)
-    
+
     intervals = []
     for start, end in pairwise(split_points):
         interval_end = end if end == end_date else end - resolution
@@ -91,9 +87,8 @@ def split_into_intervals(
 
 
 def split_by_month(
-        start_date: datetime,
-        end_date:datetime
-        ) -> list[tuple[datetime, datetime]]:
+    start_date: datetime, end_date: datetime
+) -> list[tuple[datetime, datetime]]:
     """
     Splits a time interval into monthly subintervals.
 
@@ -108,14 +103,13 @@ def split_by_month(
         start_date,
         end_date,
         get_next_point=get_next_month,
-        resolution=timedelta(seconds=1)
+        resolution=timedelta(seconds=1),
     )
 
 
 def split_by_year(
-        start_date: datetime,
-        end_date:datetime
-        ) -> list[tuple[datetime, datetime]]:
+    start_date: datetime, end_date: datetime
+) -> list[tuple[datetime, datetime]]:
     """
     Splits a time interval into yearly subintervals.
 
@@ -130,5 +124,5 @@ def split_by_year(
         start_date,
         end_date,
         get_next_point=get_next_year,
-        resolution=timedelta(seconds=1)
+        resolution=timedelta(seconds=1),
     )

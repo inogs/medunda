@@ -10,13 +10,12 @@ ACTION_NAME = "compute_depth_average"
 
 def configure_parser(subparsers):
     subparsers.add_parser(
-        ACTION_NAME,
-        help="Compute the average on all the vertical levels"
+        ACTION_NAME, help="Compute the average on all the vertical levels"
     )
 
 
-def compute_depth_average(data: xr.Dataset) -> xr.Dataset :
-    """    Compute the average on all the vertical levels of the dataset.
+def compute_depth_average(data: xr.Dataset) -> xr.Dataset:
+    """Compute the average on all the vertical levels of the dataset.
 
     Args:
         data (xr.Dataset): Input dataset with depth as one of the dimensions.
@@ -24,7 +23,7 @@ def compute_depth_average(data: xr.Dataset) -> xr.Dataset :
     LOGGER.info("Computing depth average")
     depth_min = data.depth.min().item()
     depth_max = data.depth.max().item()
-    
+
     depth_average = average_between_layers(data, depth_min - 1, depth_max + 1)
     LOGGER.info("Depth average computed successfully")
 

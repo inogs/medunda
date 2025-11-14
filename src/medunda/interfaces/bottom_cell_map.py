@@ -20,10 +20,9 @@ from medunda.tools.typing import VarName
 LOGGER = logging.getLogger(__name__)
 
 
-
 def _build_callable_wrapper(
-        f: Callable[[xr.Dataset], dict[str, Any]]
-    ) -> Callable[[np.ndarray, dict, dict[str, Any]], Delayed]:
+    f: Callable[[xr.Dataset], dict[str, Any]],
+) -> Callable[[np.ndarray, dict, dict[str, Any]], Delayed]:
     """
     Builds a delayed wrapper function for the provided function `f`
 
@@ -55,12 +54,13 @@ def _build_callable_wrapper(
         variables as input and returns the result of the user-defined function
         `f`.
     """
+
     @delayed
     def f_wrapper(
         time_steps: np.ndarray,
         coordinates: dict[str, Any],
-        data: dict[VarName, list[np.ndarray]]
-        ) -> dict[str, Any]:
+        data: dict[VarName, list[np.ndarray]],
+    ) -> dict[str, Any]:
         dataset_coords = {"model_time": time_steps}
         dataset_coords.update(coordinates)
 
@@ -70,13 +70,15 @@ def _build_callable_wrapper(
         )
 
         return f(point_array)
+
     return f_wrapper
 
 
 def _merge_together(
-        results: Sequence[Delayed],
-        dask_f_meta: pd.DataFrame | None,
-        original_table: pd.DataFrame) -> dask.dataframe.DataFrame:
+    results: Sequence[Delayed],
+    dask_f_meta: pd.DataFrame | None,
+    original_table: pd.DataFrame,
+) -> dask.dataframe.DataFrame:
     """
     Merge the results with the original table into a Dask DataFrame
 
@@ -100,9 +102,7 @@ def _merge_together(
 
     LOGGER.debug("Creating a dataframe with all the outputs")
     results_df = dask.dataframe.from_delayed(
-        delayed_dataframes,
-        meta=dask_f_meta,
-        verify_meta=False
+        delayed_dataframes, meta=dask_f_meta, verify_meta=False
     )
     LOGGER.debug(
         "Created a dataframe with %s partitions", results_df.npartitions
@@ -111,17 +111,12 @@ def _merge_together(
     # Convert the original table to a Dask DataFrame
     LOGGER.debug("Transforming original inputs into dask dataframe")
     original_ddf = dask.dataframe.from_pandas(
-        original_table,
-        npartitions=results_df.npartitions
+        original_table, npartitions=results_df.npartitions
     )
 
     LOGGER.debug("Merging the results with the original table")
     output_ddf = dask.dataframe.merge(
-        results_df,
-        original_ddf,
-        left_index=True,
-        right_index=True,
-        how="left"
+        results_df, original_ddf, left_index=True, right_index=True, how="left"
     )
 
     return output_ddf
@@ -157,13 +152,15 @@ class BottomCellMap:
         time_column (str): The name of the column in the point table that contains time
             values. Defaults to "time".
     """
-    def __init__(self,
-                 dataset: Dataset,
-                 time_range: timedelta,
-                 lat_column: str = "latitude",
-                 lon_column: str = "longitude",
-                 time_column: str = "time",
-                 ):
+
+    def __init__(
+        self,
+        dataset: Dataset,
+        time_range: timedelta,
+        lat_column: str = "latitude",
+        lon_column: str = "longitude",
+        time_column: str = "time",
+    ):
         LOGGER.debug("Initializing a new %s instance", self.__class__.__name__)
         self._dataset = dataset
         self._time_range = time_range
@@ -172,10 +169,13 @@ class BottomCellMap:
         self._lon_column = lon_column
         self._time_column = time_column
 
-    def _generate_delayed(self,
-                          callable_wrapper: Callable[[np.ndarray, dict, dict[VarName, list]], Delayed],
-                          point_dataset: xr.Dataset,
-                          ) -> Delayed:
+    def _generate_delayed(
+        self,
+        callable_wrapper: Callable[
+            [np.ndarray, dict, dict[VarName, list]], Delayed
+        ],
+        point_dataset: xr.Dataset,
+    ) -> Delayed:
         """
         Generate a delayed object that applies the callable_wrapper to a point
 
@@ -202,8 +202,9 @@ class BottomCellMap:
             if coordinate == "model_time":
                 continue
             coord_value = point_dataset[coordinate].values
-            assert np.ndim(coord_value) == 0, \
+            assert np.ndim(coord_value) == 0, (
                 f"Coordinate {coordinate} is not a scalar value."
+            )
             coordinates[coordinate] = coord_value
 
         times = point_dataset["model_time"].values
@@ -215,17 +216,21 @@ class BottomCellMap:
             if k in coordinates:
                 continue
             delayed_v = v.data.to_delayed()
-            assert len(delayed_v.shape) == 1, \
+            assert len(delayed_v.shape) == 1, (
                 f"Data variable {k} is not a 1D array."
+            )
 
             data[k] = delayed_v.tolist()
 
         return callable_wrapper(times, coordinates, data)
 
-    def _split_into_chunks(self, lat_indices: xr.DataArray,
-                           lon_indices: xr.DataArray,
-                           lat_chunks: Sequence[int],
-                           lon_chunks: Sequence[int]) -> tuple[tuple[tuple[slice, slice], np.ndarray], ...]:
+    def _split_into_chunks(
+        self,
+        lat_indices: xr.DataArray,
+        lon_indices: xr.DataArray,
+        lat_chunks: Sequence[int],
+        lon_chunks: Sequence[int],
+    ) -> tuple[tuple[tuple[slice, slice], np.ndarray], ...]:
         """
         Splits the lat_indices and lon_indices into chunks based on the provided chunk sizes.
         """
@@ -237,8 +242,12 @@ class BottomCellMap:
         LOGGER.debug("Longitude split = %s", lon_splits)
         LOGGER.debug("Latitude split = %s", lat_splits)
 
-        lon_chunk_indices = np.searchsorted(lon_splits, lon_indices, side='right')
-        lat_chunk_indices = np.searchsorted(lat_splits, lat_indices, side='right')
+        lon_chunk_indices = np.searchsorted(
+            lon_splits, lon_indices, side="right"
+        )
+        lat_chunk_indices = np.searchsorted(
+            lat_splits, lat_indices, side="right"
+        )
 
         sections = []
         for lat_chunk_index in set(lat_chunk_indices):
@@ -249,7 +258,7 @@ class BottomCellMap:
             else:
                 lat_slice = slice(
                     lat_splits[lat_chunk_index - 1],
-                    lat_splits[lat_chunk_index]
+                    lat_splits[lat_chunk_index],
                 )
 
             for lon_chunk_index in set(lon_chunk_indices):
@@ -260,13 +269,13 @@ class BottomCellMap:
                 else:
                     lon_slice = slice(
                         lon_splits[lon_chunk_index - 1],
-                        lon_splits[lon_chunk_index]
+                        lon_splits[lon_chunk_index],
                     )
 
                 positions = np.nonzero(
                     np.logical_and(
                         lat_chunk_indices == lat_chunk_index,
-                        lon_chunk_indices == lon_chunk_index
+                        lon_chunk_indices == lon_chunk_index,
                     )
                 )[0]
                 if positions.size == 0:
@@ -275,7 +284,9 @@ class BottomCellMap:
                 local_lon_indices = lon_indices[positions]
                 local_lat_indices = lat_indices[positions]
                 if lon_slice.start is not None:
-                    assert np.min(local_lon_indices) >= lon_slice.start, f"lon_indices = {local_lon_indices}, lon_slice = {lon_slice}"
+                    assert np.min(local_lon_indices) >= lon_slice.start, (
+                        f"lon_indices = {local_lon_indices}, lon_slice = {lon_slice}"
+                    )
                 if lon_slice.stop is not None:
                     assert np.max(local_lon_indices) < lon_slice.stop
                 if lat_slice.start is not None:
@@ -294,18 +305,19 @@ class BottomCellMap:
         smallest_section = sections.pop(-1)
         sections.insert(0, smallest_section)
 
-        assert sum(len(s[1]) for s in sections) == len(lat_indices), \
+        assert sum(len(s[1]) for s in sections) == len(lat_indices), (
             "Some indices are missing after splitting into chunks."
+        )
 
         return tuple(sections)
 
-
-    def map(self,
-            func: Callable[[xr.Dataset], dict[str, Any]],
-            point_table: pd.DataFrame,
-            func_meta: dict[str, np.typing.DTypeLike] | None = None,
-            delayed: bool = False
-        ) -> pd.DataFrame | dask.dataframe.DataFrame:
+    def map(
+        self,
+        func: Callable[[xr.Dataset], dict[str, Any]],
+        point_table: pd.DataFrame,
+        func_meta: dict[str, np.typing.DTypeLike] | None = None,
+        delayed: bool = False,
+    ) -> pd.DataFrame | dask.dataframe.DataFrame:
         """
         Maps the provided function to the bottom cell data corresponding
         to each point in the point table.
@@ -381,13 +393,10 @@ class BottomCellMap:
                 be computed later. If False, the method computes the results
                 immediately and returns a Pandas DataFrame.
         """
-        LOGGER.debug(
-            "Applying the function to %s points...", len(point_table)
-        )
+        LOGGER.debug("Applying the function to %s points...", len(point_table))
 
         LOGGER.debug(
-            "Reading the mask of the dataset to find the bottom cell "
-            "indices"
+            "Reading the mask of the dataset to find the bottom cell indices"
         )
         mask = Mask.from_xarray(self._dataset.get_mask())
 
@@ -421,8 +430,9 @@ class BottomCellMap:
         LOGGER.debug(
             "Computing the model indices for the points in the point table..."
         )
-        point_table[["model_lon_index", "model_lat_index"]] = \
+        point_table[["model_lon_index", "model_lat_index"]] = (
             point_table.apply(get_model_indices, axis=1)
+        )
 
         point_table["model_lat"] = mask.lat[point_table["model_lat_index"]]
         point_table["model_lon"] = mask.lon[point_table["model_lon_index"]]
@@ -440,7 +450,8 @@ class BottomCellMap:
 
         LOGGER.debug(
             "Extracting the bottom cell indices for all the %s points "
-            "in the point table", len(point_table)
+            "in the point table",
+            len(point_table),
         )
         lat_indices = point_table["model_lat_index"].values.astype(int)
         lon_indices = point_table["model_lon_index"].values.astype(int)
@@ -470,7 +481,9 @@ class BottomCellMap:
         # to avoid loading all time steps at once, which can be
         # memory-intensive.
         chunks: dict[str, str | int] = {
-            "depth": "auto", "latitude": "auto", "longitude": "auto"
+            "depth": "auto",
+            "latitude": "auto",
+            "longitude": "auto",
         }
         if n_time_steps > 500:
             chunks["time"] = "auto"
@@ -478,14 +491,15 @@ class BottomCellMap:
             chunks["time"] = -1  # Load all time steps at once
 
         LOGGER.debug(
-            "Reading the dataset to extract the data using the following " \
-            "chunks: %s", chunks
+            "Reading the dataset to extract the data using the following "
+            "chunks: %s",
+            chunks,
         )
 
         data = self._dataset.get_data(chunks=chunks)
         LOGGER.debug(
             "Dataset opened! It has the following dimensions: %s",
-            dict(data.sizes)
+            dict(data.sizes),
         )
 
         var3d = []
@@ -493,13 +507,15 @@ class BottomCellMap:
             if "depth" in data[var_name].dims:
                 LOGGER.debug(
                     "Variable %s has depth dimension; selecting the bottom "
-                    "cell data only", var_name
+                    "cell data only",
+                    var_name,
                 )
                 var3d.append(var_name)
             else:
                 LOGGER.debug(
                     "Variable %s does not have depth dimension; using it "
-                    "as is", var_name
+                    "as is",
+                    var_name,
                 )
 
         if len(var3d) > 0:
@@ -511,12 +527,13 @@ class BottomCellMap:
             data_chunks = chunking_dataset.chunks
             LOGGER.debug(
                 "The 3d variables of the dataset has the following chunks: %s",
-                data_chunks
+                data_chunks,
             )
         except ValueError as e:
             LOGGER.debug(
-                "Can not read the chunks of the dataset; probably it is not " \
-                'an homogeneous dataset; the error message was: "%s"', str(e)
+                "Can not read the chunks of the dataset; probably it is not "
+                'an homogeneous dataset; the error message was: "%s"',
+                str(e),
             )
             data = data.unify_chunks()
             data_chunks = data.chunks
@@ -547,13 +564,21 @@ class BottomCellMap:
 
         delayed_computations = []
         LOGGER.debug(
-            "Generating the dask graph of all the %s tasks that will be " \
+            "Generating the dask graph of all the %s tasks that will be "
             "executed",
-            len(point_table)
+            len(point_table),
         )
         for section_slice, section in sections:
-            lat_shift = section_slice[0].start if section_slice[0].start is not None else 0
-            lon_shift = section_slice[1].start if section_slice[1].start is not None else 0
+            lat_shift = (
+                section_slice[0].start
+                if section_slice[0].start is not None
+                else 0
+            )
+            lon_shift = (
+                section_slice[1].start
+                if section_slice[1].start is not None
+                else 0
+            )
             min_bottom_index = bottom_indices[section].min().item()
             max_bottom_index = bottom_indices[section].max().item()
             bottom_slice = slice(min_bottom_index, max_bottom_index + 1)
@@ -576,22 +601,23 @@ class BottomCellMap:
                     "data starting from %s",
                     point_global_index,
                     point_time,
-                    point_time - self._time_range
+                    point_time - self._time_range,
                 )
                 time_slice = slice(
                     point_time - self._time_range,
-                    point_time + timedelta(milliseconds=1)
+                    point_time + timedelta(milliseconds=1),
                 )
                 time_index_slice = point_ds.indexes["time"].slice_indexer(
-                    time_slice.start,
-                    time_slice.stop
+                    time_slice.start, time_slice.stop
                 )
                 LOGGER.debug(
                     "The temporal slice %s corresponds to the indices %s",
                     time_slice,
-                    time_index_slice
+                    time_index_slice,
                 )
-                point_data = point_ds.isel(points=point_indx, time=time_index_slice)
+                point_data = point_ds.isel(
+                    points=point_indx, time=time_index_slice
+                )
 
                 point_data = point_data.rename(
                     {
@@ -610,35 +636,44 @@ class BottomCellMap:
                     "latitude": point_latitude,
                     "longitude": point_longitude,
                     "time": point_time,
-                    "distance": point.distance_from_model
+                    "distance": point.distance_from_model,
                 }
                 LOGGER.debug(
                     "Assigning the following coordinates to the point %s: %s",
                     point_indx,
-                    point_new_coords
+                    point_new_coords,
                 )
                 point_data = point_data.assign_coords(**point_new_coords)
 
                 if point_indx == 0 and dask_f_meta is None:
-                    LOGGER.debug("Using this first point to guess the func_meta")
+                    LOGGER.debug(
+                        "Using this first point to guess the func_meta"
+                    )
                     test_output = func(point_data.compute())
                     LOGGER.debug(
                         f"func returned the following output: {test_output}"
                     )
-                    dask_f_meta = pd.DataFrame([test_output], index=[0]).head(0)
+                    dask_f_meta = pd.DataFrame([test_output], index=[0]).head(
+                        0
+                    )
                     LOGGER.debug(
                         f"This is the inferred value of func_meta: {dask_f_meta}"
                     )
 
-                LOGGER.debug("Genererating delayed task for point %s", point_global_index)
-                delayed_task = self._generate_delayed(callable_wrapper, point_data)
+                LOGGER.debug(
+                    "Genererating delayed task for point %s",
+                    point_global_index,
+                )
+                delayed_task = self._generate_delayed(
+                    callable_wrapper, point_data
+                )
                 delayed_computations.append(delayed_task)
 
         LOGGER.debug("Merging together all the points")
         final_output = _merge_together(
             delayed_computations,
             dask_f_meta=dask_f_meta,
-            original_table=point_table[original_columns]
+            original_table=point_table[original_columns],
         )
 
         if not delayed:
@@ -646,7 +681,6 @@ class BottomCellMap:
             final_output = final_output.compute()
 
         LOGGER.debug(
-            "Computation of %s.map completed!",
-            self.__class__.__name__
+            "Computation of %s.map completed!", self.__class__.__name__
         )
         return final_output

@@ -5,11 +5,11 @@ from pytest import fixture
 
 def generate_test_array(depth=None, latitude=None, longitude=None, time=None):
     if depth is None:
-        depth = np.array([0.5, 2., 5.], dtype=np.float32)
-    
+        depth = np.array([0.5, 2.0, 5.0], dtype=np.float32)
+
     if latitude is None:
         latitude = np.array([42, 43, 44, 45], dtype=np.float32)
-    
+
     if longitude is None:
         longitude = np.array([30, 30.5, 31, 31.5, 32], dtype=np.float32)
 
@@ -18,28 +18,27 @@ def generate_test_array(depth=None, latitude=None, longitude=None, time=None):
 
     var1 = np.empty(
         (len(time), len(depth), len(latitude), len(longitude)),
-        dtype=np.float32
+        dtype=np.float32,
     )
     var2 = np.empty(
         (len(time), len(depth), len(latitude), len(longitude)),
-        dtype=np.float32
+        dtype=np.float32,
     )
 
     return xr.Dataset(
         {
             "T": (("time", "depth", "latitude", "longitude"), var1),
-            "S": (("time", "depth", "latitude", "longitude"), var2)
+            "S": (("time", "depth", "latitude", "longitude"), var2),
         },
         coords={
             "depth": depth,
             "latitude": latitude,
             "longitude": longitude,
-            "time": time
-        }
+            "time": time,
+        },
     )
 
 
 @fixture
 def data4d():
     return generate_test_array()
-

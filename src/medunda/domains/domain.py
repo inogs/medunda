@@ -36,7 +36,7 @@ class Domain(BaseModel, ABC):
     name: str
     bounding_box: BoundingBox
 
-    @field_validator('name', mode='after')
+    @field_validator("name", mode="after")
     @classmethod
     def name_is_conformal(cls, name: str) -> str:
         """
@@ -82,45 +82,45 @@ class PolygonalDomain(Domain):
         longitudes = dataset.longitude.values
 
         polygon = Polygon(
-            lat_list=self.point_latitudes,
-            lon_list=self.point_longitudes
+            lat_list=self.point_latitudes, lon_list=self.point_longitudes
         )
 
         return polygon.is_inside(lon=longitudes, lat=latitudes[:, np.newaxis])
 
     @classmethod
     def create_from_coordinates(
-            cls, *,
-            name: str,
-            longitudes: list[float],
-            latitudes: list[float],
-            min_depth: float | None = None,
-            max_depth: float | None = None
-        ):
+        cls,
+        *,
+        name: str,
+        longitudes: list[float],
+        latitudes: list[float],
+        min_depth: float | None = None,
+        max_depth: float | None = None,
+    ):
         bounding_box = BoundingBox(
             minimum_longitude=min(longitudes),
             maximum_longitude=max(longitudes),
             minimum_latitude=min(latitudes),
             maximum_latitude=max(latitudes),
             minimum_depth=min_depth,
-            maximum_depth=max_depth
+            maximum_depth=max_depth,
         )
 
         return cls(
             name=name,
             bounding_box=bounding_box,
             point_latitudes=latitudes,
-            point_longitudes=longitudes
+            point_longitudes=longitudes,
         )
 
     @classmethod
     def create_from_shapely_poly(
-            cls,
-            name: str,
-            poly,
-            min_depth: float | None = None,
-            max_depth: float | None = None
-        ):
+        cls,
+        name: str,
+        poly,
+        min_depth: float | None = None,
+        max_depth: float | None = None,
+    ):
         xx, yy = poly.exterior.coords.xy
         latitudes = yy.tolist()
         longitudes = xx.tolist()
@@ -130,7 +130,7 @@ class PolygonalDomain(Domain):
             longitudes=longitudes,
             latitudes=latitudes,
             min_depth=min_depth,
-            max_depth=max_depth
+            max_depth=max_depth,
         )
 
 
@@ -142,17 +142,15 @@ def _read_path(raw_path: str):
     return Path(raw_path)
 
 
-def read_zipped_shapefile(compressed_path: Path, temporary_dir:Path):
+def read_zipped_shapefile(compressed_path: Path, temporary_dir: Path):
     """
     Read the content of a zipped file that contains
     only one file (among the others) with an exstension .shp
     and return the path to the uncompressed shapefile.
     """
-    with zipfile.ZipFile(compressed_path, 'r') as zip_ref:
+    with zipfile.ZipFile(compressed_path, "r") as zip_ref:
         LOGGER.debug(
-            "Unzipping file %s into %s",
-            compressed_path,
-            temporary_dir
+            "Unzipping file %s into %s", compressed_path, temporary_dir
         )
         zip_ref.extractall(temporary_dir)
 
@@ -194,14 +192,12 @@ def read_domain(domain_description: Path) -> ConcreteDomain:
     # Read the geometry
     geometry = domain_description_raw["geometry"]
     if "type" not in geometry:
-        raise ValueError(
-            "No type specified in the geometry of the file."
-            )
+        raise ValueError("No type specified in the geometry of the file.")
 
-    geo_type = geometry['type'].lower()
+    geo_type = geometry["type"].lower()
     if geo_type not in ("rectangle", "shapefile", "basin", "wkt"):
         raise ValueError(
-            f"type must be chosen among rectangle, wkt, basin or shapefile;" \
+            f"type must be chosen among rectangle, wkt, basin or shapefile;"
             f"received {geo_type}"
         )
 
@@ -218,9 +214,9 @@ def read_domain(domain_description: Path) -> ConcreteDomain:
 
         bounding_box = BoundingBox(
             minimum_latitude=ymin,
-            maximum_latitude= ymax,
-            minimum_longitude= xmin,
-            maximum_longitude= xmax,
+            maximum_latitude=ymax,
+            minimum_longitude=xmin,
+            maximum_longitude=xmax,
             minimum_depth=min_depth,
             maximum_depth=max_depth,
         )
@@ -257,9 +253,9 @@ def read_domain(domain_description: Path) -> ConcreteDomain:
             name=name,
             poly=domain_geometry.geometry,
             min_depth=min_depth,
-            max_depth=max_depth
+            max_depth=max_depth,
         )
-    
+
     elif geo_type == "wkt":
         wkt_file = _read_path(geometry["file_path"])
         polygon_name = geometry["polygon_name"]
@@ -275,7 +271,7 @@ def read_domain(domain_description: Path) -> ConcreteDomain:
                 f"choices: {', '.join(available_polys_str)}"
             )
             raise KeyError(error_message) from e
-        
+
         return PolygonalDomain.create_from_coordinates(
             name=name,
             longitudes=poly.border_longitudes,
@@ -299,8 +295,7 @@ def read_domain(domain_description: Path) -> ConcreteDomain:
             latitudes=latitudes,
         )
 
-
     raise Exception(
         "The geometry type you have chosen should have been implemented "
         "but, because of a bug of the code, it is not recognized"
-        )
+    )

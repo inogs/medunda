@@ -5,11 +5,13 @@ from medunda.providers.cmems import CMEMSProvider
 from medunda.providers.provider import Provider
 from medunda.providers.tar_archive import TarArchiveProvider
 
-PROVIDERS: Mapping[str, type[Provider]] = MappingProxyType({
-    CMEMSProvider.get_name(): CMEMSProvider,
-    TarArchiveProvider.get_name(): TarArchiveProvider,
-    # Add other providers here as needed
-})
+PROVIDERS: Mapping[str, type[Provider]] = MappingProxyType(
+    {
+        CMEMSProvider.get_name(): CMEMSProvider,
+        TarArchiveProvider.get_name(): TarArchiveProvider,
+        # Add other providers here as needed
+    }
+)
 
 
 def get_provider(name: str) -> type[Provider]:

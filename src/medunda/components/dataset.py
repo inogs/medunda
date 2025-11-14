@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Iterable
 from datetime import datetime
 from logging import getLogger
@@ -7,10 +8,9 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 import yaml
-import warnings
 from pydantic import BaseModel
-from pydantic import field_validator
 from pydantic import Field
+from pydantic import field_validator
 
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
@@ -35,6 +35,7 @@ class Dataset(BaseModel):
         frequency: The frequency of the dataset.
         provider: The provider from which the data will be downloaded.
     """
+
     domain: ConcreteDomain
     start_date: datetime
     end_date: datetime
@@ -42,12 +43,14 @@ class Dataset(BaseModel):
     frequency: Frequency = Frequency.MONTHLY
     provider: str = "cmems"
     provider_config: Path | None = None
-    main_path : Path = Field(default_factory=Path, exclude=True)
+    main_path: Path = Field(default_factory=Path, exclude=True)
 
     @field_validator("provider_config")
     def validate_file_size(cls, file_path):
         if file_path is not None and not file_path.exists():
-            raise ValueError(f'Provider config file "{file_path}" does not exist.')
+            raise ValueError(
+                f'Provider config file "{file_path}" does not exist.'
+            )
         return file_path.resolve() if file_path is not None else file_path
 
     def get_n_of_time_steps(self) -> int:
@@ -80,7 +83,7 @@ class Dataset(BaseModel):
             domain=self.domain,
             frequency=self.frequency,
             main_path=self.main_path,
-            data_files=self.data_files
+            data_files=self.data_files,
         )
 
     def get_variables(self) -> tuple[VarName, ...]:
@@ -104,34 +107,36 @@ class Dataset(BaseModel):
         """
         LOGGER.debug("Retrieving mask for domain %s", self.domain.name)
 
-        data = self.get_data(chunks={"time" : 1})
+        data = self.get_data(chunks={"time": 1})
 
         vars_3d = []
         vars_2d = []
         for var_name, var_data in data.variables.items():
-            if not ("latitude" in var_data.dims and "longitude" in var_data.dims):
+            if not (
+                "latitude" in var_data.dims and "longitude" in var_data.dims
+            ):
                 LOGGER.debug(
                     'Variable "%s" does not have latitude and longitude '
-                    'dimensions, skipping it', var_name
+                    "dimensions, skipping it",
+                    var_name,
                 )
                 continue
             LOGGER.debug(
-                'Found variable "%s" with latitude and longitude',
-                var_name
+                'Found variable "%s" with latitude and longitude', var_name
             )
 
             if "depth" in var_data.dims:
                 LOGGER.debug(
                     'Variable "%s" has depth dimension, treating it '
-                    'as a 3D var',
-                    var_name
+                    "as a 3D var",
+                    var_name,
                 )
                 vars_3d.append(var_name)
             else:
                 LOGGER.debug(
                     'Variable "%s" does not have depth dimension, treating it '
-                    'as a 2D var',
-                    var_name
+                    "as a 2D var",
+                    var_name,
                 )
                 vars_2d.append(var_name)
 
@@ -141,29 +146,25 @@ class Dataset(BaseModel):
             )
 
         if len(vars_3d) > 0:
-            LOGGER.debug(
-                "Using 3D variables for mask: %s", vars_3d
-            )
+            LOGGER.debug("Using 3D variables for mask: %s", vars_3d)
             mask_var = vars_3d[0]
         else:
-            LOGGER.debug(
-                "Using 2D variables for mask: %s", vars_2d
-            )
+            LOGGER.debug("Using 2D variables for mask: %s", vars_2d)
             mask_var = vars_2d[0]
 
-        LOGGER.debug('Generating mask file from variable %s', mask_var)
+        LOGGER.debug("Generating mask file from variable %s", mask_var)
         if "time" in data[mask_var].dims:
             LOGGER.debug(
                 'Variable %s has a "time" dimension, using the first '
-                'time step for the mask',
-                mask_var
+                "time step for the mask",
+                mask_var,
             )
             var_frame = data[mask_var].isel(time=0).drop_vars("time").compute()
         else:
             LOGGER.debug(
                 'Variable "%s" does not have a time dimension, using '
-                'the variable directly',
-                mask_var
+                "the variable directly",
+                mask_var,
             )
             var_frame = data[mask_var].compute()
 
@@ -192,14 +193,17 @@ class Dataset(BaseModel):
             A dictionary mapping variable names to a tuple of file paths
         """
         return {
-            var_name: tuple(self.main_path / data_file.path for data_file in data_files)
+            var_name: tuple(
+                self.main_path / data_file.path for data_file in data_files
+            )
             for var_name, data_files in self.data_files.items()
         }
 
-    def get_data(self,
-                variables: Iterable[VarName] | None = None,
-                chunks: dict | str | None = "auto"
-        ) -> xr.Dataset:
+    def get_data(
+        self,
+        variables: Iterable[VarName] | None = None,
+        chunks: dict | str | None = "auto",
+    ) -> xr.Dataset:
         """
         Returns an xarray Dataset for the specified variable.
 
@@ -213,8 +217,6 @@ class Dataset(BaseModel):
         Returns:
             An xarray Dataset containing the data for the specified variables.
         """
-        var_datasets = []
-
         if variables is None:
             LOGGER.debug(
                 "No specific variables requested, using all variables"
@@ -240,7 +242,7 @@ class Dataset(BaseModel):
                 # We can skip this process
                 return xr_dataset
             new_longitude = var_longitude.values
-            new_longitude[greenwich_index] = 0.
+            new_longitude[greenwich_index] = 0.0
             var_longitude["longitude"] = new_longitude
             return xr_dataset
 
@@ -251,7 +253,7 @@ class Dataset(BaseModel):
             LOGGER.debug(
                 "There are %s data files associated with variable %s",
                 len(variable_data_files),
-                variable
+                variable,
             )
             data_paths.extend(variable_data_files)
 
@@ -259,7 +261,7 @@ class Dataset(BaseModel):
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore",
-                message="The specified chunks separate the stored chunks"
+                message="The specified chunks separate the stored chunks",
             )
             dataset_data = xr.open_mfdataset(
                 data_paths,
@@ -292,19 +294,18 @@ def read_dataset(dataset_path: PathLike | str) -> Dataset:
     if dataset_path.is_dir():
         LOGGER.debug(
             'Dataset path "%s" is a directory, reading medunda file',
-            dataset_path
+            dataset_path,
         )
         main_dataset_dir = dataset_path.resolve()
         dataset_path = dataset_path / "medunda_dataset.json"
     else:
         main_dataset_dir = dataset_path.parent.resolve()
 
-
     dataset_dict = yaml.safe_load(dataset_path.read_text())
     dataset = Dataset.model_validate(dataset_dict)
 
     dataset.main_path = main_dataset_dir
 
-    LOGGER.debug('Dataset read successfully: %s', dataset)
+    LOGGER.debug("Dataset read successfully: %s", dataset)
 
     return dataset

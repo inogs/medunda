@@ -10,11 +10,12 @@ ACTION_NAME = "extract_layer_extremes"
 def configure_parser(subparsers):
     subparsers.add_parser(
         ACTION_NAME,
-        help="extract the minimum and maximum value of a variable for each layer available in the dataset"
+        help="extract the minimum and maximum value of a variable for each layer available in the dataset",
     )
 
-def extract_layer_extremes (data: xr.Dataset) -> xr.Dataset:
-    """Extracts the maximum and the minimum values of a variable 
+
+def extract_layer_extremes(data: xr.Dataset) -> xr.Dataset:
+    """Extracts the maximum and the minimum values of a variable
     across all time and spatial coordinates, for each depth layer.
     Returns a dataset with the same depth layers, containing both
     the minimum and the maximum values for each layer.
@@ -22,23 +23,25 @@ def extract_layer_extremes (data: xr.Dataset) -> xr.Dataset:
 
     LOGGER.info(f"reading file: {data}")
 
-    var_name=list(data.data_vars)[0]
-    var=data[var_name]
+    var_name = list(data.data_vars)[0]
+    var = data[var_name]
 
-    values_per_depth= []
+    values_per_depth = []
 
     depths = var.depth.values
-    for depth in depths: 
-            values_at_depth = var.sel (depth=depth)
-            min_value = float(values_at_depth.min().values)
-            max_value = float(values_at_depth.max().values)
+    for depth in depths:
+        values_at_depth = var.sel(depth=depth)
+        min_value = float(values_at_depth.min().values)
+        max_value = float(values_at_depth.max().values)
 
-            values_per_depth.append({
+        values_per_depth.append(
+            {
                 "depth": float(depth),
                 "minimum value": min_value,
                 "maximum value": max_value,
-            })
-        
+            }
+        )
+
     df = pd.DataFrame(values_per_depth)
     ds_xr = df.set_index("depth").to_xarray()
 

@@ -15,42 +15,50 @@ from medunda.tools.typing import VarName
 LOGGER = logging.getLogger(__name__)
 
 
-PRODUCTS={
-    #"MEDSEA_MULTIYEAR_PHY_006_004":
-    ("thetao",):
-        {Frequency.DAILY: "med-cmcc-tem-rean-d",
-        Frequency.MONTHLY: "med-cmcc-tem-rean-m"},
-    ("vo", "uo"):
-        {Frequency.DAILY: "med-cmcc-cur-rean-d",
-        Frequency.MONTHLY:"med-cmcc-cur-rean-m"},
-    ("so",):
-        {Frequency.DAILY: "med-cmcc-sal-rean-d",
-        Frequency.MONTHLY: "med-cmcc-sal-rean-m"},
-    ("mlotst",):
-        {Frequency.DAILY: "med-cmcc-mld-rean-d",
-        Frequency.MONTHLY: "med-cmcc-mld-rean-m"},
-
-    #"MEDSEA_MULTIYEAR_BGC_006_008":
-    ("ph",):
-         {Frequency.DAILY: "med-ogs-car-rean-d",
-         Frequency.MONTHLY: "med-ogs-car-rean-m"},
-    ("no3","po4","si"):
-        {Frequency.DAILY: "med-ogs-nut-rean-d",
-         Frequency.MONTHLY: "med-ogs-nut-rean-m"},
-    ("chl",):
-        {Frequency.DAILY: "med-ogs-pft-rean-d",
-         Frequency.MONTHLY: "med-ogs-pft-rean-m"},
-    ("o2",):
-        {Frequency.DAILY: "med-ogs-bio-rean-d",
-         Frequency.MONTHLY: "med-ogs-bio-rean-m"},
-    ("nppv",):
-         {Frequency.DAILY: "med-ogs-bio-rean-d",
-         Frequency.MONTHLY: "med-ogs-bio-rean-m"},
+PRODUCTS = {
+    # "MEDSEA_MULTIYEAR_PHY_006_004":
+    ("thetao",): {
+        Frequency.DAILY: "med-cmcc-tem-rean-d",
+        Frequency.MONTHLY: "med-cmcc-tem-rean-m",
+    },
+    ("vo", "uo"): {
+        Frequency.DAILY: "med-cmcc-cur-rean-d",
+        Frequency.MONTHLY: "med-cmcc-cur-rean-m",
+    },
+    ("so",): {
+        Frequency.DAILY: "med-cmcc-sal-rean-d",
+        Frequency.MONTHLY: "med-cmcc-sal-rean-m",
+    },
+    ("mlotst",): {
+        Frequency.DAILY: "med-cmcc-mld-rean-d",
+        Frequency.MONTHLY: "med-cmcc-mld-rean-m",
+    },
+    # "MEDSEA_MULTIYEAR_BGC_006_008":
+    ("ph",): {
+        Frequency.DAILY: "med-ogs-car-rean-d",
+        Frequency.MONTHLY: "med-ogs-car-rean-m",
+    },
+    ("no3", "po4", "si"): {
+        Frequency.DAILY: "med-ogs-nut-rean-d",
+        Frequency.MONTHLY: "med-ogs-nut-rean-m",
+    },
+    ("chl",): {
+        Frequency.DAILY: "med-ogs-pft-rean-d",
+        Frequency.MONTHLY: "med-ogs-pft-rean-m",
+    },
+    ("o2",): {
+        Frequency.DAILY: "med-ogs-bio-rean-d",
+        Frequency.MONTHLY: "med-ogs-bio-rean-m",
+    },
+    ("nppv",): {
+        Frequency.DAILY: "med-ogs-bio-rean-d",
+        Frequency.MONTHLY: "med-ogs-bio-rean-m",
+    },
 }
 
 
-def search_for_product(var_name: VarName, frequency:Frequency) -> str:
-    """ Given the name of a variable and a frequency, return the name of the
+def search_for_product(var_name: VarName, frequency: Frequency) -> str:
+    """Given the name of a variable and a frequency, return the name of the
     CMEMS product that contains such a variable with the specified frequency.
     """
 
@@ -84,12 +92,12 @@ class CMEMSProvider(Provider):
         return cls()
 
     def download_data(
-            self,
-            domain: Domain,
-            frequency: Frequency,
-            main_path: Path,
-            data_files: Mapping[VarName, tuple[DataFile, ...]]
-        ) -> None:
+        self,
+        domain: Domain,
+        frequency: Frequency,
+        main_path: Path,
+        data_files: Mapping[VarName, tuple[DataFile, ...]],
+    ) -> None:
         """
         Downloads the data for the dataset.
 
@@ -98,20 +106,19 @@ class CMEMSProvider(Provider):
         """
         for var_name, files in data_files.items():
             LOGGER.debug(
-                f'Downloading data for variable "%s": %s files will be '
-                f'downloaded',
+                'Downloading data for variable "%s": %s files will be '
+                "downloaded",
                 var_name,
-                len(files)
+                len(files),
             )
 
             product_id = search_for_product(
-                var_name=var_name,
-                frequency=frequency
+                var_name=var_name, frequency=frequency
             )
             LOGGER.debug(
                 "The product associated with variable %s is: %s",
                 var_name,
-                product_id
+                product_id,
             )
 
             for file in files:
@@ -124,7 +131,7 @@ class CMEMSProvider(Provider):
                 if file_path.exists():
                     LOGGER.debug(
                         'File "%s" already exists. Skipping download.',
-                        file_path
+                        file_path,
                     )
                     continue
 
@@ -140,7 +147,7 @@ class CMEMSProvider(Provider):
                 if temp_file_path.is_file():
                     LOGGER.debug(
                         '"%s" already exists. I will delete it!',
-                        temp_file_path
+                        temp_file_path,
                     )
                     temp_file_path.unlink()
 
@@ -155,7 +162,7 @@ class CMEMSProvider(Provider):
                     start_datetime=start,
                     end_datetime=end,
                     output_filename=str(temp_file_path),
-                    **domain.bounding_box.model_dump(exclude_none=True)
+                    **domain.bounding_box.model_dump(exclude_none=True),
                 )
 
                 LOGGER.debug(
