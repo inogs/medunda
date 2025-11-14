@@ -23,8 +23,12 @@ def extract_bottom(data: xr.Dataset) -> xr.Dataset :
             continue
         LOGGER.debug("Computing variable %s", var_name)
 
+        if "depth" not in data[var_name].dims:
+            variables[var_name] = data[var_name]
+            continue
+
         fixed_time_mask = np.ma.getmaskarray(
-            data[var_name][0, :, :, :].to_masked_array()
+            data[var_name].isel(time=0).to_masked_array()
         )
         index_map = np.count_nonzero(~fixed_time_mask, axis=0)
         index_map_labeled = xr.DataArray(

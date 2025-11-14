@@ -37,6 +37,10 @@ def average_between_layers (data: xr.Dataset, depth_min, depth_max) -> xr.Datase
         if variable in ["depth", "latitude", "longitude", "time"]:
             continue
 
+        if "depth" not in data.data_vars[variable].dims:
+            averaged_variables[variable] = data.data_vars[variable]
+            continue
+
         selected_layer = data[variable].sel(depth=slice(depth_min, depth_max))
         selected_depth = selected_layer.depth.values
 
