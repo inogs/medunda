@@ -47,3 +47,7 @@ extend-select = ["I"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101"]
