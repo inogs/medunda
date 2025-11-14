@@ -15,9 +15,7 @@ LOGGER = logging.getLogger()
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Write something here"
-    )
+    parser = argparse.ArgumentParser(description="Write something here")
 
     # Create a subparser for each available action, allowing each action
     # to have its own set of command line arguments.
@@ -25,7 +23,7 @@ def parse_args() -> argparse.Namespace:
         title="tool",
         required=True,
         dest="tool",
-        help="Choose which one of the available tools to use"
+        help="Choose which one of the available tools to use",
     )
 
     subparsers.add_parser(
@@ -52,7 +50,7 @@ def parse_args() -> argparse.Namespace:
 
 def main():
     configure_logger(LOGGER)
- 
+
     args = parse_args()
 
     if args.tool == "downloader":
@@ -64,16 +62,16 @@ def main():
             action_name=args.action,
             variables=args.variables,
             format=args.format,
-            args=build_action_args(args)
+            args=build_action_args(args),
         )
     elif args.tool == "plotter":
         return plotter(
             filepath=args.input_file,
             variable=args.variable,
             mode=args.mode,
-            args=args
+            args=args,
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys_exit(main())

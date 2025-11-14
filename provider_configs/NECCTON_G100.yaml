@@ -42,7 +42,7 @@ variables:
   - variable: B1p
     dataset_name: B1p
     unit: mmol P/m3
-  
+
   - variable: P1c
     dataset_name: P1c
     unit: mg C/m3
@@ -55,7 +55,7 @@ variables:
   - variable: P4c
     dataset_name: P4c
     unit: mg C/m3
-  
+
   - variable: Z3c
     dataset_name: Z3c
     unit: mg C/m3
@@ -68,14 +68,14 @@ variables:
   - variable: Z6c
     dataset_name: Z6c
     unit: mg C/m3
-  
+
   - variable: R1c
     dataset_name: R1c
     unit: mg C/m3
   - variable: R2c
     dataset_name: R2c
     unit: mg C/m3
-  - variable: R3c 
+  - variable: R3c
     dataset_name: R3c
     unit: mg C/m3
   - variable: R6c

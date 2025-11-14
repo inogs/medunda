@@ -13,21 +13,19 @@ from medunda.tools.logging_utils import configure_logger
 LOGGER = logging.getLogger(__name__)
 
 VAR_METADATA = {
-    "o2": {'label': 'Oxygen',                 
-            'unit':'µmol/m³',
-            'cmap': cmocean.cm.deep}, # pyright: ignore[reportAttributeAccessIssue]
-    "chl": {'label': 'Chlorophyll-a',       
-            'unit':'mg/m³',
-            'cmap':cmocean.cm.algae},  # pyright: ignore[reportAttributeAccessIssue]
-    "nppv": {'label': 'Net Primary Production',
-            'unit':'mg C/m²/day',   
-            'cmap':cmocean.cm.matter},  # pyright: ignore[reportAttributeAccessIssue]
-    "thetao": {'label': 'Temperature', 
-               'unit':'°C', 
-               'cmap':'coolwarm'},
-    "so": {'label': 'Salinity', 
-           'unit': 'PSU',
-           'cmap':'viridis'},
+    "o2": {"label": "Oxygen", "unit": "µmol/m³", "cmap": cmocean.cm.deep},  # pyright: ignore[reportAttributeAccessIssue]
+    "chl": {
+        "label": "Chlorophyll-a",
+        "unit": "mg/m³",
+        "cmap": cmocean.cm.algae,
+    },  # pyright: ignore[reportAttributeAccessIssue]
+    "nppv": {
+        "label": "Net Primary Production",
+        "unit": "mg C/m²/day",
+        "cmap": cmocean.cm.matter,
+    },  # pyright: ignore[reportAttributeAccessIssue]
+    "thetao": {"label": "Temperature", "unit": "°C", "cmap": "coolwarm"},
+    "so": {"label": "Salinity", "unit": "PSU", "cmap": "viridis"},
 }
 
 DEFAULT_VAR = {
@@ -36,37 +34,37 @@ DEFAULT_VAR = {
 }
 
 
-PLOTS=[
+PLOTS = [
     timeseries,
     maps,
 ]
 
 
-def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.ArgumentParser:
+def configure_parser(
+    parser: argparse.ArgumentParser | None = None,
+) -> argparse.ArgumentParser:
     """
-    parse command line arguments: 
+    parse command line arguments:
     --input-file: path of the input file
     --variable: name of the variable to plot
     --output-dir: directory to save the download file
     """
     if parser is None:
         parser = argparse.ArgumentParser(
-            description="plots timeseries and maps")    ######
+            description="plots timeseries and maps"
+        )  ######
 
-    parser.add_argument(   
-        "--input-file",  
-        type=Path,
-        required=True,
-        help="Path of the input file"
+    parser.add_argument(
+        "--input-file", type=Path, required=True, help="Path of the input file"
     )
-    parser.add_argument(   
-        "--variable",  
+    parser.add_argument(
+        "--variable",
         type=str,
         choices=VariableDataset.all_variables().get_variable_names(),
         required=True,
-        help="Name of the variable to plot"
+        help="Name of the variable to plot",
     )
-    parser.add_argument(     
+    parser.add_argument(
         "--output-dir",
         type=Path,
         default=Path("."),
@@ -77,7 +75,7 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
         title="mode",
         required=True,
         dest="mode",
-        help="Sets which plot must be executed on the input file"
+        help="Sets which plot must be executed on the input file",
     )
 
     for mode in PLOTS:
@@ -87,8 +85,7 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
     return parser
 
 
-def check_variable (ds, var):
-
+def check_variable(ds, var):
     if var not in ds:
         raise ValueError(f"Variable '{var}' not found in dataset")
 
@@ -101,60 +98,62 @@ def check_variable (ds, var):
     return ds[var], var_metadata
 
 
-def plotter (filepath: Path, variable: str, mode:str, args):
+def plotter(filepath: Path, variable: str, mode: str, args):
     """Extracts and plots surface, bottom, and average layers of the given variable."""
 
     if not filepath.exists():
-        raise FileNotFoundError (f"The file '{filepath}' does not exist.")
+        raise FileNotFoundError(f"The file '{filepath}' does not exist.")
 
     if filepath.suffix != ".nc":
         raise ValueError(
-            f'File {filepath} is not a valid netcdf file; its suffix does '
+            f"File {filepath} is not a valid netcdf file; its suffix does "
             'not end with ".nc."'
         )
 
-    with xr.open_dataset(filepath) as ds: 
+    with xr.open_dataset(filepath) as ds:
         data_var, metadata = check_variable(ds, variable)
 
-        if mode == 'plotting_timeseries':
-            if 'time' not in ds[variable].dims:
-                raise ValueError (f"Variable '{variable} does not have the time dimension")
-            else:  
+        if mode == "plotting_timeseries":
+            if "time" not in ds[variable].dims:
+                raise ValueError(
+                    f"Variable '{variable} does not have the time dimension"
+                )
+            else:
                 timeseries.plotting_timeseries(
-                    data=data_var, 
+                    data=data_var,
                     metadata=metadata,
                     start_time=args.start_time,
-                    end_time=args.end_time
-                    )
-        
+                    end_time=args.end_time,
+                )
+
         elif mode == "plotting_maps":
             maps.plotting_maps(
-                data=data_var, 
-                metadata=metadata, 
-                time=args.time)
-        
-        else: 
-            raise ValueError(f"Invalid mode")
-    
+                data=data_var, metadata=metadata, time=args.time
+            )
+
+        else:
+            raise ValueError("Invalid mode")
+
     return 0
 
 
-def main ():
-
+def main():
     args = configure_parser().parse_args()
     configure_logger(LOGGER)
 
-    output_dir = args.output_dir
+    # output_dir = args.output_dir
     variable = args.variable
     mode = args.mode
-    data_file = args.input_file 
+    data_file = args.input_file
 
     LOGGER.info(f"Selected file: {data_file.name}")
 
-    plotter (filepath=data_file, variable=variable, mode=mode, args=args)
+    plotter(filepath=data_file, variable=variable, mode=mode, args=args)
 
-    LOGGER.info(f"Plotting completed for variable '{variable}' in mode '{mode}'")
+    LOGGER.info(
+        f"Plotting completed for variable '{variable}' in mode '{mode}'"
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

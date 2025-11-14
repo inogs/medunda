@@ -9,12 +9,11 @@ ACTION_NAME = "extract_bottom"
 
 def configure_parser(subparsers):
     subparsers.add_parser(
-        ACTION_NAME,
-        help="Extract the values of the cells on the bottom"
+        ACTION_NAME, help="Extract the values of the cells on the bottom"
     )
 
 
-def extract_bottom(data: xr.Dataset) -> xr.Dataset :
+def extract_bottom(data: xr.Dataset) -> xr.Dataset:
     LOGGER.info(f"reading the file: {data}")
 
     variables = {}
@@ -32,16 +31,13 @@ def extract_bottom(data: xr.Dataset) -> xr.Dataset :
         )
         index_map = np.count_nonzero(~fixed_time_mask, axis=0)
         index_map_labeled = xr.DataArray(
-            dims=["latitude", "longitude"],
-            data=index_map
+            dims=["latitude", "longitude"], data=index_map
         )
 
-        time_values = data['time'].values
-
         new_data = data[var_name][:, index_map_labeled - 1]
-        
+
         variables[var_name] = new_data
 
     final_dataset = xr.Dataset(variables)
-    
+
     return final_dataset

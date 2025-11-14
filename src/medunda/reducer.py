@@ -7,16 +7,16 @@ import dask.array as da
 
 from medunda.actions import ActionNotFound
 from medunda.actions import average_between_layers
-from medunda.actions import climatology
 from medunda.actions import calculate_stats
+from medunda.actions import climatology
 from medunda.actions import depth_average
 from medunda.actions import extract_bottom
 from medunda.actions import extract_extremes
 from medunda.actions import extract_layer
 from medunda.actions import extract_layer_extremes
 from medunda.actions import extract_surface
-from medunda.actions import integration
 from medunda.actions import integrate_between_layers
+from medunda.actions import integration
 from medunda.components.dataset import read_dataset
 from medunda.tools.logging_utils import configure_logger
 
@@ -47,46 +47,46 @@ ACTION_MODULES = [
 # `ACTION_NAME` that is the name of the action. This name is both the name of
 # the function that will be called and the name of the subparser that will be
 # added to the command line parser.
-ACTIONS = {
-    m.ACTION_NAME : getattr(m, m.ACTION_NAME) for m in ACTION_MODULES
-}
+ACTIONS = {m.ACTION_NAME: getattr(m, m.ACTION_NAME) for m in ACTION_MODULES}
 
 
-def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.ArgumentParser:
+def configure_parser(
+    parser: argparse.ArgumentParser | None = None,
+) -> argparse.ArgumentParser:
     """
     Parse command line arguments and return parsed arguments object.
     """
     if parser is None:
         parser = argparse.ArgumentParser(
             description="elaborate downloaded data by performing different statistical operations"
-            )
+        )
 
-    parser.add_argument(   
-        "--input-dataset",  
+    parser.add_argument(
+        "--input-dataset",
         type=Path,
         required=True,
-        help="Path of the downloaded Medunda dataset to be processed"
+        help="Path of the downloaded Medunda dataset to be processed",
     )
-    parser.add_argument(   
+    parser.add_argument(
         "--variables",
         type=str,
         nargs="+",
         required=False,
         default=None,
-        help="Name of the variables to be processed (if not specified, all the variables will be processed)"
+        help="Name of the variables to be processed (if not specified, all the variables will be processed)",
     )
     parser.add_argument(
         "--output-file",
         type=Path,
         required=True,
-        help="Path of the output file"
+        help="Path of the output file",
     )
     parser.add_argument(
         "--format",
         type=str,
         required=True,
-        choices=["netcdf","csv"],
-        help="Format of the output-file"
+        choices=["netcdf", "csv"],
+        help="Format of the output-file",
     )
 
     # Create a subparser for each available action, allowing each action
@@ -95,7 +95,7 @@ def configure_parser(parser: argparse.ArgumentParser | None = None) -> argparse.
         title="action",
         required=True,
         dest="action",
-        help="Sets which operation must be executed on the input file"
+        help="Sets which operation must be executed on the input file",
     )
 
     # Each action module must implement a `configure_parser` function that adds
@@ -125,7 +125,14 @@ def build_action_args(args: argparse.Namespace) -> dict[str, Any]:
     return args_values
 
 
-def reducer(dataset_path: Path, output_file:Path, variables: list[str] | None, format:str, action_name: str, args: dict):
+def reducer(
+    dataset_path: Path,
+    output_file: Path,
+    variables: list[str] | None,
+    format: str,
+    action_name: str,
+    args: dict,
+):
     if action_name not in ACTIONS:
         valid_action_list = ", ".join(ACTIONS.keys())
         raise ActionNotFound(
@@ -145,16 +152,12 @@ def reducer(dataset_path: Path, output_file:Path, variables: list[str] | None, f
     LOGGER.debug("Cutting data on the domain")
     mask = domain.compute_selection_mask(data)
     for var_name in data.data_vars:
-        data[var_name].data = da.where(
-            mask,
-            data[var_name].data,
-            da.nan
-        )
+        data[var_name].data = da.where(mask, data[var_name].data, da.nan)
 
     LOGGER.info(
         'Executing action "%s" with the following arguments: %s',
         action_name,
-        args
+        args,
     )
 
     if variables:
@@ -194,7 +197,7 @@ def main():
         format=format,
         action_name=action_name,
         variables=variables,
-        args=build_action_args(args)
+        args=build_action_args(args),
     )
 
 

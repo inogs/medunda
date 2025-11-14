@@ -22,6 +22,7 @@ class Provider(ABC):
     This class is an abstract class that defines the interface that all the
     providers must implement.
     """
+
     @classmethod
     def get_name(cls) -> str:
         """
@@ -58,12 +59,12 @@ class Provider(ABC):
 
     @abstractmethod
     def download_data(
-            self,
-            domain: Domain,
-            frequency: Frequency,
-            main_path: Path,
-            data_files: Mapping[VarName, tuple[DataFile, ...]]
-        ) -> None:
+        self,
+        domain: Domain,
+        frequency: Frequency,
+        main_path: Path,
+        data_files: Mapping[VarName, tuple[DataFile, ...]],
+    ) -> None:
         """
         Downloads the required data files.
 

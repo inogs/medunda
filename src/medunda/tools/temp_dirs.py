@@ -21,6 +21,7 @@ class TemporaryDirectory:
     inside a directory named `.medunda_temp` which is created inside the scratch
     directory.
     """
+
     def __init__(self):
         self._temp_dir: _TemporaryDirectory | None = None
         self._scratch_path = None

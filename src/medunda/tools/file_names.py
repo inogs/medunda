@@ -17,12 +17,12 @@ FILE_NAME_MASK = re.compile(
 
 
 def get_output_filename(
-        variable: VarName,
-        frequency: str,
-        start: datetime,
-        end: datetime,
-        domain_name: str,
-        ) -> str:
+    variable: VarName,
+    frequency: str,
+    start: datetime,
+    end: datetime,
+    domain_name: str,
+) -> str:
     """Generate the output filename based on the variable, frequency, start
     and end dates, and domain.
 

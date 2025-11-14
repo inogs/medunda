@@ -1,5 +1,6 @@
 from medunda.actions.extract_layer import extract_layer
 
+
 def test_extract_layer(data4d):
     """Test the extract_layer function with a valid depth level."""
 
@@ -20,10 +21,12 @@ def test_extract_layer(data4d):
     assert "T" in ds.data_vars, "Variable 'T' not found in output dataset."
     assert "S" in ds.data_vars, "Variable 'S' not found in output dataset."
 
-    assert ds.T.shape == (time_levels, latitude_levels, longitude_levels), \
+    assert ds.T.shape == (time_levels, latitude_levels, longitude_levels), (
         "Shape of 'T' variable is incorrect."
-    assert ds.S.shape ==  (time_levels, latitude_levels, longitude_levels), \
+    )
+    assert ds.S.shape == (time_levels, latitude_levels, longitude_levels), (
         "Shape of 'S' variable is incorrect."
+    )
 
     assert ds.T.min() == 1, "Minimum value of 'T' variable is incorrect."
     assert ds.S.min() == 11, "Minimum value of 'S' variable is incorrect."
