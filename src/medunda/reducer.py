@@ -84,8 +84,9 @@ def configure_parser(
     parser.add_argument(
         "--format",
         type=str,
-        required=True,
+        required=False,
         choices=["netcdf", "csv"],
+        default="netcdf",
         help="Format of the output-file",
     )
 
