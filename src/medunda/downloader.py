@@ -83,7 +83,7 @@ def configure_parser(
     create_subparser.add_argument(
         "--frequency",
         type=str,
-        choices=["monthly", "daily"],
+        choices=["monthly", "daily", "yearly"],
         required=False,
         default="monthly",
         help="Frequency of the downloaded data",
