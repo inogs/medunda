@@ -3,6 +3,7 @@ import shutil
 from abc import ABC
 from datetime import timezone
 from pathlib import Path
+from typing import Any
 from typing import Mapping
 from warnings import warn
 
@@ -106,7 +107,7 @@ GLOBAL_PRODUCTS = {
 
 
 class CMEMSProvider(Provider, ABC):
-    PRODUCTS = {}
+    PRODUCTS: dict[VarName, dict[Frequency, str]] = {}
 
     def __init__(self) -> None:
         super().__init__()
@@ -166,6 +167,29 @@ class CMEMSProvider(Provider, ABC):
             if frequency in product_by_freq:
                 variables_names.extend(var_names)
         return VariableDataset(variables_names)
+
+    @classmethod
+    def get_domain_boundaries(cls, domain) -> dict[str, Any]:
+        """
+        Get the coordinates to download the data for the domain.
+
+        The output is compatible with the Copernicus Marine Data Store API; the
+        keys can be used as arguments inside the `subset` function of the
+        `copernicusmarine` library.
+
+        Args:
+            domain: a Domain
+
+        Return:
+            A dictionary that may contain the following keys:
+            - minimum_longitude
+            - maximum_longitude
+            - minimum_latitude
+            - maximum_latitude
+            - minimum_depth
+            - maximum_depth
+        """
+        return domain.bounding_box.model_dump(exclude_none=True)
 
     def download_data(
         self,
@@ -238,7 +262,8 @@ class CMEMSProvider(Provider, ABC):
                     start_datetime=start,
                     end_datetime=end,
                     output_filename=str(temp_file_path),
-                    **domain.bounding_box.model_dump(exclude_none=True),
+                    netcdf_compression_level=6,
+                    **self.get_domain_boundaries(domain),
                 )
 
                 LOGGER.debug(
@@ -249,6 +274,9 @@ class CMEMSProvider(Provider, ABC):
 
 class CMEMSProviderMed(CMEMSProvider):
     PRODUCTS = MED_PRODUCTS
+
+    MIN_LONGITUDE = -5.5416666
+    MAX_DEPTH = 4152.8959960
 
     @classmethod
     def get_name(cls) -> str:
@@ -263,6 +291,50 @@ class CMEMSProviderMed(CMEMSProvider):
             "MEDSEA_MULTIYEAR_PHY_006_004 product, while the biogeochemical "
             "data is available from the MEDSEA_MULTIYEAR_BGC_006_008 product."
         )
+
+    @classmethod
+    def get_domain_boundaries(cls, domain) -> dict[str, Any]:
+        """
+        Get the coordinates to download the data for the domain.
+
+        The output is compatible with the Copernicus Marine Data Store API; the
+        keys can be used as arguments inside the `subset` function of the
+        `copernicusmarine` library.
+
+        This function also ensures that data downloaded from
+        MEDSEA_MULTIYEAR_PHY_006_004 and from MEDSEA_MULTIYEAR_BGC_006_008
+        are homogeneous, i.e., defined over the same domain. This function cuts
+        the parts of the domain of MEDSEA_MULTIYEAR_PHY_006_004 that are not
+        available for MEDSEA_MULTIYEAR_BGC_006_008.
+
+        Args:
+            domain: a Domain
+
+        Return:
+            A dictionary that may contain the following keys:
+            - minimum_longitude
+            - maximum_longitude
+            - minimum_latitude
+            - maximum_latitude
+            - minimum_depth
+            - maximum_depth
+        """
+        domain_box = domain.bounding_box.model_dump(exclude_none=True)
+        if "minimum_longitude" in domain_box:
+            current_longitude = domain_box["minimum_longitude"]
+            domain_box["minimum_longitude"] = max(
+                cls.MIN_LONGITUDE, current_longitude
+            )
+        else:
+            domain_box["minimum_longitude"] = cls.MIN_LONGITUDE
+
+        if "maximum_depth" in domain_box:
+            current_depth = domain_box["maximum_depth"]
+            domain_box["maximum_depth"] = min(cls.MAX_DEPTH, current_depth)
+        else:
+            domain_box["maximum_depth"] = cls.MAX_DEPTH
+
+        return domain_box
 
 
 class CMEMSProviderGlobal(CMEMSProvider):
