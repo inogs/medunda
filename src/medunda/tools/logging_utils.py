@@ -2,14 +2,17 @@ import logging
 import time
 
 
-def configure_logger(logger: logging.Logger):
+def configure_logger(logger: logging.Logger | None = None, level=logging.INFO):
+    if logger is None:
+        logger = logging.getLogger()
+
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     # Ensure that this formatter uses local time and not UTC
     formatter.converter = time.localtime
 
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(level)
 
     # Remove all handlers associated with the copernicusmarine logger
     copernicusmarine_logger = logging.getLogger("copernicusmarine")
@@ -21,7 +24,7 @@ def configure_logger(logger: logging.Logger):
     logging.getLogger("h5py").setLevel(logging.INFO)
 
     handler = logging.StreamHandler()
-    handler.setLevel(logging.INFO)
+    handler.setLevel(level)
     handler.setFormatter(formatter)
 
     logger.addHandler(handler)

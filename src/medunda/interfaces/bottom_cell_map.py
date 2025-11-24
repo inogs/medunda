@@ -1,7 +1,9 @@
 import logging
+import warnings
 from datetime import timedelta
 from typing import Any
 from typing import Callable
+from typing import Literal
 from typing import Sequence
 
 import dask.dataframe
@@ -15,80 +17,136 @@ from dask.delayed import Delayed
 from dask.delayed import delayed
 
 from medunda.components.dataset import Dataset
-from medunda.tools.typing import VarName
+from medunda.tools.xarray_utils import DelayedDataset
+from medunda.tools.xarray_utils import from_delayed
+from medunda.tools.xarray_utils import to_delayed
 
 LOGGER = logging.getLogger(__name__)
 
 
-def _build_callable_wrapper(
-    f: Callable[[xr.Dataset], dict[str, Any]],
-) -> Callable[[np.ndarray, dict, dict[str, Any]], Delayed]:
-    """
-    Builds a delayed wrapper function for the provided function `f`
+@delayed
+def _extract_points(
+    f: Callable,
+    dataset: DelayedDataset,
+    point_table: pd.DataFrame,
+    depth_indices: xr.DataArray,
+    indices_shift: dict,
+    column_names: dict[Literal["time", "latitude", "longitude"], str],
+    time_range: timedelta,
+    preserve_columns: list[str],
+):
+    dataset = from_delayed(dataset)
 
-    This is a function used by the `BottomCellMap` class to transform the
-    user-defined function `f` into a delayed function `f_wrapper` that
-    can be executed in parallel. Read the documentation of the
-    `BottomCellMap.map` to better understand what is `f` and the purpose
-    of this function.
+    output = []
 
-    This function solves the problem of passing a Dask Array as a delayed
-    object to the user-defined function `f`.
-    The method `BottomCellMap.map` decomposes the xarray Dataset
-    into its components: time steps, coordinates, and data variables,
-    where data_variables is a list of delayed objects that can be
-    concatenated along the `model_time` dimension to reconstruct
-    the original Dataset.
-    The wrapper function `f_wrapper` takes these components and passes
-    them to the user-defined function `f` after reconstructing
-    the xarray Dataset from the delayed objects.
-    Then it returns the result of the user-defined function `f`.
-
-    Args:
-        f: The user-defined function that takes an xarray Dataset as input
-            and returns a dictionary where keys are column names and values
-            are the data for those columns.
-
-    Returns:
-        A delayed function that takes time steps, coordinates, and data
-        variables as input and returns the result of the user-defined function
-        `f`.
-    """
-
-    @delayed
-    def f_wrapper(
-        time_steps: np.ndarray,
-        coordinates: dict[str, Any],
-        data: dict[VarName, list[np.ndarray]],
-    ) -> dict[str, Any]:
-        dataset_coords = {"model_time": time_steps}
-        dataset_coords.update(coordinates)
-
-        point_array = xr.Dataset(
-            {d: ("model_time", np.concat(data[d])) for d in data},
-            coords=dataset_coords,
+    for local_i, (global_i, point) in enumerate(point_table.iterrows()):
+        point_time = point[column_names["time"]]
+        LOGGER.debug(
+            "Point %s is associated with time %s; collecting the model "
+            "data starting from %s",
+            global_i,
+            point_time,
+            point_time - time_range,
         )
 
-        return f(point_array)
+        time_slice = slice(
+            point_time - time_range,
+            point_time + timedelta(milliseconds=1),
+        )
+        time_index_slice = dataset.indexes[column_names["time"]].slice_indexer(
+            time_slice.start, time_slice.stop
+        )
+        LOGGER.debug(
+            "The temporal slice %s corresponds to the indices %s",
+            time_slice,
+            time_index_slice,
+        )
 
-    return f_wrapper
+        dataset_selection = dict(
+            time=time_index_slice,
+            latitude=point["model_lat_index"] - indices_shift["latitude"],
+            longitude=point["model_lon_index"] - indices_shift["longitude"],
+            depth=depth_indices[local_i] - indices_shift["depth"],
+        )
+        LOGGER.debug(
+            "Performing the following slicing on the dataset: %s",
+            dataset_selection,
+        )
+        point_data = dataset.isel(**dataset_selection)
+
+        point_data = point_data.rename(
+            {
+                "latitude": "model_latitude",
+                "longitude": "model_longitude",
+                "depth": "model_depth",
+                "time": "model_time",
+            }
+        )
+
+        point_latitude = getattr(point, column_names["latitude"])
+        point_longitude = getattr(point, column_names["longitude"])
+        point_time = getattr(point, column_names["time"])
+
+        point_new_coords = {
+            column_names["latitude"]: point_latitude,
+            column_names["longitude"]: point_longitude,
+            column_names["time"]: point_time,
+            "distance": point.distance_from_model,
+        }
+        LOGGER.debug(
+            "Assigning the following coordinates to the point %s: %s",
+            (
+                point[column_names["latitude"]],
+                point[column_names["longitude"]],
+            ),
+            point_new_coords,
+        )
+        point_data = point_data.assign_coords(**point_new_coords)
+
+        try:
+            point_output = f(point_data)
+        except Exception as e:
+            LOGGER.error(
+                f"Error in function {f.__name__} for point {global_i}, for which "
+                f"the function received the following data: {point_data}\n\n"
+                f"Error raised: \n{e}"
+            )
+            raise Exception(
+                f"Error in function {f.__name__} for point {global_i}"
+            ) from e
+
+        if not isinstance(point_output, dict):
+            raise ValueError(
+                f"Function {f.__name__} must always return a dictionary. It "
+                f"returned a {type(point_output)} instead."
+            )
+
+        point_as_dict = {
+            p: v for p, v in point.to_dict().items() if p in preserve_columns
+        }
+        point_as_dict.update(point_output)
+
+        output.append(point_as_dict)
+
+    return output
 
 
 def _merge_together(
     results: Sequence[Delayed],
+    indices: list[pd.Index],
     dask_f_meta: pd.DataFrame | None,
-    original_table: pd.DataFrame,
 ) -> dask.dataframe.DataFrame:
     """
     Merge the results with the original table into a Dask DataFrame
 
     Args:
         results: List of dictionaries containing the computed results
+        indices: A list of Pandas indices corresponding to the rows of the
+            results
         dask_f_meta: An empty Pandas DataFrame. The columns for the
             output of this function will be copied from this input.
             If it is `None`, dask will use the structure of the
             first delayed object.
-        original_table: Original pandas DataFrame
 
     Returns:
         A Dask DataFrame containing merged results
@@ -96,8 +154,7 @@ def _merge_together(
     # Convert the list of dictionaries into a Dask DataFrame
     LOGGER.debug("Transforming all the objects into dataframes")
     delayed_dataframes = [
-        delayed(pd.DataFrame)([r], index=[original_table.index[i]])
-        for i, r in enumerate(results)
+        delayed(pd.DataFrame)(r, index=i) for r, i in zip(results, indices)
     ]
 
     LOGGER.debug("Creating a dataframe with all the outputs")
@@ -108,18 +165,7 @@ def _merge_together(
         "Created a dataframe with %s partitions", results_df.npartitions
     )
 
-    # Convert the original table to a Dask DataFrame
-    LOGGER.debug("Transforming original inputs into dask dataframe")
-    original_ddf = dask.dataframe.from_pandas(
-        original_table, npartitions=results_df.npartitions
-    )
-
-    LOGGER.debug("Merging the results with the original table")
-    output_ddf = dask.dataframe.merge(
-        results_df, original_ddf, left_index=True, right_index=True, how="left"
-    )
-
-    return output_ddf
+    return results_df
 
 
 class BottomCellMap:
@@ -169,67 +215,13 @@ class BottomCellMap:
         self._lon_column = lon_column
         self._time_column = time_column
 
-    def _generate_delayed(
-        self,
-        callable_wrapper: Callable[
-            [np.ndarray, dict, dict[VarName, list]], Delayed
-        ],
-        point_dataset: xr.Dataset,
-    ) -> Delayed:
-        """
-        Generate a delayed object that applies the callable_wrapper to a point
-
-        This is a helper method that takes a callable_wrapper function
-        and a point_dataset, and returns a delayed object that applies the
-        callable_wrapper to the point_dataset. This method is invoked
-        for each point in the point table when mapping the function to the
-        bottom cell data (see the `map` method).
-
-        In some sense, this method is the inverse of the
-        `_build_callable_wrapper` function. While the output of the
-        `_build_callable_wrapper` takes three arguments (time_steps,
-        coordinates, data) and uses them to reconstruct an xarray Dataset,
-        this method takes a point_dataset (which is an xarray Dataset) and
-        extracts the time steps, coordinates, and data variables from it,
-        and then passes them to the callable_wrapper function.
-
-        In this way, the callable_wrapper function can be applied to the data
-        of the dataset in a delayed manner, allowing for parallel computation
-        of the results for each point in the point table.
-        """
-        coordinates = {}
-        for coordinate in point_dataset.coords:
-            if coordinate == "model_time":
-                continue
-            coord_value = point_dataset[coordinate].values
-            assert np.ndim(coord_value) == 0, (
-                f"Coordinate {coordinate} is not a scalar value."
-            )
-            coordinates[coordinate] = coord_value
-
-        times = point_dataset["model_time"].values
-
-        data: dict[VarName, list] = {}
-        for k, v in point_dataset.data_vars.items():
-            if k == "model_time":
-                continue
-            if k in coordinates:
-                continue
-            delayed_v = v.data.to_delayed()
-            assert len(delayed_v.shape) == 1, (
-                f"Data variable {k} is not a 1D array."
-            )
-
-            data[k] = delayed_v.tolist()
-
-        return callable_wrapper(times, coordinates, data)
-
     def _split_into_chunks(
         self,
         lat_indices: xr.DataArray,
         lon_indices: xr.DataArray,
         lat_chunks: Sequence[int],
         lon_chunks: Sequence[int],
+        times: Sequence[np.datetime64],
     ) -> tuple[tuple[tuple[slice, slice], np.ndarray], ...]:
         """
         Splits the lat_indices and lon_indices into chunks based on the provided chunk sizes.
@@ -248,6 +240,10 @@ class BottomCellMap:
         lat_chunk_indices = np.searchsorted(
             lat_splits, lat_indices, side="right"
         )
+
+        start_date = np.datetime64(self._dataset.start_date, "s")
+        time_range = np.timedelta64(self._time_range, "s")
+        times = np.asarray(times)
 
         sections = []
         for lat_chunk_index in set(lat_chunk_indices):
@@ -294,18 +290,30 @@ class BottomCellMap:
                 if lat_slice.stop is not None:
                     assert np.max(local_lat_indices) < lat_slice.stop
 
-                sections.append(((lat_slice, lon_slice), positions))
+                current_time = start_date
+                while current_time <= self._dataset.end_date:
+                    inside_time_frame = np.logical_and(
+                        times[positions] >= current_time,
+                        times[positions] < current_time + time_range,
+                    )
+                    time_window = (current_time, current_time + time_range)
+                    current_time += time_range
+
+                    if not np.any(inside_time_frame):
+                        continue
+
+                    sections.append(
+                        (
+                            (lat_slice, lon_slice),
+                            time_window,
+                            positions[inside_time_frame],
+                        )
+                    )
 
         # Sort by length of sections (largest first)
         sections.sort(key=lambda x: -len(x[-1]))
 
-        # Now we put the smallest section at the first place, so if we have to guess
-        # the func_meta using the first point, we use a point that is in the smallest
-        # section
-        smallest_section = sections.pop(-1)
-        sections.insert(0, smallest_section)
-
-        assert sum(len(s[1]) for s in sections) == len(lat_indices), (
+        assert sum(len(s[-1]) for s in sections) == len(lat_indices), (
             "Some indices are missing after splitting into chunks."
         )
 
@@ -322,7 +330,7 @@ class BottomCellMap:
         Maps the provided function to the bottom cell data corresponding
         to each point in the point table.
 
-        This method need a Pandas DataFrame `point_table` that contains a
+        This method needs a Pandas DataFrame `point_table` that contains a
         column for latitude, a column for longitude, and a column for time.
         The name of these columns can be customized using the attributes of
         this class: `lat_column`, `lon_column`, and `time_column`.
@@ -387,13 +395,21 @@ class BottomCellMap:
                 values of the column A are integers while the values of B are
                 floating point numbers, f_meta must be
                 {"A": int, "B", np.float32}. If it is not submitted, the code
-                will try to guess an approriate meta by executing f on the
+                will try to guess an appropriate meta by executing f on the
                 first point.
             delayed: If True, the method returns a Dask Delayed object that can
                 be computed later. If False, the method computes the results
                 immediately and returns a Pandas DataFrame.
         """
         LOGGER.debug("Applying the function to %s points...", len(point_table))
+
+        if point_table.index.duplicated().any():
+            warnings.warn(
+                "point_table contains duplicated indices. Since this method "
+                "alters the order of the rows, it is recommended to use "
+                "an index without duplicates in order to be able to identify "
+                "the original order of the points."
+            )
 
         LOGGER.debug(
             "Reading the mask of the dataset to find the bottom cell indices"
@@ -411,7 +427,7 @@ class BottomCellMap:
         def get_model_indices(row):
             """
             Given a row of the point table, this function extracts the
-            latitude and longitude of the point, and converts them to the
+            latitude and longitude of the point and converts them to the
             nearest model point indices in the model grid. It returns a
             Pandas Series with the model longitude index and model latitude
             index.
@@ -455,18 +471,12 @@ class BottomCellMap:
         )
         lat_indices = point_table["model_lat_index"].values.astype(int)
         lon_indices = point_table["model_lon_index"].values.astype(int)
-        bottom_indices = bottom_index_map[lat_indices, lon_indices]
 
-        # I convert the indices to xarray DataArrays
-        # so that they can be used to index the xarray Dataset later
-        lat_indices = xr.DataArray(
-            lat_indices, dims="points", name="model_lat_index"
-        )
-        lon_indices = xr.DataArray(
-            lon_indices, dims="points", name="model_lon_index"
-        )
+        # I create an array of bottom indices
         bottom_indices = xr.DataArray(
-            bottom_indices, dims="points", name="model_depth_index"
+            bottom_index_map[lat_indices, lon_indices],
+            dims="points",
+            name="model_depth_index",
         )
 
         n_time_steps = self._dataset.get_n_of_time_steps()
@@ -474,28 +484,17 @@ class BottomCellMap:
             "The dataset has approximately %s time steps", n_time_steps
         )
 
-        # Here I define the chunks for the xarray Dataset
-        # I use "auto" for depth, latitude, and longitude to allow
-        # Dask to determine the optimal chunk size for these dimensions.
-        # For time, I use "1000" if there are more than 2000 time steps
-        # to avoid loading all time steps at once, which can be
-        # memory-intensive.
         chunks: dict[str, str | int] = {
-            "depth": "auto",
-            "latitude": "auto",
-            "longitude": "auto",
+            "time": "auto",
+            "depth": -1,
+            "latitude": 50,
+            "longitude": 50,
         }
-        if n_time_steps > 500:
-            chunks["time"] = "auto"
-        else:
-            chunks["time"] = -1  # Load all time steps at once
-
         LOGGER.debug(
             "Reading the dataset to extract the data using the following "
             "chunks: %s",
             chunks,
         )
-
         data = self._dataset.get_data(chunks=chunks)
         LOGGER.debug(
             "Dataset opened! It has the following dimensions: %s",
@@ -538,8 +537,6 @@ class BottomCellMap:
             data = data.unify_chunks()
             data_chunks = data.chunks
 
-        callable_wrapper = _build_callable_wrapper(func)
-
         # Now we need to split the points into several arrays, one for each
         # zone of the model grid
         if data_chunks is not None:
@@ -554,7 +551,14 @@ class BottomCellMap:
             lon_indices=lon_indices,
             lat_chunks=lat_chunks,
             lon_chunks=lon_chunks,
+            times=point_table[self._time_column],
         )
+
+        column_names = {
+            "time": self._time_column,
+            "latitude": self._lat_column,
+            "longitude": self._lon_column,
+        }
 
         dask_f_meta = None
         if func_meta is not None:
@@ -562,13 +566,55 @@ class BottomCellMap:
             dask_f_meta: pd.DataFrame | None = make_meta(func_meta)
             LOGGER.debug(f"func_meta has been translated as: {dask_f_meta}")
 
+        if dask_f_meta is None:
+            LOGGER.debug("We use the first point to guess the func_meta")
+            test_point = point_table.iloc[0]
+            time_slice = slice(
+                test_point[column_names["time"]] - self._time_range,
+                test_point[column_names["time"]] + timedelta(milliseconds=1),
+            )
+            time_index_slice = data.indexes[
+                column_names["time"]
+            ].slice_indexer(time_slice.start, time_slice.stop)
+            lat_index = test_point["model_lat_index"]
+            lon_index = test_point["model_lon_index"]
+            test_dataset = data.isel(
+                time=time_index_slice,
+                latitude=slice(lat_index, lat_index + 1),
+                longitude=slice(lon_index, lon_index + 1),
+                depth=slice(
+                    bottom_indices[0].item(), bottom_indices[0].item() + 1
+                ),
+            )
+            local_shifts = {
+                "latitude": lat_index,
+                "longitude": lon_index,
+                "depth": bottom_indices[0].item(),
+            }
+            meta_task = _extract_points(
+                func,
+                dataset=to_delayed(test_dataset),
+                point_table=point_table.iloc[[0]],
+                depth_indices=bottom_indices[0:1],
+                indices_shift=local_shifts,
+                column_names=column_names,
+                time_range=self._time_range,
+                preserve_columns=[],
+            ).compute()
+
+            LOGGER.debug(f"func returned the following output: {meta_task}")
+            dask_f_meta = pd.DataFrame(meta_task, index=[0]).head(0)
+            LOGGER.debug(
+                f"This is the inferred value of func_meta: {dask_f_meta}"
+            )
+
         delayed_computations = []
         LOGGER.debug(
             "Generating the dask graph of all the %s tasks that will be "
             "executed",
             len(point_table),
         )
-        for section_slice, section in sections:
+        for section_slice, time_window, section in sections:
             lat_shift = (
                 section_slice[0].start
                 if section_slice[0].start is not None
@@ -582,98 +628,49 @@ class BottomCellMap:
             min_bottom_index = bottom_indices[section].min().item()
             max_bottom_index = bottom_indices[section].max().item()
             bottom_slice = slice(min_bottom_index, max_bottom_index + 1)
-            LOGGER.warning(bottom_slice)
-            point_ds = data.isel(
+            time_slice = data.indexes["time"].slice_indexer(
+                time_window[0] - np.timedelta64(self._time_range, "s"),
+                time_window[1],
+            )
+            LOGGER.debug(
+                "Slicing a section in the time window %s", time_window
+            )
+            section_slice = dict(
+                time=time_slice,
                 latitude=section_slice[0],
                 longitude=section_slice[1],
                 depth=bottom_slice,
-            ).isel(
-                latitude=lat_indices[section] - lat_shift,
-                longitude=lon_indices[section] - lon_shift,
-                depth=bottom_indices[section] - bottom_slice.start,
             )
-            for point_indx, point_global_index in enumerate(section):
-                point = point_table.iloc[point_global_index]
-                point_time = getattr(point, self._time_column)
+            LOGGER.debug(
+                "Slicing the dataset in the following area: %s", section_slice
+            )
+            point_ds = data.isel(**section_slice)
 
-                LOGGER.debug(
-                    "Point %s is associated with time %s; collecting the model "
-                    "data starting from %s",
-                    point_global_index,
-                    point_time,
-                    point_time - self._time_range,
-                )
-                time_slice = slice(
-                    point_time - self._time_range,
-                    point_time + timedelta(milliseconds=1),
-                )
-                time_index_slice = point_ds.indexes["time"].slice_indexer(
-                    time_slice.start, time_slice.stop
-                )
-                LOGGER.debug(
-                    "The temporal slice %s corresponds to the indices %s",
-                    time_slice,
-                    time_index_slice,
-                )
-                point_data = point_ds.isel(
-                    points=point_indx, time=time_index_slice
-                )
+            local_shifts = {
+                "latitude": lat_shift,
+                "longitude": lon_shift,
+                "depth": bottom_slice.start,
+            }
+            delayed_point_ds = to_delayed(point_ds)
 
-                point_data = point_data.rename(
-                    {
-                        "latitude": "model_latitude",
-                        "longitude": "model_longitude",
-                        "depth": "model_depth",
-                        "time": "model_time",
-                    }
-                )
+            delayed_task = _extract_points(
+                func,
+                dataset=delayed_point_ds,
+                point_table=point_table.iloc[section],
+                depth_indices=bottom_indices[section],
+                indices_shift=local_shifts,
+                column_names=column_names,
+                time_range=self._time_range,
+                preserve_columns=original_columns,
+            )
 
-                point_latitude = getattr(point, self._lat_column)
-                point_longitude = getattr(point, self._lon_column)
-                point_time = getattr(point, self._time_column)
-
-                point_new_coords = {
-                    "latitude": point_latitude,
-                    "longitude": point_longitude,
-                    "time": point_time,
-                    "distance": point.distance_from_model,
-                }
-                LOGGER.debug(
-                    "Assigning the following coordinates to the point %s: %s",
-                    point_indx,
-                    point_new_coords,
-                )
-                point_data = point_data.assign_coords(**point_new_coords)
-
-                if point_indx == 0 and dask_f_meta is None:
-                    LOGGER.debug(
-                        "Using this first point to guess the func_meta"
-                    )
-                    test_output = func(point_data.compute())
-                    LOGGER.debug(
-                        f"func returned the following output: {test_output}"
-                    )
-                    dask_f_meta = pd.DataFrame([test_output], index=[0]).head(
-                        0
-                    )
-                    LOGGER.debug(
-                        f"This is the inferred value of func_meta: {dask_f_meta}"
-                    )
-
-                LOGGER.debug(
-                    "Genererating delayed task for point %s",
-                    point_global_index,
-                )
-                delayed_task = self._generate_delayed(
-                    callable_wrapper, point_data
-                )
-                delayed_computations.append(delayed_task)
+            delayed_computations.append(delayed_task)
 
         LOGGER.debug("Merging together all the points")
         final_output = _merge_together(
             delayed_computations,
+            indices=[point_table.index[s] for _, _, s in sections],
             dask_f_meta=dask_f_meta,
-            original_table=point_table[original_columns],
         )
 
         if not delayed:
