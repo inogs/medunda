@@ -210,6 +210,7 @@ class GeoDataCollection(BaseModel):
         Args:
             variables: An iterable of variable names (VarName) to include in the
                 dataset. If None, all variables in the dataset will be included.
+            chunks: The chunk size for the dataset.
 
         Raises:
             ValueError: If no variables are specified.
@@ -241,10 +242,9 @@ class GeoDataCollection(BaseModel):
                 # This dataset does not contain the Greenwich meridian.
                 # We can skip this process
                 return xr_dataset
-            new_longitude = var_longitude.values
+            new_longitude = var_longitude.values.copy()
             new_longitude[greenwich_index] = 0.0
-            var_longitude["longitude"] = new_longitude
-            return xr_dataset
+            return xr_dataset.assign_coords(longitude=new_longitude)
 
         data_paths = []
         for variable in variables:
@@ -267,6 +267,7 @@ class GeoDataCollection(BaseModel):
                 data_paths,
                 chunks=chunks,
                 preprocess=clean_longitude_zeros,
+                join="exact",
             )
         LOGGER.debug("All files have been opened and merged successfully")
 
@@ -302,10 +303,12 @@ class GeoDataCollection(BaseModel):
             main_dataset_dir = data_path.parent.resolve()
 
         dataset_dict = yaml.safe_load(data_path.read_text())
-        dataset = GeoDataCollection.model_validate(dataset_dict)
+        data_collection = GeoDataCollection.model_validate(dataset_dict)
 
-        dataset.main_path = main_dataset_dir
+        data_collection.main_path = main_dataset_dir
 
-        LOGGER.debug("Dataset read successfully: %s", dataset)
+        LOGGER.debug(
+            "GeoDataCollection read successfully: %s", main_dataset_dir.name
+        )
 
-        return dataset
+        return data_collection
