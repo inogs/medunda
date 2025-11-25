@@ -1,5 +1,7 @@
 import logging
 import shutil
+from abc import ABC
+from abc import abstractmethod
 from datetime import timezone
 from pathlib import Path
 from typing import Mapping
@@ -8,6 +10,7 @@ import copernicusmarine
 
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
+from medunda.components.variables import VariableDataset
 from medunda.domains.domain import Domain
 from medunda.providers.provider import Provider
 from medunda.tools.typing import VarName
@@ -15,7 +18,7 @@ from medunda.tools.typing import VarName
 LOGGER = logging.getLogger(__name__)
 
 
-PRODUCTS = {
+MED_PRODUCTS = {
     # "MEDSEA_MULTIYEAR_PHY_006_004":
     ("thetao",): {
         Frequency.DAILY: "med-cmcc-tem-rean-d",
@@ -65,38 +68,46 @@ PRODUCTS = {
     },
 }
 
+GLOBAL_PRODUCTS = {
+    # GLOBAL_MULTIYEAR_PHY_001_030
+    ("thetao",): {
+        Frequency.DAILY: "cmems_mod_glo_phy_my_0.083deg_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_glo_phy_my_0.083deg_P1M-m",
+    },
+    (
+        "uo",
+        "vo",
+    ): {
+        Frequency.DAILY: "cmems_mod_glo_phy_my_0.083deg_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_glo_phy_my_0.083deg_P1M-m",
+    },
+    ("mlotst",): {
+        Frequency.DAILY: "cmems_mod_glo_phy_my_0.083deg_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_glo_phy_my_0.083deg_P1M-m",
+    },
+    ("so",): {
+        Frequency.DAILY: "cmems_mod_glo_phy_my_0.083deg_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_glo_phy_my_0.083deg_P1M-m",
+    },
+}
 
-def search_for_product(var_name: VarName, frequency: Frequency) -> str:
-    """Given the name of a variable and a frequency, return the name of the
-    CMEMS product that contains such a variable with the specified frequency.
-    """
 
-    selected_product = None
-    for vars_tuple, prod_dict in PRODUCTS.items():
-        if var_name in vars_tuple:
-            selected_product = prod_dict[frequency]
-            break
-
-    if selected_product is None:
-        raise ValueError(
-            f"Variable '{var_name}' is not available in the dictionary"
-        )
-
-    LOGGER.debug(f"var_name={var_name}, selected_product={selected_product}")
-
-    return selected_product
-
-
-class CMEMSProvider(Provider):
+class CMEMSProvider(Provider, ABC):
     @classmethod
-    def get_name(cls) -> str:
-        return "cmems"
+    @abstractmethod
+    def search_for_product(
+        cls, var_name: VarName, frequency: Frequency
+    ) -> str:
+        """Given the name of a variable and a frequency, return the name of the
+        CMEMS product that contains such a variable with the specified frequency.
+        """
+        raise NotImplementedError
 
     @classmethod
     def create(cls, config_file: Path | None = None) -> "Provider":
         if config_file is not None:
             raise ValueError(
-                "CMEMS provider does not support configuration files"
+                "CMEMS providers do not support configuration files"
             )
         return cls()
 
@@ -121,7 +132,7 @@ class CMEMSProvider(Provider):
                 len(files),
             )
 
-            product_id = search_for_product(
+            product_id = self.search_for_product(
                 var_name=var_name, frequency=frequency
             )
             LOGGER.debug(
@@ -178,3 +189,72 @@ class CMEMSProvider(Provider):
                     'Moving file "%s" to "%s"', temp_file_path, file_path
                 )
                 shutil.move(temp_file_path, file_path)
+
+
+class CMEMSProviderMed(CMEMSProvider):
+    @classmethod
+    def get_name(cls) -> str:
+        return "cmems_mediterranean"
+
+    @classmethod
+    def search_for_product(
+        cls, var_name: VarName, frequency: Frequency
+    ) -> str:
+        """Given the name of a variable and a frequency, return the name of the
+        CMEMS product that contains such a variable with the specified frequency.
+        """
+        selected_product = None
+        for vars_tuple, prod_dict in MED_PRODUCTS.items():
+            if var_name in vars_tuple:
+                selected_product = prod_dict[frequency]
+                break
+
+        if selected_product is None:
+            raise ValueError(
+                f"Variable '{var_name}' is not available in the dictionary"
+            )
+
+        LOGGER.debug(
+            f"var_name={var_name}, selected_product={selected_product}"
+        )
+
+        return selected_product
+
+    def available_variables(self, frequency: Frequency) -> VariableDataset:
+        variables_names = []
+        for var_names, product_by_freq in MED_PRODUCTS.items():
+            if frequency in product_by_freq:
+                variables_names.extend(var_names)
+        return VariableDataset(variables_names)
+
+
+class CMEMSProviderGlobal(CMEMSProvider):
+    @classmethod
+    def get_name(cls) -> str:
+        return "cmems_global"
+
+    @classmethod
+    def search_for_product(cls, var_name, frequency):
+        selected_product = None
+        for vars_tuple, prod_dict in GLOBAL_PRODUCTS.items():
+            if var_name in vars_tuple:
+                selected_product = prod_dict[frequency]
+                break
+
+        if selected_product is None:
+            raise ValueError(
+                f"Variable '{var_name}' is not available in the dictionary"
+            )
+
+        LOGGER.debug(
+            f"var_name={var_name}, selected_product={selected_product}"
+        )
+
+        return selected_product
+
+    def available_variables(self, frequency: Frequency) -> VariableDataset:
+        variables_names = []
+        for var_names, product_by_freq in GLOBAL_PRODUCTS.items():
+            if frequency in product_by_freq:
+                variables_names.extend(var_names)
+        return VariableDataset(variables_names)
