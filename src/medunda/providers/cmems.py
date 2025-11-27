@@ -18,49 +18,49 @@ LOGGER = logging.getLogger(__name__)
 PRODUCTS = {
     # "MEDSEA_MULTIYEAR_PHY_006_004":
     ("thetao",): {
-        Frequency.DAILY: "med-cmcc-tem-rean-d",
-        Frequency.MONTHLY: "med-cmcc-tem-rean-m",
+        Frequency.DAILY: "cmems_mod_med_phy-temp_my_4.2km_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_med_phy-temp_my_4.2km_P1M-m",
         Frequency.YEARLY: "cmems_mod_med_phy-tem_my_4.2km_P1Y-m",
     },
     ("vo", "uo"): {
-        Frequency.DAILY: "med-cmcc-cur-rean-d",
-        Frequency.MONTHLY: "med-cmcc-cur-rean-m",
+        Frequency.DAILY: "cmems_mod_med_phy-cur_my_4.2km_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_med_phy-cur_my_4.2km_P1M-m",
         Frequency.YEARLY: "cmems_mod_med_phy-cur_my_4.2km_P1Y-m",
     },
     ("so",): {
-        Frequency.DAILY: "med-cmcc-sal-rean-d",
-        Frequency.MONTHLY: "med-cmcc-sal-rean-m",
+        Frequency.DAILY: "cmems_mod_med_phy-sal_my_4.2km_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_med_phy-sal_my_4.2km_P1M-m",
         Frequency.YEARLY: "cmems_mod_med_phy-sal_my_4.2km_P1Y-m",
     },
     ("mlotst",): {
-        Frequency.DAILY: "med-cmcc-mld-rean-d",
-        Frequency.MONTHLY: "med-cmcc-mld-rean-m",
+        Frequency.DAILY: "cmems_mod_med_phy-mld_my_4.2km_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_med_phy-mld_my_4.2km_P1M-m",
         Frequency.YEARLY: "cmems_mod_med_phy-mld_my_4.2km_P1Y-m",
     },
     # "MEDSEA_MULTIYEAR_BGC_006_008":
     ("ph",): {
-        Frequency.DAILY: "med-ogs-car-rean-d",
-        Frequency.MONTHLY: "med-ogs-car-rean-m",
+        Frequency.DAILY: "cmems_mod_med_bgc-car_my_4.2km_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_med_bgc-car_my_4.2km_P1M-m",
         Frequency.YEARLY: "cmems_mod_med_bgc-car_my_4.2km_P1Y-m",
     },
     ("no3", "po4", "si"): {
-        Frequency.DAILY: "med-ogs-nut-rean-d",
-        Frequency.MONTHLY: "med-ogs-nut-rean-m",
+        Frequency.DAILY: "cmems_mod_med_bgc-nut_my_4.2km_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_med_bgc-nut_my_4.2km_P1M-m",
         Frequency.YEARLY: "cmems_mod_med_bgc-nut_my_4.2km_P1Y-m",
     },
     ("chl",): {
-        Frequency.DAILY: "med-ogs-pft-rean-d",
-        Frequency.MONTHLY: "med-ogs-pft-rean-m",
+        Frequency.DAILY: "cmems_mod_med_bgc-plankton_my_4.2km_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_med_bgc-plankton_my_4.2km_P1M-m",
         Frequency.YEARLY: "cmems_mod_med_bgc-plankton_my_4.2km_P1Y-m",
     },
     ("o2",): {
-        Frequency.DAILY: "med-ogs-bio-rean-d",
-        Frequency.MONTHLY: "med-ogs-bio-rean-m",
+        Frequency.DAILY: "cmems_mod_med_bgc-bio_my_4.2km_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_med_bgc-bio_my_4.2km_P1M-m",
         Frequency.YEARLY: "cmems_mod_med_bgc-bio_my_4.2km_P1Y-m",
     },
     ("nppv",): {
-        Frequency.DAILY: "med-ogs-bio-rean-d",
-        Frequency.MONTHLY: "med-ogs-bio-rean-m",
+        Frequency.DAILY: "cmems_mod_med_bgc-bio_my_4.2km_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_med_bgc-bio_my_4.2km_P1M-m",
         Frequency.YEARLY: "cmems_mod_med_bgc-bio_my_4.2km_P1Y-m",
     },
 }
