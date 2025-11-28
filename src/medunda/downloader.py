@@ -116,8 +116,8 @@ def configure_parser(
         type=str,
         required=False,
         choices=sorted(list(PROVIDERS.keys())),
-        default="cmems",
-        help="The provider from which to download the data (default: cmems)",
+        default="cmems_mediterranean",
+        help="The provider from which to download the data (default: cmems_mediterranean)",
     )
 
     create_subparser.add_argument(
@@ -184,6 +184,7 @@ def download_data(
             f'frequency "{frequency}".'
         )
     for variable in variables:
+        print(provider.available_variables(frequency)._variables)
         if variable not in provider.available_variables(frequency):
             raise ValueError(
                 f'Variable "{variable}" is not available from provider '
