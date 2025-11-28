@@ -1,7 +1,6 @@
 import logging
 import shutil
 from abc import ABC
-from abc import abstractmethod
 from datetime import timezone
 from pathlib import Path
 from typing import Mapping
@@ -93,15 +92,31 @@ GLOBAL_PRODUCTS = {
 
 
 class CMEMSProvider(Provider, ABC):
+    PRODUCTS = {}
+
     @classmethod
-    @abstractmethod
     def search_for_product(
         cls, var_name: VarName, frequency: Frequency
     ) -> str:
         """Given the name of a variable and a frequency, return the name of the
         CMEMS product that contains such a variable with the specified frequency.
         """
-        raise NotImplementedError
+        selected_product = None
+        for vars_tuple, prod_dict in cls.PRODUCTS.items():
+            if var_name in vars_tuple:
+                selected_product = prod_dict[frequency]
+                break
+
+        if selected_product is None:
+            raise ValueError(
+                f"Variable '{var_name}' is not available in the dictionary"
+            )
+
+        LOGGER.debug(
+            f"var_name={var_name}, selected_product={selected_product}"
+        )
+
+        return selected_product
 
     @classmethod
     def create(cls, config_file: Path | None = None) -> "Provider":
@@ -110,6 +125,13 @@ class CMEMSProvider(Provider, ABC):
                 "CMEMS providers do not support configuration files"
             )
         return cls()
+
+    def available_variables(self, frequency: Frequency) -> VariableDataset:
+        variables_names = []
+        for var_names, product_by_freq in self.PRODUCTS.items():
+            if frequency in product_by_freq:
+                variables_names.extend(var_names)
+        return VariableDataset(variables_names)
 
     def download_data(
         self,
@@ -192,69 +214,16 @@ class CMEMSProvider(Provider, ABC):
 
 
 class CMEMSProviderMed(CMEMSProvider):
+    PRODUCTS = MED_PRODUCTS
+
     @classmethod
     def get_name(cls) -> str:
         return "cmems_mediterranean"
 
-    @classmethod
-    def search_for_product(
-        cls, var_name: VarName, frequency: Frequency
-    ) -> str:
-        """Given the name of a variable and a frequency, return the name of the
-        CMEMS product that contains such a variable with the specified frequency.
-        """
-        selected_product = None
-        for vars_tuple, prod_dict in MED_PRODUCTS.items():
-            if var_name in vars_tuple:
-                selected_product = prod_dict[frequency]
-                break
-
-        if selected_product is None:
-            raise ValueError(
-                f"Variable '{var_name}' is not available in the dictionary"
-            )
-
-        LOGGER.debug(
-            f"var_name={var_name}, selected_product={selected_product}"
-        )
-
-        return selected_product
-
-    def available_variables(self, frequency: Frequency) -> VariableDataset:
-        variables_names = []
-        for var_names, product_by_freq in MED_PRODUCTS.items():
-            if frequency in product_by_freq:
-                variables_names.extend(var_names)
-        return VariableDataset(variables_names)
-
 
 class CMEMSProviderGlobal(CMEMSProvider):
+    PRODUCTS = GLOBAL_PRODUCTS
+
     @classmethod
     def get_name(cls) -> str:
         return "cmems_global"
-
-    @classmethod
-    def search_for_product(cls, var_name, frequency):
-        selected_product = None
-        for vars_tuple, prod_dict in GLOBAL_PRODUCTS.items():
-            if var_name in vars_tuple:
-                selected_product = prod_dict[frequency]
-                break
-
-        if selected_product is None:
-            raise ValueError(
-                f"Variable '{var_name}' is not available in the dictionary"
-            )
-
-        LOGGER.debug(
-            f"var_name={var_name}, selected_product={selected_product}"
-        )
-
-        return selected_product
-
-    def available_variables(self, frequency: Frequency) -> VariableDataset:
-        variables_names = []
-        for var_names, product_by_freq in GLOBAL_PRODUCTS.items():
-            if frequency in product_by_freq:
-                variables_names.extend(var_names)
-        return VariableDataset(variables_names)
