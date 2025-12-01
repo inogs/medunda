@@ -116,8 +116,8 @@ def configure_parser(
         type=str,
         required=False,
         choices=sorted(list(PROVIDERS.keys())),
-        default="cmems",
-        help="The provider from which to download the data (default: cmems)",
+        default="cmems_mediterranean",
+        help="The provider from which to download the data (default: cmems_mediterranean)",
     )
 
     create_subparser.add_argument(
