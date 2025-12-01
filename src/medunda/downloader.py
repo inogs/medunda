@@ -184,7 +184,6 @@ def download_data(
             f'frequency "{frequency}".'
         )
     for variable in variables:
-        print(provider.available_variables(frequency)._variables)
         if variable not in provider.available_variables(frequency):
             raise ValueError(
                 f'Variable "{variable}" is not available from provider '
