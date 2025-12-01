@@ -108,7 +108,7 @@ class CMEMSProvider(Provider, ABC):
                 "https://marine.copernicus.eu/ to create an account and "
                 "log in. If you have an account, create a valid credential "
                 "file by executing the following function: "
-                "'copernicusmarine.login()' in a python script before "
+                "'copernicusmarine.login()' in a Python script before "
                 "attempting to download data (otherwise Medunda will ask for "
                 "your credentials interactively every time it downloads a "
                 "file).",
