@@ -4,6 +4,7 @@ from abc import ABC
 from datetime import timezone
 from pathlib import Path
 from typing import Mapping
+from warnings import warn
 
 import copernicusmarine
 
@@ -93,6 +94,26 @@ GLOBAL_PRODUCTS = {
 
 class CMEMSProvider(Provider, ABC):
     PRODUCTS = {}
+
+    def __init__(self) -> None:
+        super().__init__()
+        user_logged_in = copernicusmarine.login(check_credentials_valid=True)
+
+        if not user_logged_in:
+            warn(
+                "You are not logged in to the Copernicus Marine "
+                "Environment Monitoring Service (CMEMS). "
+                "You need a valid CMEMS account to download data if you are "
+                "using the CMEMS provider. Please visit "
+                "https://marine.copernicus.eu/ to create an account and "
+                "log in. If you have an account, create a valid credential "
+                "file by executing the following function: "
+                "'copernicusmarine.login()' in a Python script before "
+                "attempting to download data (otherwise Medunda will ask for "
+                "your credentials interactively every time it downloads a "
+                "file).",
+                UserWarning,
+            )
 
     @classmethod
     def search_for_product(
