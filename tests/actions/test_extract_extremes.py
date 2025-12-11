@@ -1,5 +1,5 @@
 import numpy as np
-from conftest import generate_test_array
+from fixtures import generate_test_array
 
 from medunda.actions.extract_extremes import extract_min_max
 
