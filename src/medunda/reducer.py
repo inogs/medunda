@@ -85,7 +85,7 @@ def configure_parser(
         "--format",
         type=str,
         required=False,
-        choices=["netcdf", "csv"],
+        choices=["netcdf", "csv", "geotiff"],
         default="netcdf",
         help="Format of the output-file",
     )
@@ -172,11 +172,23 @@ def reducer(
 
     if format == "netcdf":
         dataset_result.to_netcdf(output_file)
+
     elif format == "csv":
         dataset_result.to_csv(output_file)
+
+    elif format == "geotiff":
+        if "time" in dataset_result.dims:
+            dataset_result = dataset_result.mean(dim="time", keep_attrs=True)
+
+        dataset_result = dataset_result.rio.set_spatial_dims(
+            x_dim="longitude", y_dim="latitude"
+        )
+        dataset_result.rio.crs
+        dataset_result.rio.write_crs("epsg:4326", inplace=True)
+        dataset_result.rio.to_raster(output_file)
+
     else:
         raise ValueError(f"{format} is unsupported format for now.")
-
     return 0
 
 
