@@ -100,7 +100,7 @@ def configure_parser(
         type=str,
         required=False,
         choices=["month", "year", "whole"],
-        default="whole",
+        default="year",
         help="Split the downloaded dataset by month, year or download all data together",
     )
 
