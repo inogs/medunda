@@ -32,6 +32,9 @@ variables:
   - variable: ph
     dataset_name: pH
     unit: null
+  - variable: nppv
+    dataset_name: ppnNew
+    unit: mg/m3/day
 
   - variable: B1c
     dataset_name: B1c
@@ -87,5 +90,5 @@ frequencies:
     variables: [o2, no3, po4, si, chl, ph]
     path: "/g100_scratch/userexternal/plazzari/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_1_tar"
   - frequency: monthly
-    variables: [thetao, so, o2, no3, po4, si, chl, ph, B1c, B1n, B1p, P1c, P2c, P3c, P4c, Z3c, Z4c, Z5c, Z6c, R1c, R2c, R3c, R6c]
+    variables: [thetao, so, o2, no3, po4, si, chl, ph, nppv, B1c, B1n, B1p, P1c, P2c, P3c, P4c, Z3c, Z4c, Z5c, Z6c, R1c, R2c, R3c, R6c]
     path: "/g100_scratch/userexternal/plazzari/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_2_tar"
