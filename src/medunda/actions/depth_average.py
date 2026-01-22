@@ -1,7 +1,7 @@
 import logging
 
-import numpy as np
 import xarray as xr
+from bitsea.commons.mask import Mask
 
 from medunda.actions.average_between_layers import average_between_layers
 
@@ -23,22 +23,33 @@ def configure_parser(subparsers):
         "--axis",
         type=str,
         choices=["depth", "space", "time"],
-        nargs="+",
+        # nargs="+",
         required=True,
         help="Choose the axis on which the average will be computed.",
     )
 
 
-def get_volume():
-    pass
+def get_volume(data: xr.Dataset) -> xr.DataArray:
+    """Compute the cell volume"""
+
+    mask = Mask.from_xarray(dataset=data)
+    area = xr.DataArray(mask.area, dims=("latitude", "longitude"))
+    e3t = xr.DataArray(mask.e3t, dims=("depth", "latitude", "longitude"))
+    vol_cell = area * e3t
+    return vol_cell
 
 
-def compute_depth_average(data: xr.Dataset, axis) -> xr.Dataset:
+def compute_average(data: xr.Dataset, axis) -> xr.Dataset:
     """Compute the average on a given axis.
 
     Args:
         data (xr.Dataset): Input dataset with depth as one of the dimensions.
     """
+    if axis not in AXIS.keys():
+        raise ValueError(
+            f"Axis '{axis}' is not valid. Choose from {list(AXIS.keys())}"
+        )
+
     LOGGER.info(f"Computing average over axis '{axis}'")
 
     if axis == "depth":
@@ -50,16 +61,19 @@ def compute_depth_average(data: xr.Dataset, axis) -> xr.Dataset:
         LOGGER.info("Depth average computed successfully")
 
     elif axis == "space":
-        mask = np.ma.getmaskarray(data.to_masked_array(copy=False))[0, :, :, :]
+        print(data)
+        mask = Mask.from_xarray(dataset=data)
 
         weights = get_volume(data)
         weights = weights * (~mask)
 
         averaged_dataset = xr.Dataset()
+
         for var in data.data_vars:
             da = data[var]
-            weighted_sum = (da * weights).sum(dim=["latitude", "longitude"])
-            total_weights = weights.sum(dim=["latitude", "longitude"])
+
+            weighted_sum = (da * weights).sum(dim=("latitude", "longitude"))
+            total_weights = weights.sum(dim=("latitude", "longitude"))
             averaged_dataset[var] = weighted_sum / total_weights
 
         LOGGER.info("Space average computed successfully")
@@ -68,10 +82,5 @@ def compute_depth_average(data: xr.Dataset, axis) -> xr.Dataset:
         averaged_dataset = data.mean(dim="time")
 
         LOGGER.info("Time average computed successfully")
-
-    else:
-        raise ValueError(
-            f"Axis '{axis}' is not valid. Choose from {list(AXIS.keys())}"
-        )
 
     return averaged_dataset

@@ -157,6 +157,8 @@ def reducer(
     for var_name in data.data_vars:
         data[var_name].data = da.where(mask, data[var_name].data, da.nan)
 
+    data["tmask"] = dataset.get_mask()["tmask"]
+
     LOGGER.info(
         'Executing action "%s" with the following arguments: %s',
         action_name,
