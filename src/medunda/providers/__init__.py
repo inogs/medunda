@@ -3,6 +3,7 @@ from types import MappingProxyType
 
 from medunda.providers.cmems import CMEMSProviderGlobal
 from medunda.providers.cmems import CMEMSProviderMed
+from medunda.providers.local_reanalysis import LocalReanalysis
 from medunda.providers.provider import Provider
 from medunda.providers.tar_archive import TarArchiveProvider
 
@@ -11,6 +12,7 @@ PROVIDERS: Mapping[str, type[Provider]] = MappingProxyType(
         CMEMSProviderGlobal.get_name(): CMEMSProviderGlobal,
         CMEMSProviderMed.get_name(): CMEMSProviderMed,
         TarArchiveProvider.get_name(): TarArchiveProvider,
+        LocalReanalysis.get_name(): LocalReanalysis,
         # Add other providers here as needed
     }
 )
