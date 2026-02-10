@@ -3,6 +3,7 @@ from enum import Enum
 
 class Frequency(Enum):
     DAILY = "daily"
+    WEEKLY = "weekly"
     MONTHLY = "monthly"
     YEARLY = "yearly"
 
@@ -13,5 +14,7 @@ class Frequency(Enum):
             return "monthly"
         elif self == Frequency.YEARLY:
             return "yearly"
+        elif self == Frequency.WEEKLY:
+            return "weekly"
         else:
             raise ValueError("Invalid Frequency value")
