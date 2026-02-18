@@ -311,7 +311,7 @@ class LocalReanalysis(Provider):
 
                         with netCDF4.Dataset(t_input_file, "r") as ds:
                             data = np.asarray(
-                                np.ma.getdata(ds[var_name][slices]),
+                                np.ma.getdata(ds[dataset_var_name][slices]),
                                 dtype=np.float32,
                             )
                         nc_var[t_index, :] = data
