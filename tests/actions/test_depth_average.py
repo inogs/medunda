@@ -1,6 +1,6 @@
 import numpy as np
 
-from medunda.actions.depth_average import compute_depth_average
+from medunda.actions.compute_average import compute_depth_average
 
 
 def test_depth_average(data4d):
