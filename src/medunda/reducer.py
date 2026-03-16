@@ -11,7 +11,7 @@ from medunda.actions import ActionNotFound
 from medunda.actions import average_between_layers
 from medunda.actions import calculate_stats
 from medunda.actions import climatology
-from medunda.actions import depth_average
+from medunda.actions import compute_average
 from medunda.actions import extract_bottom
 from medunda.actions import extract_extremes
 from medunda.actions import extract_layer
@@ -34,7 +34,7 @@ ACTION_MODULES = [
     average_between_layers,
     calculate_stats,
     climatology,
-    depth_average,
+    compute_average,
     extract_bottom,
     extract_extremes,
     extract_layer,
