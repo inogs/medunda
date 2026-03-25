@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Any
 
 import dask.array as da
+import numpy as np
+import xarray as xr
 
 from medunda.actions import ActionNotFound
 from medunda.actions import average_between_layers
@@ -85,7 +87,7 @@ def configure_parser(
         "--format",
         type=str,
         required=False,
-        choices=["netcdf", "csv", "geotiff"],
+        choices=["netcdf", "csv", "geotiff", "ascii"],
         default="netcdf",
         help="Format of the output-file",
     )
@@ -174,7 +176,16 @@ def reducer(
         dataset_result.to_netcdf(output_file)
 
     elif format == "csv":
-        dataset_result.to_csv(output_file)
+        if isinstance(dataset_result, xr.Dataset):
+            raise TypeError("ASCII configuration requires a Dataset")
+
+        if len(dataset_result.data_vars) == 1:
+            dataset_result = dataset_result[list(dataset_result.data_vars)[0]]
+        else:
+            raise ValueError("CSV configuration requires a single variable")
+
+        df = dataset_result.to_dataframe().reset_index()
+        df.to_csv(output_file)
 
     elif format == "geotiff":
         if "time" in dataset_result.dims:
@@ -186,6 +197,63 @@ def reducer(
         dataset_result.rio.crs
         dataset_result.rio.write_crs("epsg:4326", inplace=True)
         dataset_result.rio.to_raster(output_file)
+
+    elif format == "ascii":
+        if not isinstance(dataset_result, xr.Dataset):
+            raise TypeError("ASCII configuration requires a Dataset")
+
+        if len(dataset_result.data_vars) == 1:
+            dataset_result = dataset_result[list(dataset_result.data_vars)[0]]
+        else:
+            raise ValueError("ASCII configuration requires a single variable")
+
+        if "time" in dataset_result.dims:
+            dataset_result = dataset_result.mean(dim="time", keep_attrs=True)
+
+        if not {"latitude", "longitude"}.issubset(dataset_result.dims):
+            raise ValueError(
+                "ASCII grid requires latitude and longitude dimensions"
+            )
+
+        nodata = -9999
+
+        ncols = dataset_result.sizes["latitude"]
+        nrows = dataset_result.sizes["longitude"]
+
+        lat = dataset_result.latitude.values
+        lon = dataset_result.longitude.values
+
+        lat_diff = (lat[-1] - lat[0]) / (ncols - 1)
+        lon_diff = (lon[-1] - lon[0]) / (nrows - 1)
+
+        cellsize = (lat_diff + lon_diff) / 2
+
+        xllcorner = float(dataset_result.longitude.min())
+        yllcorner = float(dataset_result.latitude.min())
+
+        arr = dataset_result.values.astype(float, copy=False)
+        arr = np.where(np.isnan(dataset_result.values), nodata, arr)
+
+        if arr.ndim != 2:
+            raise ValueError("ASCII grid requires a 2D array")
+
+        with open(output_file, "w") as f:
+            f.write(f"ncols {ncols}\n")
+            f.write(f"nrows {nrows}\n")
+            f.write(f"xllcorner {xllcorner}\n")
+            f.write(f"yllcorner {yllcorner}\n")
+            f.write(f"cellsize {cellsize}\n")
+            f.write(f"NODATA_value {nodata}\n")
+
+            for row in arr:
+                line = []
+                for v in row:
+                    if v == nodata:
+                        line.append(str(nodata))
+                    else:
+                        line.append(f"{v:.8f}")
+
+                f.write(" ".join(line) + "\n")
 
     else:
         raise ValueError(f"{format} is unsupported format for now.")
