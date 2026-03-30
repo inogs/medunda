@@ -7,11 +7,11 @@ A toolkit for downloading and analyzing oceanographic data from the Copernicus M
 Data Store in the Mediterranean Sea.
 
 Medunda is a Python-based tool designed to download, process and visualize environmental data
-form different sources, moslty noticeable to Copernicus Marine Data Store.
+from different sources, moslty noticeable to Copernicus Marine Data Store.
 This tool offers users a certain degree of flexibility, including customizable command-line
 downloads and different data processing actions.
 
-Built to be a user-friendly tool, Medunda allows a coherent interaction though the command
+Built to be a user-friendly tool, Medunda allows a coherent interaction through the command
 line, making data access manipulation more intuitive.
 
 

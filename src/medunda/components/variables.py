@@ -125,10 +125,10 @@ Variable(
 Variable(
     "B1p", label="Aerobic and Anaerobic Bacteria phosphorous", cmap="viridis"
 )
-Variable("P1c", label="Diamtoms Biomass_carbon", cmap=cmocean.cm.matter)
+Variable("P1c", label="Diatoms Biomass_carbon", cmap=cmocean.cm.matter)
 Variable("P2c", label="Flagellates Biomass_carbon", cmap=cmocean.cm.matter)
 Variable(
-    "P3c", label="PicoPhytoplakton Biomass_carbon", cmap=cmocean.cm.matter
+    "P3c", label="PicoPhytoplankton Biomass_carbon", cmap=cmocean.cm.matter
 )
 Variable(
     "P4c", label="Large Phytoplankton Biomass_carbon", cmap=cmocean.cm.matter
