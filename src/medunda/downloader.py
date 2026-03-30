@@ -1,3 +1,15 @@
+"""
+The downloader is one of the tools that Medunda provides to facilitate the
+downloadingof model data from various sources.
+
+Its main job is creating a :class:`medunda.components.dataset.Dataset`, which
+is the core data structure used by Medunda to manage and process the data
+produced by one or more model runs.
+
+It provides a command line interface that allows users to specify the
+variables, frequencies, and other parameters for the data download.
+"""
+
 import argparse
 import logging
 from collections.abc import Iterable
