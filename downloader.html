@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Downloader &#8212; Medunda User Guide  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Components" href="components.html" />
+    <link rel="prev" title="Workflow" href="workflow.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-medunda.downloader">
+<span id="downloader"></span><span id="downloaderdoc"></span><h1>Downloader<a class="headerlink" href="#module-medunda.downloader" title="Link to this heading">¶</a></h1>
+<p>The downloader is one of the tools that Medunda provides to facilitate the
+downloading of model data from various sources.</p>
+<p>Its main job is creating a <a class="reference internal" href="components.html#medunda.components.dataset.Dataset" title="medunda.components.dataset.Dataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">medunda.components.dataset.Dataset</span></code></a>, which
+is the core data structure used by Medunda to manage and process the data
+produced by one or more model runs.</p>
+<p>It provides a command line interface that allows users to specify the
+variables, frequencies, and other parameters for the data download.</p>
+<p>To start a new download:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>medunda<span class="w"> </span>downloader<span class="w"> </span>create<span class="w"> </span>--variables<span class="w"> </span>&lt;variable_name&gt;<span class="w"> </span>--start-date<span class="w"> </span>&lt;YYYY-MM-DD&gt;<span class="w"> </span>--end-date<span class="w"> </span>&lt;YYYY-MM-DD&gt;<span class="w"> </span>--frequency<span class="w"> </span>&lt;daily<span class="p">|</span>weekly<span class="p">|</span>monthly<span class="p">|</span>yearly&gt;<span class="w"> </span>--domain<span class="w"> </span>&lt;domain_file&gt;<span class="w"> </span>--provider<span class="w"> </span>&lt;data_source&gt;<span class="w"> </span>--provider-config<span class="w"> </span>&lt;configuration<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>provider&gt;<span class="w"> </span>--split-by<span class="w"> </span>&lt;whole<span class="p">|</span>year<span class="p">|</span>month&gt;<span class="w"> </span>--output-dir<span class="w"> </span>&lt;output_path&gt;
+</pre></div>
+</div>
+<p>To resume an interrupted download:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>medunda<span class="w"> </span>downloader<span class="w"> </span>resume<span class="w"> </span>--dataset-dir<span class="w"> </span>&lt;path_of_the_dataset&gt;
+</pre></div>
+</div>
+<p><em>Example</em>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>medunda<span class="w"> </span>downloader<span class="w"> </span>create<span class="w"> </span>--variables<span class="w"> </span>thetao<span class="w"> </span>o2<span class="w"> </span>--start-date<span class="w"> </span><span class="m">1999</span>-01-01<span class="w"> </span>--end-date<span class="w"> </span><span class="m">2023</span>-12-31<span class="w"> </span>--frequency<span class="w"> </span>monthly<span class="w"> </span>--domain<span class="w"> </span>gsa9<span class="w"> </span>--split-by<span class="w"> </span>year<span class="w"> </span>--output-dir<span class="w"> </span>./data/
+</pre></div>
+</div>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Medunda User Guide</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Downloader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="workflow.html" title="previous chapter">Workflow</a></li>
+      <li>Next: <a href="components.html" title="next chapter">Components</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/downloader.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
