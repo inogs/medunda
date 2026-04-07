@@ -11,7 +11,7 @@ from medunda.actions import ActionNotFound
 from medunda.actions import average_between_layers
 from medunda.actions import calculate_stats
 from medunda.actions import climatology
-from medunda.actions import depth_average
+from medunda.actions import compute_average
 from medunda.actions import extract_bottom
 from medunda.actions import extract_extremes
 from medunda.actions import extract_layer
@@ -34,7 +34,7 @@ ACTION_MODULES = [
     average_between_layers,
     calculate_stats,
     climatology,
-    depth_average,
+    compute_average,
     extract_bottom,
     extract_extremes,
     extract_layer,
@@ -156,6 +156,8 @@ def reducer(
     mask = domain.compute_selection_mask(data)
     for var_name in data.data_vars:
         data[var_name].data = da.where(mask, data[var_name].data, da.nan)
+
+    data["tmask"] = dataset.get_mask()["tmask"]
 
     LOGGER.info(
         'Executing action "%s" with the following arguments: %s',

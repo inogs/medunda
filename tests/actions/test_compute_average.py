@@ -1,9 +1,9 @@
 import numpy as np
 
-from medunda.actions.depth_average import compute_depth_average
+from medunda.actions.compute_average import compute_average
 
 
-def test_depth_average(data4d):
+def test_compute_average(data4d):
     """Test the extract_surface function."""
 
     depth_levels = data4d.depth.shape[0]
@@ -15,7 +15,7 @@ def test_depth_average(data4d):
     latitude_levels = data4d.latitude.shape[0]
     longitude_levels = data4d.longitude.shape[0]
 
-    ds = compute_depth_average(data=data4d)
+    ds = compute_average(data=data4d, axis="depth")
 
     assert "T" in ds.data_vars, "Variable 'T' not found in output dataset."
     assert "S" in ds.data_vars, "Variable 'S' not found in output dataset."
