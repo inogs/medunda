@@ -53,11 +53,14 @@ def integrate_between_layers(
         if "time" in data.dims:
             selection["time"] = 0
 
+        dims = tuple(d for d in weighted_average.dims)
+
         weighted_average = xr.where(
             np.isnan(data[variable].isel(**selection)),
             np.nan,
             weighted_average,
-        )
+        ).transpose(*dims)
+
         integrated_variables[variable] = weighted_average
 
     final_dataset = xr.Dataset(integrated_variables)
