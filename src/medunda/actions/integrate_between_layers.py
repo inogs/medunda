@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import xarray as xr
 
 from medunda.tools.layers import compute_layer_height
@@ -46,6 +47,16 @@ def integrate_between_layers(
 
         weighted_average = (selected_layer * layer_height_extended).sum(
             dim="depth", skipna=True
+        )
+
+        selection = {"depth": 0}
+        if "time" in data.dims:
+            selection["time"] = 0
+
+        weighted_average = xr.where(
+            np.isnan(data[variable].isel(**selection)),
+            np.nan,
+            weighted_average,
         )
         integrated_variables[variable] = weighted_average
 
