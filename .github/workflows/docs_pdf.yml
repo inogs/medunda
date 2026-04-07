@@ -1,0 +1,44 @@
+name: Build and Deploy PDF docs
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build_docs:
+    runs-on: ubuntu-latest
+    steps:
+      # Repo checkout
+      - name: Clone repo
+        uses: actions/checkout@v6
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pipx install poetry==2.3.2
+
+      - name: Install dependencies
+        run: poetry install --with dev
+
+      - name: Install LaTeX
+        run: sudo apt-get update && sudo apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra latexmk make
+
+      - name: Build PDF docs
+        run: |
+          poetry run sphinx-build -b latex docs/source docs/build/latex
+          make -C docs/build/latex
+          cp docs/build/latex/*.pdf medunda_user_guide.pdf
+
+      - name: Upload PDF to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-docs
+          name: Latest Docs
+          body: "Latest version of the PDF manual"
+          make_latest: false
+          files: medunda_user_guide.pdf

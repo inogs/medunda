@@ -1,0 +1,36 @@
+name: Build and Deploy HTML Docs
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build_docs:
+    runs-on: ubuntu-latest
+    steps:
+      # Repo checkout
+      - name: Clone repo
+        uses: actions/checkout@v6
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pipx install poetry==2.3.2
+
+      - name: Install dependencies
+        run: poetry install --with dev
+
+      - name: Build HTML docs
+        run: |
+          poetry run sphinx-build -b html docs/source docs/build/html
+
+      - name: Deploy HTML to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/build/html

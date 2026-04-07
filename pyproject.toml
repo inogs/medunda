@@ -30,6 +30,11 @@ hypothesis = "^6.135.26"
 pre-commit = "^4.4.0"
 deptry = "^0.24.0"
 
+[tool.poetry.group.docs.dependencies]
+sphinx = "^8"
+myst-parser = "^4.0.1"
+sphinx-rtd-theme = "^3.0.2"
+sphinx-autodoc-typehints = "^3.5"
 
 [tool.poetry]
 packages = [{include = "medunda", from = "src"}]
