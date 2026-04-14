@@ -15,39 +15,45 @@ def configure_parser(subparsers):
         help="Plots timeseries for a specific variable over a defined period of time",
     )
     plotting_timeseries.add_argument(
-        "--start-time",
+        "--start-date",
         type=date_from_str,
-        required=True,
+        required=False,
         help="Start date of the period to plot (format: YYYY-MM-DD)",
     )
     plotting_timeseries.add_argument(
-        "--end-time",
+        "--end-date",
         type=date_from_str,
-        required=True,
+        required=False,
         help="End date of the period to plot (format: YYYY-MM-DD)",
     )
 
 
 def plotting_timeseries(
-    data: xr.DataArray, metadata: dict, start_time, end_time
+    data: xr.DataArray, metadata: dict, start_date, end_date
 ):
-    start = start_time
-    end = end_time
-
     if "time" not in data.dims:
         raise ValueError(
             "This dataset has no 'time' dimension therefore cannot plot time series."
         )
 
-    # Aggregate spatial dims by mean over lat and lon if they exist
+    if start_date is None and end_date is None:
+        start_date = data["time"].values[0]
+        end_date = data["time"].values[-1]
+    else:
+        if start_date is not None:
+            start_date = start_date
+        if end_date is not None:
+            end_date = end_date
+
     spatial_dims = [
         dim
         for dim in ["lat", "latitude", "lon", "longitude"]
         if dim in data.dims
     ]
+
     data_mean = data.mean(dim=spatial_dims)
 
-    ts = data_mean.sel(time=slice(start, end))
+    ts = data_mean.sel(time=slice(start_date, end_date))
 
     fig, ax = plt.subplots(figsize=(12, 6))
     ax.plot(ts.time, ts)
