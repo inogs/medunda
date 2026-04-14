@@ -21,21 +21,30 @@ def configure_parser(subparsers):
         required=True,
         help="Date to plot the map for (format: YYYY-MM-DD)",
     )
+
     plotting_maps.add_argument(
-        "--latitude",
-        type=float,
-        required=False,
-        help="Latitude of the area to plot",
+        "--aggregation-dimension",
+        type=str,
+        help="Dimension along which to aggregate the data"
+        "By default, no aggregation is performed and the data is plotted as is."
+        "If the data has more than 2 dimensions, an aggregation method must be specified using '--aggregation-method'",
     )
     plotting_maps.add_argument(
-        "--longitude",
-        type=float,
-        required=False,
-        help="Longitude of the area to plot",
+        "--aggregation-method",
+        type=str,
+        choices=["mean", "max", "min"],
+        default="mean",
+        help="Method to use for aggregating data along the specified dimension",
     )
 
 
-def plotting_maps(data: xr.DataArray, metadata: dict, time):
+def plotting_maps(
+    data: xr.DataArray,
+    metadata: dict,
+    time,
+    aggregation_dimension,
+    aggregation_method,
+):
     selected_time = pd.to_datetime(time)
 
     data["time"] = pd.to_datetime(data["time"].values)
@@ -48,13 +57,56 @@ def plotting_maps(data: xr.DataArray, metadata: dict, time):
         except Exception as e:
             raise ValueError(f"Could not select time {selected_time}: {e}")
 
-    non_spatial_dims = [
-        dim
-        for dim in data_slice.dims
-        if dim not in ["lat", "latitude", "lon", "longitude"]
-    ]
-    if non_spatial_dims:
-        data_slice = data_slice.mean(dim=non_spatial_dims)
+    n_dims = len(data_slice.dims)
+
+    if n_dims == 2:
+        if (
+            "latitude" not in data_slice.dims
+            or "longitude" not in data_slice.dims
+        ):
+            raise ValueError(
+                "Data must have 'latitude' and 'longitude' dimensions for 2D plotting."
+            )
+        else:
+            LOGGER.debug("Data has 2 dimensions, proceeding with plotting.")
+
+        if aggregation_dimension:
+            if aggregation_dimension in data_slice.dims:
+                raise ValueError(
+                    f"Aggregation dimension '{aggregation_dimension}' cannot be used for 2D data with dimensions {data_slice.dims}"
+                )
+            LOGGER.debug(
+                f"Applying {aggregation_method} aggregation along dimension '{aggregation_dimension}'"
+            )
+
+            data_slice = getattr(data_slice, aggregation_method)(
+                dim=aggregation_dimension
+            )
+
+    elif n_dims > 2:
+        if not aggregation_method:
+            raise ValueError(
+                "Data has more than 2 dimensions, an aggregation method must be specified."
+                " Please provide an aggregation method using the '--aggregation-method'"
+            )
+
+        if aggregation_dimension not in data_slice.dims:
+            raise ValueError(
+                f"Aggregation dimension '{aggregation_dimension}' not found in data dimensions: {data_slice.dims}"
+            )
+
+        LOGGER.info(
+            f"Applying {aggregation_method} aggregation along dimension '{aggregation_dimension}'"
+        )
+
+        data_slice = getattr(data_slice, aggregation_method)(
+            dim=aggregation_dimension
+        )
+
+    else:
+        raise ValueError(
+            f"Data has {n_dims} dimensions, expected at least 2 dimensions for plotting."
+        )
 
     actual_time = pd.to_datetime(data_slice["time"].values)
 

@@ -52,7 +52,7 @@ def configure_parser(
     if parser is None:
         parser = argparse.ArgumentParser(
             description="plots timeseries and maps"
-        )  ######
+        )
 
     parser.add_argument(
         "--input-file", type=Path, required=True, help="Path of the input file"
@@ -64,12 +64,12 @@ def configure_parser(
         required=True,
         help="Name of the variable to plot",
     )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=Path("."),
-        help="Directory where the downloaded files are saved",
-    )
+    # parser.add_argument(
+    #     "--output-dir",
+    #     type=Path,
+    #     default=Path("."),
+    #     help="Directory where the downloaded files are saved",
+    # )
 
     subparsers = parser.add_subparsers(
         title="mode",
@@ -122,13 +122,17 @@ def plotter(filepath: Path, variable: str, mode: str, args):
                 timeseries.plotting_timeseries(
                     data=data_var,
                     metadata=metadata,
-                    start_time=args.start_time,
-                    end_time=args.end_time,
+                    start_date=args.start_date,
+                    end_date=args.end_date,
                 )
 
         elif mode == "plotting_maps":
             maps.plotting_maps(
-                data=data_var, metadata=metadata, time=args.time
+                data=data_var,
+                metadata=metadata,
+                time=args.time,
+                aggregation_dimension=args.aggregation_dimension,
+                aggregation_method=args.aggregation_method,
             )
 
         else:
