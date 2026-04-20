@@ -28,7 +28,8 @@ dependencies = [
 pytest = "^8.4.1"
 hypothesis = "^6.135.26"
 pre-commit = "^4.4.0"
-deptry = "^0.24.0"
+deptry = ">=0.24.0"
+ipython = ">9"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^8"
