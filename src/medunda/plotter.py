@@ -13,7 +13,7 @@ from medunda.tools.logging_utils import configure_logger
 LOGGER = logging.getLogger(__name__)
 
 VAR_METADATA = {
-    "o2": {"label": "Oxygen", "unit": "µmol/m³", "cmap": cmocean.cm.deep},  # pyright: ignore[reportAttributeAccessIssue]
+    "o2": {"label": "Oxygen", "unit": "mmol/m³", "cmap": cmocean.cm.deep},  # pyright: ignore[reportAttributeAccessIssue]
     "chl": {
         "label": "Chlorophyll-a",
         "unit": "mg/m³",
