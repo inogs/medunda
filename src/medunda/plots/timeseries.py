@@ -55,7 +55,7 @@ def plotting_timeseries(
 
     ts = data_mean.sel(time=slice(start_date, end_date))
 
-    fig, ax = plt.subplots(figsize=(12, 6))
+    _, ax = plt.subplots(figsize=(12, 6))
     ax.plot(ts.time, ts)
 
     ylabel = f"{metadata['label']}"
@@ -65,5 +65,4 @@ def plotting_timeseries(
     ax.set_title(f"Time Series of {metadata['label']}")
     ax.set_xlabel("Time")
     ax.set_ylabel(ylabel)
-
     plt.show()

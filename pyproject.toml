@@ -7,7 +7,7 @@ authors = [
     {name = "Stefano Piani",email = "spiani@ogs.it"}
 ]
 readme = "README.md"
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.12,<4.0"
 dependencies = [
     "pydantic (>=2.11.7,<3.0.0)",
     "numpy (>=2.3.0,<3.0.0)",
@@ -22,6 +22,7 @@ dependencies = [
     "cmocean (>=4.0.3,<5.0.0)",
     "pyyaml (>=6.0.3,<7.0.0)",
     "bitsea @ git+https://github.com/inogs/bit.sea.git",
+    "rioxarray (>=0.22.0,<0.23.0)",
 ]
 
 [tool.poetry.group.dev.dependencies]
