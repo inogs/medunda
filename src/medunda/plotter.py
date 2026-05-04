@@ -197,8 +197,6 @@ def plotter(filepath: Path, variable: str, mode: str, args):
 
     elif filepath.suffix == ".tif":
         with rioxarray.open_rasterio(filepath) as ds:
-            print(ds)
-
             data_var, metadata = check_variable(ds, variable)
 
             if mode == "plotting_timeseries":
