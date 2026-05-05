@@ -14,7 +14,7 @@ from dask.dataframe.dispatch import make_meta
 from dask.delayed import Delayed
 from dask.delayed import delayed
 
-from medunda.components.dataset import Dataset
+from medunda.components.geodata import GeoDataCollection
 from medunda.tools.typing import VarName
 
 LOGGER = logging.getLogger(__name__)
@@ -141,7 +141,7 @@ class BottomCellMap:
     grid points and extract the corresponding data.
 
     Args:
-        dataset (Dataset): The dataset containing the model data.
+        dataset (GeoDataCollection): The dataset containing the model data.
         time_range (timedelta): The time range around each point's time to consider for
             data extraction. For each point, data will be extracted starting from the
             point's time minus this range to the point's time.
@@ -155,7 +155,7 @@ class BottomCellMap:
 
     def __init__(
         self,
-        dataset: Dataset,
+        dataset: GeoDataCollection,
         time_range: timedelta,
         lat_column: str = "latitude",
         lon_column: str = "longitude",

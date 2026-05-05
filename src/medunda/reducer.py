@@ -19,7 +19,7 @@ from medunda.actions import extract_layer_extremes
 from medunda.actions import extract_surface
 from medunda.actions import integrate_between_layers
 from medunda.actions import integration
-from medunda.components.dataset import read_dataset
+from medunda.components.geodata import GeoDataCollection
 from medunda.tools.logging_utils import configure_logger
 
 if __name__ == "__main__":
@@ -144,7 +144,7 @@ def reducer(
 
     # Read the dataset file
     LOGGER.info('Reading dataset from "%s"', dataset_path)
-    dataset = read_dataset(dataset_path)
+    dataset = GeoDataCollection.read_from_disk(dataset_path)
 
     domain = dataset.domain
     LOGGER.debug("Domain: %s", domain.name)

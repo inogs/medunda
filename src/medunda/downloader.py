@@ -2,7 +2,7 @@
 The downloader is one of the tools that Medunda provides to facilitate the
 downloading of model data from various sources.
 
-Its main job is creating a :class:`medunda.components.dataset.Dataset`, which
+Its main job is creating a :class:`medunda.components.geodata.GeoDataCollection`, which
 is the core data structure used by Medunda to manage and process the data
 produced by one or more model runs.
 
@@ -20,9 +20,8 @@ from sys import exit as sys_exit
 import xarray as xr
 
 from medunda.components.data_files import DataFile
-from medunda.components.dataset import Dataset
-from medunda.components.dataset import read_dataset
 from medunda.components.frequencies import Frequency
+from medunda.components.geodata import GeoDataCollection
 from medunda.components.variables import VariableDataset
 from medunda.domains.domain import ConcreteDomain
 from medunda.domains.domain import read_domain
@@ -208,12 +207,13 @@ def download_data(
     if not output_dir.is_dir():
         raise ValueError(f"Output directory {output_dir} is not a directory")
 
-    # We want to prepare a Dataset object that will contain the path of all the
+    # We want to prepare a GeoDataCollection object that will contain the path
+    # of all the
     # files that we will download.
     downloaded_files: dict[VarName, tuple[DataFile, ...]] = {}
 
     # Dataset file
-    dataset_file = output_dir / "medunda_dataset.json"
+    dataset_file = output_dir / "medunda_geodata_collection.json"
     if dataset_file.exists():
         raise IOError(
             f"Dataset file {dataset_file} already exists. "
@@ -248,9 +248,10 @@ def download_data(
 
         downloaded_files[variable] = tuple(files_for_current_var)
 
-    # Create a Dataset object that will describe the data that we are going
+    # Create a GeoDataCollection object that will describe the data that we
+    # are going
     # to download.
-    dataset = Dataset(
+    dataset = GeoDataCollection(
         domain=domain,
         start_date=start,
         end_date=end,
@@ -265,7 +266,8 @@ def download_data(
     dataset_file.write_text(dataset.model_dump_json(indent=4) + "\n")
 
     # Download the data for each variable. We delegate the actual download
-    # to the Dataset class, which will handle the downloading of the data
+    # to the GeoDataCollection class, which will handle the downloading of the
+    # data
     # files for each variable.
     LOGGER.info("Downloading data...")
     dataset.download_data()
@@ -341,7 +343,7 @@ def downloader(args):
                     )
 
     else:
-        dataset = read_dataset(args.dataset_dir)
+        dataset = GeoDataCollection.read_from_disk(args.dataset_dir)
 
         LOGGER.info("Resuming the download...")
 
