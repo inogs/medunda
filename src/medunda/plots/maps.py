@@ -44,6 +44,8 @@ def plotting_maps(
     time,
     aggregation_dimension,
     aggregation_method,
+    output_dir,
+    show_plot,
 ):
     if time is None:
         if "band" in data.dims:
@@ -140,4 +142,8 @@ def plotting_maps(
     cbar = fig.colorbar(im, ax=ax, orientation="vertical")
     cbar.set_label(f"{metadata['label']} ({metadata.get('unit', '')})")
 
-    plt.show()
+    if output_dir:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        plt.savefig(output_dir / f"{metadata['label']}_map.png")
+    if show_plot:
+        plt.show()

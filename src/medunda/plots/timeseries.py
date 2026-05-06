@@ -29,7 +29,12 @@ def configure_parser(subparsers):
 
 
 def plotting_timeseries(
-    data: xr.DataArray, metadata: dict, start_date, end_date
+    data: xr.DataArray,
+    metadata: dict,
+    start_date,
+    end_date,
+    output_dir,
+    show_plot,
 ):
     if "time" not in data.dims:
         raise ValueError(
@@ -65,4 +70,9 @@ def plotting_timeseries(
     ax.set_title(f"Time Series of {metadata['label']}")
     ax.set_xlabel("Time")
     ax.set_ylabel(ylabel)
-    plt.show()
+
+    if output_dir:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        plt.savefig(output_dir / f"{metadata['label']}_timeseries.png")
+    if show_plot:
+        plt.show()

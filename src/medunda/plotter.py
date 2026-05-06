@@ -67,12 +67,17 @@ def configure_parser(
         required=False,
         help="Name of the variable to plot",
     )
-    # parser.add_argument(
-    #     "--output-dir",
-    #     type=Path,
-    #     default=Path("."),
-    #     help="Directory where the downloaded files are saved",
-    # )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        required=False,
+        help="Directory where the plots generated are saved",
+    )
+    parser.add_argument(
+        "--show-plot",
+        action="store_true",
+        help="Display the plot in an interactive window instead of saving it to a file",
+    )
 
     subparsers = parser.add_subparsers(
         title="mode",
@@ -133,6 +138,8 @@ def plotter(filepath: Path, variable: str, mode: str, args):
                         metadata=metadata,
                         start_date=args.start_date,
                         end_date=args.end_date,
+                        output_dir=args.output_dir,
+                        show_plot=args.show_plot,
                     )
 
             elif mode == "plotting_maps":
@@ -142,6 +149,8 @@ def plotter(filepath: Path, variable: str, mode: str, args):
                     time=args.time,
                     aggregation_dimension=args.aggregation_dimension,
                     aggregation_method=args.aggregation_method,
+                    output_dir=args.output_dir,
+                    show_plot=args.show_plot,
                 )
 
             else:
@@ -189,6 +198,8 @@ def plotter(filepath: Path, variable: str, mode: str, args):
                     metadata=metadata,
                     start_date=args.start_date,
                     end_date=args.end_date,
+                    output_dir=args.output_dir,
+                    show_plot=args.show_plot,
                 )
         elif mode == "plotting_maps":
             raise ValueError("Plotting maps from CSV files is not supported")
@@ -211,6 +222,8 @@ def plotter(filepath: Path, variable: str, mode: str, args):
                     time=args.time,
                     aggregation_dimension=args.aggregation_dimension,
                     aggregation_method=args.aggregation_method,
+                    output_dir=args.output_dir,
+                    show_plot=args.show_plot,
                 )
             else:
                 raise ValueError("Invalid mode")
@@ -225,14 +238,22 @@ def main():
     args = configure_parser().parse_args()
     configure_logger(LOGGER)
 
-    # output_dir = args.output_dir
     variable = args.variable
     mode = args.mode
     data_file = args.input_file
+    output_dir = args.output_dir
+    show_plot = args.show_plot
 
     LOGGER.info(f"Selected file: {data_file.name}")
 
-    plotter(filepath=data_file, variable=variable, mode=mode, args=args)
+    plotter(
+        filepath=data_file,
+        variable=variable,
+        mode=mode,
+        args=args,
+        output_dir=output_dir,
+        show_plot=show_plot,
+    )
 
     LOGGER.info(
         f"Plotting completed for variable '{variable}' in mode '{mode}'"
