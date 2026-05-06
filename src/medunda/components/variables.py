@@ -107,6 +107,11 @@ class Variable:
 # pyright: reportAttributeAccessIssue=false
 
 Variable("thetao", label="Potential Temperature", cmap=cmocean.cm.thermal)
+Variable(
+    "bottomT",
+    label="Sea water potential temperature at sea floor",
+    cmap=cmocean.cm.thermal,
+)
 Variable("so", label="Practical Salinity", cmap="viridis")
 Variable("o2", label="Dissolved Oxygen", cmap=cmocean.cm.deep)
 Variable("chl", label="Chlorophyll-a", cmap=cmocean.cm.algae)

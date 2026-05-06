@@ -74,6 +74,10 @@ GLOBAL_PRODUCTS = {
         Frequency.DAILY: "cmems_mod_glo_phy_my_0.083deg_P1D-m",
         Frequency.MONTHLY: "cmems_mod_glo_phy_my_0.083deg_P1M-m",
     },
+    ("bottomT",): {
+        Frequency.DAILY: "cmems_mod_glo_phy_my_0.083deg_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_glo_phy_my_0.083deg_P1M-m",
+    },
     (
         "uo",
         "vo",
