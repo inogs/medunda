@@ -93,6 +93,16 @@ GLOBAL_PRODUCTS = {
         Frequency.DAILY: "cmems_mod_glo_phy_my_0.083deg_P1D-m",
         Frequency.MONTHLY: "cmems_mod_glo_phy_my_0.083deg_P1M-m",
     },
+    # GLOBAL_MULTIYEAR_PHY_ENS_001_031
+    ("thetao_mean",): {
+        Frequency.DAILY: "cmems_mod_glo_phy-mnstd_my_0.25deg_P1D-m",
+        Frequency.MONTHLY: "cmems_mod_glo_phy-mnstd_my_0.25deg_P1M-m",
+    },
+    # MULTIOBS_GLO_PHY_TSUV_3D_MYNRT_015_012
+    ("to",): {
+        Frequency.DAILY: "cmems_obs-mob_glo_phy_my_0.125deg_P1D-m",
+        Frequency.MONTHLY: "cmems_obs-mob_glo_phy_my_0.125deg_P1M-m",
+    },
 }
 
 

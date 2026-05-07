@@ -112,6 +112,17 @@ Variable(
     label="Sea water potential temperature at sea floor",
     cmap=cmocean.cm.thermal,
 )
+Variable(
+    "thetao_mean",
+    label="Mean Sea water potential Temperature",
+    cmap=cmocean.cm.thermal,
+)
+Variable(
+    "to",
+    label="Observed Sea water potential Temperature",
+    cmap=cmocean.cm.thermal,
+)
+
 Variable("so", label="Practical Salinity", cmap="viridis")
 Variable("o2", label="Dissolved Oxygen", cmap=cmocean.cm.deep)
 Variable("chl", label="Chlorophyll-a", cmap=cmocean.cm.algae)
