@@ -18,9 +18,9 @@ def configure_parser(subparsers):
 def extract_annual_extremes_per_layer(data: xr.Dataset) -> xr.Dataset:
     """Extracts the annual extremes (maximum and minimum) from the dataset for each layer.
 
-    This action is very similar to `extract_annuals_extremes`, but it does not include the depth
+    This action is very similar to `extract_annual_extremes`, but it does not include the depth
     dimension in the reduction process. This means that the minimum and maximum values are computed
-    for each depth layer separately, rather than across all depth layers. Threfore, the output
+    for each depth layer separately, rather than across all depth layers. Therefore, the output
     dataset will have the same depth dimension as the input dataset, and the minimum and maximum
     values will be computed for each depth layer independently.
     """
