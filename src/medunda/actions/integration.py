@@ -1,8 +1,7 @@
 import logging
 
-import xarray as xr
-
 from medunda.tools.layers import compute_layer_height
+from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "compute_integral"
@@ -15,7 +14,7 @@ def configure_parser(subparsers):
     )
 
 
-def compute_integral(data: xr.Dataset) -> xr.Dataset:
+def compute_integral(data: "xr.Dataset") -> "xr.Dataset":
     layer_height = compute_layer_height(data.depth.values)
     lh = xr.DataArray(layer_height, dims=["depth"])
 

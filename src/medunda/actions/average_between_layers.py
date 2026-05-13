@@ -1,9 +1,8 @@
 import logging
 
-import numpy as np
-import xarray as xr
-
 from medunda.tools.layers import compute_layer_height
+from medunda.tools.lazy_imports import np
+from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "average_between_layers"
@@ -29,8 +28,8 @@ def configure_parser(subparsers):
 
 
 def average_between_layers(
-    data: xr.Dataset, depth_min, depth_max
-) -> xr.Dataset:
+    data: "xr.Dataset", depth_min, depth_max
+) -> "xr.Dataset":
     """Computes the vertical average of variables between two specified depths.
     Returns a dataset containing the weighted average of this strata.
     """

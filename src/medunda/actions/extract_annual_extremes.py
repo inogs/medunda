@@ -1,7 +1,7 @@
 import logging
 
-import pandas as pd
-import xarray as xr
+from medunda.tools.lazy_imports import pd
+from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "extract_annual_extremes"
@@ -15,8 +15,8 @@ def configure_parser(subparsers):
 
 
 def _extract_annual_extremes(
-    data: xr.Dataset, include_depth: bool
-) -> xr.Dataset:
+    data: "xr.Dataset", include_depth: bool
+) -> "xr.Dataset":
     """Extracts the annual extremes (maximum and minimum) from the dataset.
 
     This is an internal function that performs the actual extraction of annual extremes.
@@ -56,7 +56,7 @@ def _extract_annual_extremes(
     return output
 
 
-def extract_annual_extremes(data: xr.Dataset) -> xr.Dataset:
+def extract_annual_extremes(data: "xr.Dataset") -> "xr.Dataset":
     """Extracts the annual extremes of a variable (maximum and minimum) from the dataset.
 
     This action groups the data by year and computes the minimum and maximum values for

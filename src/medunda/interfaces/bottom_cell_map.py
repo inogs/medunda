@@ -7,7 +7,6 @@ from typing import Sequence
 import dask.dataframe
 import numpy as np
 import pandas as pd
-import xarray as xr
 from bitsea.commons.geodistances import compute_geodesic_distance
 from bitsea.commons.mask import Mask
 from dask.dataframe.dispatch import make_meta
@@ -15,13 +14,14 @@ from dask.delayed import Delayed
 from dask.delayed import delayed
 
 from medunda.components.geodata import GeoDataCollection
+from medunda.tools.lazy_imports import xr
 from medunda.tools.typing import VarName
 
 LOGGER = logging.getLogger(__name__)
 
 
 def _build_callable_wrapper(
-    f: Callable[[xr.Dataset], dict[str, Any]],
+    f: Callable[["xr.Dataset"], dict[str, Any]],
 ) -> Callable[[np.ndarray, dict, dict[str, Any]], Delayed]:
     """
     Builds a delayed wrapper function for the provided function `f`
@@ -174,7 +174,7 @@ class BottomCellMap:
         callable_wrapper: Callable[
             [np.ndarray, dict, dict[VarName, list]], Delayed
         ],
-        point_dataset: xr.Dataset,
+        point_dataset: "xr.Dataset",
     ) -> Delayed:
         """
         Generate a delayed object that applies the callable_wrapper to a point
@@ -226,8 +226,8 @@ class BottomCellMap:
 
     def _split_into_chunks(
         self,
-        lat_indices: xr.DataArray,
-        lon_indices: xr.DataArray,
+        lat_indices: "xr.DataArray",
+        lon_indices: "xr.DataArray",
         lat_chunks: Sequence[int],
         lon_chunks: Sequence[int],
     ) -> tuple[tuple[tuple[slice, slice], np.ndarray], ...]:
@@ -313,7 +313,7 @@ class BottomCellMap:
 
     def map(
         self,
-        func: Callable[[xr.Dataset], dict[str, Any]],
+        func: Callable[["xr.Dataset"], dict[str, Any]],
         point_table: pd.DataFrame,
         func_meta: dict[str, np.typing.DTypeLike] | None = None,
         delayed: bool = False,

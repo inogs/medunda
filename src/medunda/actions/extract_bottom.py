@@ -1,7 +1,7 @@
 import logging
 
-import numpy as np
-import xarray as xr
+from medunda.tools.lazy_imports import np
+from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "extract_bottom"
@@ -13,7 +13,7 @@ def configure_parser(subparsers):
     )
 
 
-def extract_bottom(data: xr.Dataset) -> xr.Dataset:
+def extract_bottom(data: "xr.Dataset") -> "xr.Dataset":
     LOGGER.info(f"reading the file: {data}")
 
     variables = {}

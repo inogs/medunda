@@ -1,8 +1,7 @@
 import logging
 
-import xarray as xr
-
 from medunda.tools.argparse_utils import date_from_str
+from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "climatology"
@@ -40,7 +39,7 @@ def configure_parser(subparsers):
     )
 
 
-def configure_data_frequency(data=xr.Dataset):
+def configure_data_frequency(data: "xr.Dataset") -> str:
     ds_title = data.attrs.get("title").lower()
     if "monthly" in ds_title:
         ds_frequency = "monthly"
@@ -86,12 +85,12 @@ def weighted_monthly_average(group, days_in_month):
 
 
 def climatology(
-    data: xr.Dataset,
+    data: "xr.Dataset",
     variable: str,
     frequency: str,
     start_date=None,
     end_date=None,
-) -> xr.Dataset:
+) -> "xr.Dataset":
     # check the variable
     if variable not in data.data_vars:
         available_variables = list(data.data_vars.keys())

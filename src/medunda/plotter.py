@@ -2,28 +2,28 @@ import argparse
 import logging
 from pathlib import Path
 
-import cmocean
-import xarray as xr
-
+import medunda.tools.lazy_imports.cmocean as lazy_cmocean
+import medunda.tools.lazy_imports.colormap as clp
 from medunda.components.variables import VariableDataset
 from medunda.plots import maps
 from medunda.plots import timeseries
+from medunda.tools.lazy_imports import xr
 from medunda.tools.logging_utils import configure_logger
 
 LOGGER = logging.getLogger(__name__)
 
 VAR_METADATA = {
-    "o2": {"label": "Oxygen", "unit": "µmol/m³", "cmap": cmocean.cm.deep},  # pyright: ignore[reportAttributeAccessIssue]
+    "o2": {"label": "Oxygen", "unit": "µmol/m³", "cmap": "cmo:deep"},
     "chl": {
         "label": "Chlorophyll-a",
         "unit": "mg/m³",
-        "cmap": cmocean.cm.algae,
-    },  # pyright: ignore[reportAttributeAccessIssue]
+        "cmap": "cmo:algae",
+    },
     "nppv": {
         "label": "Net Primary Production",
         "unit": "mg C/m²/day",
-        "cmap": cmocean.cm.matter,
-    },  # pyright: ignore[reportAttributeAccessIssue]
+        "cmap": "cmo:matter",
+    },
     "thetao": {"label": "Temperature", "unit": "°C", "cmap": "coolwarm"},
     "so": {"label": "Salinity", "unit": "PSU", "cmap": "viridis"},
 }
@@ -112,6 +112,15 @@ def plotter(filepath: Path, variable: str, mode: str, args):
 
     with xr.open_dataset(filepath) as ds:
         data_var, metadata = check_variable(ds, variable)
+
+        # Ensure that the metadata contains a colormap object if a colormap
+        # name is provided
+        if "cmap" in metadata and isinstance(metadata["cmap"], str):
+            cmap_name = metadata["cmap"]
+            if cmap_name.startswith("cmo:"):
+                metadata["cmap"] = lazy_cmocean.get_cmocean_map(cmap_name[4:])
+            else:
+                metadata["cmap"] = clp.Colormap(cmap_name)
 
         if mode == "plotting_timeseries":
             if "time" not in ds[variable].dims:

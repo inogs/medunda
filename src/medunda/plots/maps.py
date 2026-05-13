@@ -1,10 +1,9 @@
 import logging
 
-import matplotlib.pyplot as plt
-import pandas as pd
-import xarray as xr
-
 from medunda.tools.argparse_utils import date_from_str
+from medunda.tools.lazy_imports import pd
+from medunda.tools.lazy_imports import pyplot as plt
+from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
 PLOT_NAME = "plotting_maps"
@@ -35,7 +34,7 @@ def configure_parser(subparsers):
     )
 
 
-def plotting_maps(data: xr.DataArray, metadata: dict, time):
+def plotting_maps(data: "xr.DataArray", metadata: dict, time):
     selected_time = pd.to_datetime(time)
 
     data["time"] = pd.to_datetime(data["time"].values)

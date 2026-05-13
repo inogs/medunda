@@ -3,12 +3,17 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import ClassVar
 
-import cmocean
-from matplotlib.colors import Colormap
-
+import medunda.tools.lazy_imports.cmocean as lazy_cmocean
+import medunda.tools.lazy_imports.colormap as clp
 from medunda.tools.typing import VarName
 
-DEFAULT_COLORMAP = Colormap("viridis")
+
+# The _DEFAULT_COLORMAP is defined as a function so that it is not evaluated
+# at the time of the definition of the variables, but only when it is actually
+# needed. This is important because the colormap module is lazily imported
+# and we want to avoid importing it if it is not necessary.
+def _DEFAULT_COLORMAP():
+    return clp.Colormap("viridis")
 
 
 @dataclass(frozen=True)
@@ -23,8 +28,8 @@ class Variable:
         name: The unique identifier for the variable.
         label: A human-readable label for the variable. If None, the name is
             used.
-        cmap: The colormap specification. Can be a string name, a Colormap
-            object, or None (uses default colormap).
+        cmap: The colormap specification. Can be a string name or None
+            (uses default colormap).
 
     Raises:
         ValueError: If attempting to create a variable with a name that already exists,
@@ -33,11 +38,11 @@ class Variable:
 
     name: VarName
     label: str | None = None
-    cmap: str | Colormap | None = None
+    cmap: str | None = None
 
     _variables: ClassVar[dict[VarName, "Variable"]] = {}
 
-    def get_colormap(self) -> Colormap:
+    def get_colormap(self) -> "clp.Colormap":
         """
         Returns the colormap associated to this variable.
 
@@ -49,10 +54,10 @@ class Variable:
             A colormap associated to the variable
         """
         if self.cmap is None:
-            return DEFAULT_COLORMAP
-        if isinstance(self.cmap, str):
-            return Colormap(self.cmap)
-        return self.cmap
+            return _DEFAULT_COLORMAP()
+        if self.cmap.lower().startswith("cmo:"):
+            return lazy_cmocean.get_cmocean_map(self.cmap[4:])
+        return clp.Colormap(self.cmap)
 
     def get_label(self) -> str:
         """
@@ -106,34 +111,34 @@ class Variable:
 # cmocean colormaps
 # pyright: reportAttributeAccessIssue=false
 
-Variable("thetao", label="Potential Temperature", cmap=cmocean.cm.thermal)
+Variable("thetao", label="Potential Temperature", cmap="cmo:thermal")
 Variable(
     "bottomT",
     label="Sea water potential temperature at sea floor",
-    cmap=cmocean.cm.thermal,
+    cmap="cmo:thermal",
 )
 Variable(
     "thetao_mean",
     label="Mean Sea water potential Temperature",
-    cmap=cmocean.cm.thermal,
+    cmap="cmo:thermal",
 )
 Variable(
     "to",
     label="Observed Sea water potential Temperature",
-    cmap=cmocean.cm.thermal,
+    cmap="cmo:thermal",
 )
 
 Variable("so", label="Practical Salinity", cmap="viridis")
-Variable("o2", label="Dissolved Oxygen", cmap=cmocean.cm.deep)
-Variable("chl", label="Chlorophyll-a", cmap=cmocean.cm.algae)
-Variable("nppv", label="Net Primary Production", cmap=cmocean.cm.matter)
-Variable("uo", label="Zonal Velocity", cmap=cmocean.cm.balance)
-Variable("vo", label="Meridional Velocity", cmap=cmocean.cm.balance)
-Variable("mlotst", label="Mixed Layer Depth", cmap=cmocean.cm.deep)
-Variable("ph", label="pH", cmap=cmocean.cm.balance)
-Variable("no3", label="Nitrate", cmap=cmocean.cm.matter)
-Variable("po4", label="Phosphate", cmap=cmocean.cm.matter)
-Variable("si", label="Silicate", cmap=cmocean.cm.matter)
+Variable("o2", label="Dissolved Oxygen", cmap="cmo:deep")
+Variable("chl", label="Chlorophyll-a", cmap="cmo:algae")
+Variable("nppv", label="Net Primary Production", cmap="cmo:matter")
+Variable("uo", label="Zonal Velocity", cmap="cmo:balance")
+Variable("vo", label="Meridional Velocity", cmap="cmo:balance")
+Variable("mlotst", label="Mixed Layer Depth", cmap="cmo:deep")
+Variable("ph", label="pH", cmap="cmo:balance")
+Variable("no3", label="Nitrate", cmap="cmo:matter")
+Variable("po4", label="Phosphate", cmap="cmo:matter")
+Variable("si", label="Silicate", cmap="cmo:matter")
 Variable("B1c", label="Aerobic and Anaerobic Bacteria carbon", cmap="viridis")
 Variable(
     "B1n", label="Aerobic and Anaerobic Bacteria nitrogen", cmap="viridis"
@@ -141,29 +146,25 @@ Variable(
 Variable(
     "B1p", label="Aerobic and Anaerobic Bacteria phosphorous", cmap="viridis"
 )
-Variable("P1c", label="Diatoms Biomass_carbon", cmap=cmocean.cm.matter)
-Variable("P2c", label="Flagellates Biomass_carbon", cmap=cmocean.cm.matter)
-Variable(
-    "P3c", label="PicoPhytoplankton Biomass_carbon", cmap=cmocean.cm.matter
-)
-Variable(
-    "P4c", label="Large Phytoplankton Biomass_carbon", cmap=cmocean.cm.matter
-)
+Variable("P1c", label="Diatoms Biomass_carbon", cmap="cmo:matter")
+Variable("P2c", label="Flagellates Biomass_carbon", cmap="cmo:matter")
+Variable("P3c", label="PicoPhytoplankton Biomass_carbon", cmap="cmo:matter")
+Variable("P4c", label="Large Phytoplankton Biomass_carbon", cmap="cmo:matter")
 Variable("Z3c", label="Carnivorous Mesozooplankton_carbon", cmap="viridis")
 Variable("Z4c", label="Omnivorous Mesozooplankton_carbon", cmap="viridis")
 Variable("Z5c", label="Microzooplankton_carbon", cmap="viridis")
 Variable("Z6c", label="Heterotrophic Nanoflagellates", cmap="viridis")
 
-Variable("R1c", label="Dissolved Organic Carbon", cmap=cmocean.cm.matter)
+Variable("R1c", label="Dissolved Organic Carbon", cmap="cmo:matter")
 Variable(
-    "R2c", label="Semi-labile Dissolved Organic Carbon", cmap=cmocean.cm.matter
+    "R2c", label="Semi-labile Dissolved Organic Carbon", cmap="cmo:matter"
 )
 Variable(
     "R3c",
     label="Semi-refactory Dissolved Organic Carbon",
-    cmap=cmocean.cm.matter,
+    cmap="cmo:matter",
 )
-Variable("R6c", label="Particulate Organic Carbon", cmap=cmocean.cm.matter)
+Variable("R6c", label="Particulate Organic Carbon", cmap="cmo:matter")
 
 
 class VariableDataset(Collection[Variable]):

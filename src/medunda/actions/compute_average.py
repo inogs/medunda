@@ -1,10 +1,9 @@
 import logging
 
-import numpy as np
-import xarray as xr
-from bitsea.commons.mask import Mask
-
+import medunda.tools.lazy_imports.bitsea.mask as bitsea
 from medunda.actions.average_between_layers import average_between_layers
+from medunda.tools.lazy_imports import np
+from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "compute_average"
@@ -29,7 +28,7 @@ def configure_parser(subparsers):
     )
 
 
-def get_volume(data: xr.Dataset) -> xr.DataArray:
+def get_volume(data: "xr.Dataset") -> "xr.DataArray":
     """Compute the cell volume"""
     data_var = list(data.data_vars)[0]
     if "time" in data[data_var].dims:
@@ -37,7 +36,7 @@ def get_volume(data: xr.Dataset) -> xr.DataArray:
     else:
         reference = data[data_var]
     tmask = np.logical_not(np.isnan(reference))
-    mask = Mask.from_xarray(dataset=xr.Dataset({"tmask": tmask}))
+    mask = bitsea.Mask.from_xarray(dataset=xr.Dataset({"tmask": tmask}))
     area = xr.DataArray(mask.area, dims=("latitude", "longitude"))
     e3t = xr.DataArray(mask.e3t, dims=("depth", "latitude", "longitude"))
     vol_cell = area * e3t
@@ -52,10 +51,11 @@ def get_volume(data: xr.Dataset) -> xr.DataArray:
     )
 
 
-def compute_average(data: xr.Dataset, axis) -> xr.Dataset:
+def compute_average(data: "xr.Dataset", axis) -> "xr.Dataset":
     """Compute the average on a given axis.
     Args:
         data (xr.Dataset): Input dataset with depth as one of the dimensions.
+        axis: The axis over which to compute the average.
     """
     if axis not in VALID_AXIS.keys():
         raise ValueError(

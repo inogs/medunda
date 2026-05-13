@@ -1,9 +1,8 @@
 import logging
 
-import matplotlib.pyplot as plt
-import xarray as xr
-
 from medunda.tools.argparse_utils import date_from_str
+from medunda.tools.lazy_imports import pyplot as plt
+from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
 PLOT_NAME = "plotting_timeseries"
@@ -29,7 +28,7 @@ def configure_parser(subparsers):
 
 
 def plotting_timeseries(
-    data: xr.DataArray, metadata: dict, start_time, end_time
+    data: "xr.DataArray", metadata: dict, start_time, end_time
 ):
     start = start_time
     end = end_time

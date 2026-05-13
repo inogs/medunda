@@ -2,8 +2,8 @@ import logging
 from collections.abc import Sequence
 from typing import Any
 
-import numpy as np
-import xarray as xr
+from medunda.tools.lazy_imports import np
+from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "calculate_stats"
@@ -97,7 +97,7 @@ class Stats:
         return results
 
 
-def calculate_stats(data: xr.Dataset, operations) -> xr.Dataset:
+def calculate_stats(data: "xr.Dataset", operations) -> "xr.Dataset":
     """Regroups and compute some statistical operations
     according to the user's choice"""
 

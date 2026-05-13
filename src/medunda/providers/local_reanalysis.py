@@ -6,17 +6,17 @@ from pathlib import Path
 from typing import Literal
 
 import netCDF4
-import numpy as np
-import xarray as xr
 import yaml
-from bitsea.commons.mask import Mask
 
+import medunda.tools.lazy_imports.bitsea.mask as bitsea
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import Variable
 from medunda.components.variables import VariableDataset
 from medunda.domains.domain import Domain
 from medunda.providers.provider import Provider
+from medunda.tools.lazy_imports import np
+from medunda.tools.lazy_imports import xr
 from medunda.tools.typing import VarName
 
 LOGGER = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ AVE_FILE_MASK = re.compile(
 def allocate_medunda_data_file(
     var_name: VarName,
     var_units: str | None,
-    meshmask: xr.Dataset,
+    meshmask: "xr.Dataset",
     spatial_slices: dict[Literal["depth", "latitude", "longitude"], slice],
     time_steps: np.ndarray,
     f_pointer: netCDF4.Dataset,
@@ -142,13 +142,13 @@ class LocalReanalysis(Provider):
     def available_variables(self, frequency: Frequency) -> VariableDataset:
         return VariableDataset.all_variables()
 
-    def get_meshmask(self, main_path: Path) -> xr.Dataset:
+    def get_meshmask(self, main_path: Path) -> "xr.Dataset":
         meshmask_path = main_path / "meshmask.nc"
 
         if not meshmask_path.exists():
             compression = {"zlib": True, "complevel": 9}
 
-            bitsea_meshmask = Mask.from_file(Path(self._meshmask))
+            bitsea_meshmask = bitsea.Mask.from_file(Path(self._meshmask))
             xr_meshmask = bitsea_meshmask.to_xarray()
             xr_meshmask.to_netcdf(
                 meshmask_path,

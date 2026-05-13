@@ -12,17 +12,17 @@ from pathlib import Path
 from queue import Queue
 
 import netCDF4
-import numpy as np
-import xarray as xr
 import yaml
-from bitsea.commons.mask import Mask
 
+import medunda.tools.lazy_imports.bitsea.mask as bitsea
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import Variable
 from medunda.components.variables import VariableDataset
 from medunda.domains.domain import Domain
 from medunda.providers.provider import Provider
+from medunda.tools.lazy_imports import np
+from medunda.tools.lazy_imports import xr
 from medunda.tools.parallelization import get_n_of_processes
 from medunda.tools.temp_dirs import TemporaryDirectory
 from medunda.tools.typing import VarName
@@ -111,7 +111,7 @@ def reader(
 def allocate_medunda_data_file(
     var_name: VarName,
     var_units: str | None,
-    meshmask: xr.Dataset,
+    meshmask: "xr.Dataset",
     spatial_slices,
     time_steps: np.ndarray,
     f_pointer: netCDF4.Dataset,
@@ -205,7 +205,7 @@ def writer(
     file_path: Path,
     var_name: VarName,
     var_units: str | None,
-    meshmask: xr.Dataset,
+    meshmask: "xr.Dataset",
     spatial_slices: dict[str, slice],
     time_steps: np.ndarray,
 ):
@@ -273,7 +273,7 @@ def writer(
     LOGGER.info("File %s has been written", file_path)
 
 
-def execute_writing_task(args: tuple[TASK, dict, xr.Dataset, int]):
+def execute_writing_task(args: tuple[TASK, dict, "xr.Dataset", int]):
     task, spatial_slices, meshmask, n_processors = args
     (
         output_file_path,
@@ -367,13 +367,15 @@ class TarArchiveProvider(Provider):
             return VariableDataset()
         return VariableDataset(self._frequencies[frequency]["variables"])
 
-    def get_meshmask(self, main_path: Path) -> xr.Dataset:
+    def get_meshmask(self, main_path: Path) -> "xr.Dataset":
         meshmask_path = main_path / "meshmask.nc"
 
         if not meshmask_path.exists():
             compression = {"zlib": True, "complevel": 9}
 
-            bitsea_meshmask = Mask.from_file(Path(self._meshmask["path"]))
+            bitsea_meshmask = bitsea.Mask.from_file(
+                Path(self._meshmask["path"])
+            )
             xr_meshmask = bitsea_meshmask.to_xarray()
             xr_meshmask.to_netcdf(
                 meshmask_path,

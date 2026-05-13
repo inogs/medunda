@@ -1,8 +1,9 @@
-import numpy as np
 from numpy.typing import ArrayLike
 
+from medunda.tools.lazy_imports import numpy as np
 
-def compute_layer_height(layer_centers: ArrayLike) -> np.ndarray:
+
+def compute_layer_height(layer_centers: ArrayLike) -> "np.ndarray":
     """Computes layer thicknesses from cell center depths.
 
     Calculates the thickness of each layer in a vertical column based on the

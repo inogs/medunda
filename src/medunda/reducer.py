@@ -3,10 +3,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import dask.array as da
-import numpy as np
-import xarray as xr
-
 from medunda.actions import ActionNotFound
 from medunda.actions import average_between_layers
 from medunda.actions import calculate_stats
@@ -20,6 +16,9 @@ from medunda.actions import extract_surface
 from medunda.actions import integrate_between_layers
 from medunda.actions import integration
 from medunda.components.geodata import GeoDataCollection
+from medunda.tools.lazy_imports import dask_array as da
+from medunda.tools.lazy_imports import numpy as np
+from medunda.tools.lazy_imports import xr
 from medunda.tools.logging_utils import configure_logger
 
 if __name__ == "__main__":
