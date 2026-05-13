@@ -22,7 +22,7 @@ from medunda.tools.typing import VarName
 LOGGER = getLogger(__name__)
 
 
-class Dataset(BaseModel):
+class GeoDataCollection(BaseModel):
     """
     A class to represent a dataset for a specific domain.
 
@@ -51,7 +51,7 @@ class Dataset(BaseModel):
             raise ValueError(
                 f'Provider config file "{file_path}" does not exist.'
             )
-        return file_path.resolve() if file_path is not None else file_path
+        return file_path.resolve() if file_path is not None else None
 
     def get_n_of_time_steps(self) -> int:
         """
@@ -272,40 +272,40 @@ class Dataset(BaseModel):
 
         return dataset_data
 
+    @staticmethod
+    def read_from_disk(data_path: PathLike | str) -> "GeoDataCollection":
+        """
+        Reads a GeoDataCollection from the specified path.
 
-def read_dataset(dataset_path: PathLike | str) -> Dataset:
-    """
-    Reads a dataset from the specified path.
+        Args:
+            data_path: The path to the directory that stores the geodata collection.
 
-    Args:
-        dataset_path: The path to the dataset file.
+        Returns:
+            A GeoDataCollection object containing the data from the file.
+        """
+        LOGGER.info('Reading geodata collection from "%s"', data_path)
+        data_path = Path(data_path)
 
-    Returns:
-        A Dataset object containing the data from the file.
-    """
-    LOGGER.info('Reading dataset from "%s"', dataset_path)
-    dataset_path = Path(dataset_path)
+        if not data_path.exists():
+            raise FileNotFoundError(
+                f'Geodata collection file "{data_path}" does not exist.'
+            )
 
-    if not dataset_path.exists():
-        raise FileNotFoundError(
-            f'Dataset file "{dataset_path}" does not exist.'
-        )
+        if data_path.is_dir():
+            LOGGER.debug(
+                'Data path "%s" is a directory, reading medunda file',
+                data_path,
+            )
+            main_dataset_dir = data_path.resolve()
+            data_path = data_path / "medunda_geodata_collection.json"
+        else:
+            main_dataset_dir = data_path.parent.resolve()
 
-    if dataset_path.is_dir():
-        LOGGER.debug(
-            'Dataset path "%s" is a directory, reading medunda file',
-            dataset_path,
-        )
-        main_dataset_dir = dataset_path.resolve()
-        dataset_path = dataset_path / "medunda_dataset.json"
-    else:
-        main_dataset_dir = dataset_path.parent.resolve()
+        dataset_dict = yaml.safe_load(data_path.read_text())
+        dataset = GeoDataCollection.model_validate(dataset_dict)
 
-    dataset_dict = yaml.safe_load(dataset_path.read_text())
-    dataset = Dataset.model_validate(dataset_dict)
+        dataset.main_path = main_dataset_dir
 
-    dataset.main_path = main_dataset_dir
+        LOGGER.debug("Dataset read successfully: %s", dataset)
 
-    LOGGER.debug("Dataset read successfully: %s", dataset)
-
-    return dataset
+        return dataset
