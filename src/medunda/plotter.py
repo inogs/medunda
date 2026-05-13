@@ -1,6 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
+from types import MappingProxyType
 
 import medunda.tools.lazy_imports.cmocean as lazy_cmocean
 import medunda.tools.lazy_imports.colormap as clp
@@ -12,26 +13,40 @@ from medunda.tools.logging_utils import configure_logger
 
 LOGGER = logging.getLogger(__name__)
 
-VAR_METADATA = {
-    "o2": {"label": "Oxygen", "unit": "µmol/m³", "cmap": "cmo:deep"},
-    "chl": {
-        "label": "Chlorophyll-a",
-        "unit": "mg/m³",
-        "cmap": "cmo:algae",
-    },
-    "nppv": {
-        "label": "Net Primary Production",
-        "unit": "mg C/m²/day",
-        "cmap": "cmo:matter",
-    },
-    "thetao": {"label": "Temperature", "unit": "°C", "cmap": "coolwarm"},
-    "so": {"label": "Salinity", "unit": "PSU", "cmap": "viridis"},
-}
+VAR_METADATA = MappingProxyType(
+    {
+        "o2": MappingProxyType(
+            {"label": "Oxygen", "unit": "µmol/m³", "cmap": "cmo:deep"}
+        ),
+        "chl": MappingProxyType(
+            {
+                "label": "Chlorophyll-a",
+                "unit": "mg/m³",
+                "cmap": "cmo:algae",
+            }
+        ),
+        "nppv": MappingProxyType(
+            {
+                "label": "Net Primary Production",
+                "unit": "mg C/m²/day",
+                "cmap": "cmo:matter",
+            }
+        ),
+        "thetao": MappingProxyType(
+            {"label": "Temperature", "unit": "°C", "cmap": "coolwarm"}
+        ),
+        "so": MappingProxyType(
+            {"label": "Salinity", "unit": "PSU", "cmap": "viridis"}
+        ),
+    }
+)
 
-DEFAULT_VAR = {
-    "unit": "",
-    "cmap": "viridis",
-}
+DEFAULT_VAR = MappingProxyType(
+    {
+        "unit": "",
+        "cmap": "viridis",
+    }
+)
 
 
 PLOTS = [
@@ -90,9 +105,9 @@ def check_variable(ds, var):
         raise ValueError(f"Variable '{var}' not found in dataset")
 
     if var in VAR_METADATA:
-        var_metadata = VAR_METADATA[var]
+        var_metadata = dict(VAR_METADATA[var])
     else:
-        var_metadata = DEFAULT_VAR
+        var_metadata = dict(DEFAULT_VAR)
         var_metadata["label"] = var
 
     return ds[var], var_metadata
