@@ -12,7 +12,7 @@ from medunda.tools.typing import VarName
 # at the time of the definition of the variables, but only when it is actually
 # needed. This is important because the colormap module is lazily imported
 # and we want to avoid importing it if it is not necessary.
-def _DEFAULT_COLORMAP():
+def _get_default_colormap():
     return clp.Colormap("viridis")
 
 
@@ -54,7 +54,7 @@ class Variable:
             A colormap associated to the variable
         """
         if self.cmap is None:
-            return _DEFAULT_COLORMAP()
+            return _get_default_colormap()
         if self.cmap.lower().startswith("cmo:"):
             return lazy_cmocean.get_cmocean_map(self.cmap[4:])
         return clp.Colormap(self.cmap)
