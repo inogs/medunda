@@ -12,10 +12,10 @@ from medunda.actions import average_between_layers
 from medunda.actions import calculate_stats
 from medunda.actions import climatology
 from medunda.actions import compute_average
+from medunda.actions import extract_annual_extremes
+from medunda.actions import extract_annual_extremes_per_layer
 from medunda.actions import extract_bottom
-from medunda.actions import extract_extremes
 from medunda.actions import extract_layer
-from medunda.actions import extract_layer_extremes
 from medunda.actions import extract_surface
 from medunda.actions import integrate_between_layers
 from medunda.actions import integration
@@ -36,9 +36,9 @@ ACTION_MODULES = [
     climatology,
     compute_average,
     extract_bottom,
-    extract_extremes,
+    extract_annual_extremes,
     extract_layer,
-    extract_layer_extremes,
+    extract_annual_extremes_per_layer,
     extract_surface,
     integration,
     integrate_between_layers,
