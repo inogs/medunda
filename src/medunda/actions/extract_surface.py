@@ -1,6 +1,6 @@
 import logging
 
-import xarray as xr
+from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "extract_surface"
@@ -12,7 +12,7 @@ def configure_parser(subparsers):
     )
 
 
-def extract_surface(data: xr.Dataset) -> xr.Dataset:
+def extract_surface(data: "xr.Dataset") -> "xr.Dataset":
     LOGGER.info(f"reading the file: {data}")
 
     surface_layer = data.isel(depth=0)

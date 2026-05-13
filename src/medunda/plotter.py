@@ -1,37 +1,52 @@
 import argparse
 import logging
 from pathlib import Path
+from types import MappingProxyType
 
-import cmocean
-import xarray as xr
-
+import medunda.tools.lazy_imports.cmocean as lazy_cmocean
+import medunda.tools.lazy_imports.colormap as clp
 from medunda.components.variables import VariableDataset
 from medunda.plots import maps
 from medunda.plots import timeseries
+from medunda.tools.lazy_imports import xr
 from medunda.tools.logging_utils import configure_logger
 
 LOGGER = logging.getLogger(__name__)
 
-VAR_METADATA = {
-    "o2": {"label": "Oxygen", "unit": "µmol/m³", "cmap": cmocean.cm.deep},  # pyright: ignore[reportAttributeAccessIssue]
-    "chl": {
-        "label": "Chlorophyll-a",
-        "unit": "mg/m³",
-        "cmap": cmocean.cm.algae,
-    },  # pyright: ignore[reportAttributeAccessIssue]
-    "nppv": {
-        "label": "Net Primary Production",
-        "unit": "mg C/m²/day",
-        "cmap": cmocean.cm.matter,
-    },  # pyright: ignore[reportAttributeAccessIssue]
-    "thetao": {"label": "Temperature", "unit": "°C", "cmap": "coolwarm"},
-    "so": {"label": "Salinity", "unit": "PSU", "cmap": "viridis"},
-}
+VAR_METADATA = MappingProxyType(
+    {
+        "o2": MappingProxyType(
+            {"label": "Oxygen", "unit": "µmol/m³", "cmap": "cmo:deep"}
+        ),
+        "chl": MappingProxyType(
+            {
+                "label": "Chlorophyll-a",
+                "unit": "mg/m³",
+                "cmap": "cmo:algae",
+            }
+        ),
+        "nppv": MappingProxyType(
+            {
+                "label": "Net Primary Production",
+                "unit": "mg C/m²/day",
+                "cmap": "cmo:matter",
+            }
+        ),
+        "thetao": MappingProxyType(
+            {"label": "Temperature", "unit": "°C", "cmap": "coolwarm"}
+        ),
+        "so": MappingProxyType(
+            {"label": "Salinity", "unit": "PSU", "cmap": "viridis"}
+        ),
+    }
+)
 
-DEFAULT_VAR = {
-    "unit": "",
-    "cmap": "viridis",
-}
+DEFAULT_VAR = MappingProxyType(
+    {
+        "unit": "",
+        "cmap": "viridis",
+    }
+)
 
 
 PLOTS = [
@@ -90,9 +105,9 @@ def check_variable(ds, var):
         raise ValueError(f"Variable '{var}' not found in dataset")
 
     if var in VAR_METADATA:
-        var_metadata = VAR_METADATA[var]
+        var_metadata = dict(VAR_METADATA[var])
     else:
-        var_metadata = DEFAULT_VAR
+        var_metadata = dict(DEFAULT_VAR)
         var_metadata["label"] = var
 
     return ds[var], var_metadata
@@ -112,6 +127,15 @@ def plotter(filepath: Path, variable: str, mode: str, args):
 
     with xr.open_dataset(filepath) as ds:
         data_var, metadata = check_variable(ds, variable)
+
+        # Ensure that the metadata contains a colormap object if a colormap
+        # name is provided
+        if "cmap" in metadata and isinstance(metadata["cmap"], str):
+            cmap_name = metadata["cmap"]
+            if cmap_name.startswith("cmo:"):
+                metadata["cmap"] = lazy_cmocean.get_cmocean_map(cmap_name[4:])
+            else:
+                metadata["cmap"] = clp.Colormap(cmap_name)
 
         if mode == "plotting_timeseries":
             if "time" not in ds[variable].dims:

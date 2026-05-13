@@ -1,6 +1,6 @@
 import logging
 
-import xarray as xr
+from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "extract_layer"
@@ -18,7 +18,7 @@ def configure_parser(subparsers):
     )
 
 
-def extract_layer(data: xr.Dataset, depth) -> xr.Dataset:
+def extract_layer(data: "xr.Dataset", depth: float) -> "xr.Dataset":
     """Extracts the layer nearest to the specified depth from the dataset.
     Returns a dataset containing only the layer extracted.
     """

@@ -17,8 +17,6 @@ from datetime import datetime
 from pathlib import Path
 from sys import exit as sys_exit
 
-import xarray as xr
-
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
 from medunda.components.geodata import GeoDataCollection
@@ -29,6 +27,7 @@ from medunda.providers import PROVIDERS
 from medunda.providers import get_provider
 from medunda.tools.argparse_utils import date_from_str
 from medunda.tools.file_names import get_output_filename
+from medunda.tools.lazy_imports import xr
 from medunda.tools.logging_utils import configure_logger
 from medunda.tools.time_tables import split_by_month
 from medunda.tools.time_tables import split_by_year

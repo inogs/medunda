@@ -5,8 +5,6 @@ from logging import getLogger
 from os import PathLike
 from pathlib import Path
 
-import numpy as np
-import xarray as xr
 import yaml
 from pydantic import BaseModel
 from pydantic import Field
@@ -16,6 +14,8 @@ from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
 from medunda.domains.domain import ConcreteDomain
 from medunda.providers import get_provider
+from medunda.tools.lazy_imports import numpy as np
+from medunda.tools.lazy_imports import xr
 from medunda.tools.time_tables import split_by_month
 from medunda.tools.typing import VarName
 
@@ -95,7 +95,7 @@ class GeoDataCollection(BaseModel):
         """
         return tuple(self.data_files.keys())
 
-    def get_mask(self) -> xr.Dataset:
+    def get_mask(self) -> "xr.Dataset":
         """
         Returns the mask dataset for the domain.
 
@@ -203,7 +203,7 @@ class GeoDataCollection(BaseModel):
         self,
         variables: Iterable[VarName] | None = None,
         chunks: dict | str | None = "auto",
-    ) -> xr.Dataset:
+    ) -> "xr.Dataset":
         """
         Returns an xarray Dataset for the specified variable.
 

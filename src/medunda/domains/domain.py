@@ -8,14 +8,15 @@ from pathlib import Path
 from typing import Literal
 from typing import Union
 
-import geopandas as gpd
-import numpy as np
-import xarray as xr
 import yaml
-from bitsea.basins.basin import Basin
-from bitsea.basins.region import Polygon
 from pydantic import BaseModel
 from pydantic import field_validator
+
+import medunda.tools.lazy_imports.bitsea.basin as bitsea_basin
+import medunda.tools.lazy_imports.bitsea.region as bitsea_region
+from medunda.tools.lazy_imports import geopandas as gpd
+from medunda.tools.lazy_imports import numpy as np
+from medunda.tools.lazy_imports import xr
 
 MAIN_DIR = Path(__file__).absolute().parent.parent.parent.parent
 
@@ -52,14 +53,14 @@ class Domain(BaseModel, ABC):
         return name
 
     @abstractmethod
-    def compute_selection_mask(self, dataset: xr.Dataset):
+    def compute_selection_mask(self, dataset: "xr.Dataset") -> "np.ndarray":
         raise NotImplementedError
 
 
 class RectangularDomain(Domain):
     type: Literal["RectangularDomain"] = "RectangularDomain"
 
-    def compute_selection_mask(self, dataset: xr.Dataset) -> np.ndarray:
+    def compute_selection_mask(self, dataset: "xr.Dataset") -> "np.ndarray":
         latitudes = dataset.latitude.values
         longitudes = dataset.longitude.values
 
@@ -77,11 +78,11 @@ class PolygonalDomain(Domain):
     point_longitudes: list[float]
     type: Literal["PolygonalDomain"] = "PolygonalDomain"
 
-    def compute_selection_mask(self, dataset: xr.Dataset) -> np.ndarray:
+    def compute_selection_mask(self, dataset: "xr.Dataset") -> "np.ndarray":
         latitudes = dataset.latitude.values
         longitudes = dataset.longitude.values
 
-        polygon = Polygon(
+        polygon = bitsea_region.Polygon(
             lat_list=self.point_latitudes, lon_list=self.point_longitudes
         )
 
@@ -260,7 +261,7 @@ def read_domain(domain_description: Path) -> ConcreteDomain:
         wkt_file = _read_path(geometry["file_path"])
         polygon_name = geometry["polygon_name"]
         with open(wkt_file, "r") as f:
-            available_polys = Polygon.read_WKT_file(f)
+            available_polys = bitsea_region.Polygon.read_WKT_file(f)
 
         try:
             poly = available_polys[polygon_name]
@@ -279,7 +280,7 @@ def read_domain(domain_description: Path) -> ConcreteDomain:
         )
     elif geo_type == "basin":
         basin_uuid = geometry["uuid"]
-        basin = Basin.load_from_uuid(basin_uuid)
+        basin = bitsea_basin.Basin.load_from_uuid(basin_uuid)
 
         if not hasattr(basin, "borders"):
             raise NotImplementedError(
