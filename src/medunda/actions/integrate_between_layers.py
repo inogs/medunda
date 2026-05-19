@@ -30,8 +30,25 @@ def configure_parser(subparsers):
 def integrate_between_layers(
     data: "xr.Dataset", depth_min: float, depth_max: float
 ) -> "xr.Dataset":
-    """Computes the vertical integral of variables between two specified depths.
-    Returns a dataset containing the weighted average of this strata.
+    """Compute the vertical integral of variables between two specified depths.
+
+    For each variable in the input dataset that has a ``depth`` dimension, the
+    function selects the depth levels within ``[depth_min, depth_max]`` and
+    integrates over those levels by weighting each cell by its layer height.
+    Grid points that are masked (NaN) at the shallowest selected level are set
+    to NaN in the output, preserving the land-sea mask.  Variables that do not
+    have a ``depth`` dimension are omitted from the output.
+
+    Args:
+        data (xr.Dataset): Input dataset containing the variables to integrate.
+            Must include a ``depth`` coordinate.
+        depth_min (float): Upper bound of the depth range (shallowest depth).
+        depth_max (float): Lower bound of the depth range (deepest depth).
+
+    Returns:
+        xr.Dataset: Dataset containing the vertically integrated values for all
+        depth-dependent variables over the selected depth range.  The ``depth``
+        dimension is collapsed in the output.
     """
     integrated_variables = {}
     for variable in data.data_vars:

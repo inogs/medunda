@@ -30,8 +30,26 @@ def configure_parser(subparsers):
 def average_between_layers(
     data: "xr.Dataset", depth_min, depth_max
 ) -> "xr.Dataset":
-    """Computes the vertical average of variables between two specified depths.
-    Returns a dataset containing the weighted average of this strata.
+    """Compute the depth-weighted vertical average between two specified depths.
+
+    For each variable in the input dataset that has a ``depth`` dimension, the
+    function selects the depth levels within ``[depth_min, depth_max]`` and
+    computes a weighted average, where the weight of each depth cell is its
+    layer height.  Masked (NaN) cells are excluded from both the weighted sum
+    and the normalisation, so the result is always a proper average of the
+    valid cells.  Variables that do not have a ``depth`` dimension are passed
+    through unchanged.
+
+    Args:
+        data (xr.Dataset): Input dataset containing the variables to average.
+            Must include a ``depth`` coordinate.
+        depth_min (float): Upper bound of the depth range (shallowest depth).
+        depth_max (float): Lower bound of the depth range (deepest depth).
+
+    Returns:
+        xr.Dataset: Dataset with the same variables as the input, but with the
+        ``depth`` dimension collapsed.  Each variable is replaced by its
+        depth-weighted average over the selected depth range.
     """
     averaged_variables = {}
     for variable in data.data_vars:

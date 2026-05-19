@@ -52,10 +52,30 @@ def get_volume(data: "xr.Dataset") -> "xr.DataArray":
 
 
 def compute_average(data: "xr.Dataset", axis) -> "xr.Dataset":
-    """Compute the average on a given axis.
+    """Compute the average of all variables along a specified axis.
+
+    Three axes are supported:
+
+    * ``"depth"``: Computes the depth-weighted vertical average over the full
+      depth column using :func:`~medunda.actions.average_between_layers.average_between_layers`.
+    * ``"space"``: Computes a volume-weighted spatial average over all
+      (latitude, longitude) grid points using the cell volumes derived from
+      the grid mask.
+    * ``"time"``: Computes a simple arithmetic mean over the time dimension.
+
     Args:
-        data (xr.Dataset): Input dataset with depth as one of the dimensions.
-        axis: The axis over which to compute the average.
+        data (xr.Dataset): Input dataset.  Must include ``depth``,
+            ``latitude``, ``longitude``, and ``time`` coordinates as required
+            by the chosen axis.
+        axis (str): Axis along which to compute the average.  One of
+            ``"depth"``, ``"space"``, or ``"time"``.
+
+    Returns:
+        xr.Dataset: Dataset with the chosen dimension collapsed, containing
+        the averaged values for each variable.
+
+    Raises:
+        ValueError: If *axis* is not one of the valid choices.
     """
     if axis not in VALID_AXIS.keys():
         raise ValueError(

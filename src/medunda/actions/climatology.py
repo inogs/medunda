@@ -91,6 +91,56 @@ def climatology(
     start_date=None,
     end_date=None,
 ) -> "xr.Dataset":
+    """Compute the climatological average of a variable at a given temporal frequency.
+
+    The climatology is computed by grouping the data by the requested temporal
+    period (day-of-year, month, or season) and averaging across all years
+    within the specified date range.  Both monthly and daily source datasets
+    are supported; the dataset frequency is inferred automatically from the
+    ``title`` global attribute of the dataset.
+
+    When the source dataset has **monthly** resolution:
+
+    * *monthly* climatology is computed as a year-weighted average where each
+      month is weighted by its number of days.
+    * *daily* climatology cannot be computed and raises a :class:`ValueError`.
+    * *seasonal* climatology groups months into DJF, MAM, JJA, SON and
+      averages with equal weights.
+
+    When the source dataset has **daily** resolution:
+
+    * *daily* climatology is the mean for each calendar day-of-year across
+      all years.
+    * *monthly* climatology is obtained by first computing a daily
+      climatology then averaging the day-of-year bins within each calendar
+      month.
+    * *seasonal* climatology groups day-of-year bins into DJF, MAM, JJA,
+      SON and averages with equal weights.
+
+    Args:
+        data (xr.Dataset): Input dataset.  Must have a ``time`` coordinate
+            and a ``title`` global attribute containing either
+            ``"monthly"`` or ``"daily"``.
+        variable (str): Name of the variable to compute the climatology for.
+            Must be present in ``data.data_vars``.
+        frequency (str): Temporal resolution of the output climatology.  One
+            of ``"daily"``, ``"monthly"``, or ``"seasonally"``.
+        start_date (datetime-like, optional): Start of the reference period.
+            Defaults to the first time step in the dataset.
+        end_date (datetime-like, optional): End of the reference period.
+            Defaults to the last time step in the dataset.
+
+    Returns:
+        xr.Dataset: Dataset containing the climatological average of
+        *variable*, with the time dimension replaced by the climatological
+        coordinate (``month``, ``dayofyear``, or ``season``).
+
+    Raises:
+        ValueError: If *variable* is not found in the dataset, if the
+            dataset frequency cannot be determined from its ``title``
+            attribute, or if a daily climatology is requested from a monthly
+            dataset.
+    """
     # check the variable
     if variable not in data.data_vars:
         available_variables = list(data.data_vars.keys())

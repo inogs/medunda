@@ -13,6 +13,18 @@ def configure_parser(subparsers):
 
 
 def extract_surface(data: "xr.Dataset") -> "xr.Dataset":
+    """Extract the surface layer (first depth level) from the dataset.
+
+    Selects the shallowest depth level (index 0) across all variables,
+    removing the ``depth`` dimension from the output dataset.
+
+    Args:
+        data (xr.Dataset): Input dataset containing a ``depth`` dimension.
+
+    Returns:
+        xr.Dataset: Dataset with the same variables as the input but with the
+        ``depth`` dimension removed, containing only surface-level values.
+    """
     LOGGER.info(f"reading the file: {data}")
 
     surface_layer = data.isel(depth=0)
