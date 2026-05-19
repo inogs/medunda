@@ -15,6 +15,22 @@ def configure_parser(subparsers):
 
 
 def compute_integral(data: "xr.Dataset") -> "xr.Dataset":
+    """Compute the vertical integral of all depth-dependent variables.
+
+    For each variable in the input dataset that includes a ``depth``
+    dimension, the function integrates the variable over the full depth column
+    by weighting each depth cell by its layer height (in metres).  Variables
+    without a ``depth`` dimension are omitted from the output.
+
+    Args:
+        data (xr.Dataset): Input dataset.  Must include a ``depth``
+            coordinate from which layer heights can be derived.
+
+    Returns:
+        xr.Dataset: Dataset containing the vertically integrated values for
+        all depth-dependent variables.  The ``depth`` dimension is collapsed
+        in the output.
+    """
     layer_height = compute_layer_height(data.depth.values)
     lh = xr.DataArray(layer_height, dims=["depth"])
 

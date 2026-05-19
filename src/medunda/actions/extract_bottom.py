@@ -14,6 +14,24 @@ def configure_parser(subparsers):
 
 
 def extract_bottom(data: "xr.Dataset") -> "xr.Dataset":
+    """Extract the bottom-most valid grid cell for each spatial location.
+
+    For each variable with a ``depth`` dimension, the function uses the
+    land-sea mask (derived from the first time step) to identify the deepest
+    unmasked (valid) depth level at every (latitude, longitude) grid point and
+    returns the corresponding values.  Variables without a ``depth`` dimension
+    are passed through unchanged.
+
+    Args:
+        data (xr.Dataset): Input dataset.  Must include a ``depth`` coordinate
+            and at least one time step for each variable with a depth
+            dimension.
+
+    Returns:
+        xr.Dataset: Dataset with the same variables as the input but with the
+        ``depth`` dimension removed.  Each value corresponds to the deepest
+        valid cell at the corresponding spatial location.
+    """
     LOGGER.info(f"reading the file: {data}")
 
     variables = {}
