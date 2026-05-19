@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Actions &#8212; Medunda User Guide  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Components" href="components.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="actions">
+<span id="actionsdoc"></span><h1>Actions<a class="headerlink" href="#actions" title="Link to this heading">¶</a></h1>
+<p>Actions are the processing operations that can be applied to oceanographic datasets in Medunda.
+Each action is exposed as a sub-command of the CLI and as a Python function that accepts an
+<code class="docutils literal notranslate"><span class="pre">xarray.Dataset</span></code> and returns a transformed dataset.</p>
+<hr class="docutils" />
+<section id="average-between-layers">
+<h2>average_between_layers<a class="headerlink" href="#average-between-layers" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.average_between_layers.average_between_layers">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.average_between_layers.</span></span><span class="sig-name descname"><span class="pre">average_between_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.average_between_layers.average_between_layers" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the depth-weighted vertical average between two specified depths.</p>
+<p>For each variable in the input dataset that has a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension, the
+function selects the depth levels within <code class="docutils literal notranslate"><span class="pre">[depth_min,</span> <span class="pre">depth_max]</span></code> and
+computes a weighted average, where the weight of each depth cell is its
+layer height.  Masked (NaN) cells are excluded from both the weighted sum
+and the normalisation, so the result is always a proper average of the
+valid cells.  Variables that do not have a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension are passed
+through unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset containing the variables to average.
+Must include a <code class="docutils literal notranslate"><span class="pre">depth</span></code> coordinate.</p></li>
+<li><p><strong>depth_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Upper bound of the depth range (shallowest depth).</p></li>
+<li><p><strong>depth_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Lower bound of the depth range (deepest depth).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with the same variables as the input, but with the
+<code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension collapsed.  Each variable is replaced by its
+depth-weighted average over the selected depth range.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="calculate-stats">
+<h2>calculate_stats<a class="headerlink" href="#calculate-stats" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="medunda.actions.calculate_stats.Stats">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">medunda.actions.calculate_stats.</span></span><span class="sig-name descname"><span class="pre">Stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.calculate_stats.Stats" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Provides methods to compute basic statistical operations on an array.</p>
+<p>All operations reduce along axis 0, which is assumed to correspond to the
+time dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> – Numeric array-like object to analyse.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="medunda.actions.calculate_stats.Stats.calculate">
+<span class="sig-name descname"><span class="pre">calculate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.calculate_stats.Stats.calculate" title="Link to this definition">¶</a></dt>
+<dd><p>Compute one or more statistical operations on the stored data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>operations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[str]</span> <span class="pre">|</span> <span class="pre">None</span></code>) – Names of the operations to compute.
+Accepted values are <code class="docutils literal notranslate"><span class="pre">&quot;mean&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;variance&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;median&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;minimum&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;maximum&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;quartiles&quot;</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">&quot;all&quot;</span></code>.  When <code class="docutils literal notranslate"><span class="pre">None</span></code> or <code class="docutils literal notranslate"><span class="pre">[&quot;all&quot;]</span></code> is passed, every
+available operation is computed.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary mapping each operation name to its
+result.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, Any]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">&quot;all&quot;</span></code> is combined with other operation names,
+    if duplicate operation names are provided, or if an unknown
+    operation name is requested.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="medunda.actions.calculate_stats.Stats.max">
+<span class="sig-name descname"><span class="pre">max</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.calculate_stats.Stats.max" title="Link to this definition">¶</a></dt>
+<dd><p>Return the maximum value along axis 0.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="medunda.actions.calculate_stats.Stats.mean">
+<span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.calculate_stats.Stats.mean" title="Link to this definition">¶</a></dt>
+<dd><p>Return the arithmetic mean along axis 0.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="medunda.actions.calculate_stats.Stats.median">
+<span class="sig-name descname"><span class="pre">median</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.calculate_stats.Stats.median" title="Link to this definition">¶</a></dt>
+<dd><p>Return the median along axis 0.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="medunda.actions.calculate_stats.Stats.min">
+<span class="sig-name descname"><span class="pre">min</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.calculate_stats.Stats.min" title="Link to this definition">¶</a></dt>
+<dd><p>Return the minimum value along axis 0.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="medunda.actions.calculate_stats.Stats.quartiles">
+<span class="sig-name descname"><span class="pre">quartiles</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.calculate_stats.Stats.quartiles" title="Link to this definition">¶</a></dt>
+<dd><p>Return the 5th, 25th, 75th, and 95th percentiles along axis 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary mapping each percentile
+(as a string, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;25&quot;</span></code>) to the corresponding percentile
+array.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, numpy.ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="medunda.actions.calculate_stats.Stats.variance">
+<span class="sig-name descname"><span class="pre">variance</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.calculate_stats.Stats.variance" title="Link to this definition">¶</a></dt>
+<dd><p>Return the variance along axis 0.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.calculate_stats.calculate_stats">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.calculate_stats.</span></span><span class="sig-name descname"><span class="pre">calculate_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operations</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.calculate_stats.calculate_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Compute statistical operations on each variable in the dataset.</p>
+<p>For each variable in the input dataset (excluding coordinate-like
+variables such as <code class="docutils literal notranslate"><span class="pre">depth</span></code>, <code class="docutils literal notranslate"><span class="pre">latitude</span></code>, <code class="docutils literal notranslate"><span class="pre">longitude</span></code>, and <code class="docutils literal notranslate"><span class="pre">time</span></code>),
+the requested statistical operations are computed over all dimensions and
+stored as new variables in the output dataset.  Output variable names
+follow the pattern <code class="docutils literal notranslate"><span class="pre">{variable}_{operation}</span></code>; quartile outputs use
+<code class="docutils literal notranslate"><span class="pre">{variable}_quartiles_{percentile}</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset containing the variables to analyse.</p></li>
+<li><p><strong>operations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[str]</span> <span class="pre">|</span> <span class="pre">None</span></code>) – Statistical operations to compute.
+Accepted values are <code class="docutils literal notranslate"><span class="pre">&quot;mean&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;median&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;variance&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;quartiles&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;minimum&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;maximum&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;all&quot;</span></code>.
+Pass <code class="docutils literal notranslate"><span class="pre">None</span></code> or <code class="docutils literal notranslate"><span class="pre">[&quot;all&quot;]</span></code> to compute every available
+operation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset whose variables are the results of the requested
+statistical operations.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="climatology">
+<h2>climatology<a class="headerlink" href="#climatology" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.climatology.climatology">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.climatology.</span></span><span class="sig-name descname"><span class="pre">climatology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.climatology.climatology" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the climatological average of a variable at a given temporal frequency.</p>
+<p>The climatology is computed by grouping the data by the requested temporal
+period (day-of-year, month, or season) and averaging across all years
+within the specified date range.  Both monthly and daily source datasets
+are supported; the dataset frequency is inferred automatically from the
+<code class="docutils literal notranslate"><span class="pre">title</span></code> global attribute of the dataset.</p>
+<p>When the source dataset has <strong>monthly</strong> resolution:</p>
+<ul class="simple">
+<li><p><em>monthly</em> climatology is computed as a year-weighted average where each
+month is weighted by its number of days.</p></li>
+<li><p><em>daily</em> climatology cannot be computed and raises a <code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code>.</p></li>
+<li><p><em>seasonal</em> climatology groups months into DJF, MAM, JJA, SON and
+averages with equal weights.</p></li>
+</ul>
+<p>When the source dataset has <strong>daily</strong> resolution:</p>
+<ul class="simple">
+<li><p><em>daily</em> climatology is the mean for each calendar day-of-year across
+all years.</p></li>
+<li><p><em>monthly</em> climatology is obtained by first computing a daily
+climatology then averaging the day-of-year bins within each calendar
+month.</p></li>
+<li><p><em>seasonal</em> climatology groups day-of-year bins into DJF, MAM, JJA,
+SON and averages with equal weights.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset.  Must have a <code class="docutils literal notranslate"><span class="pre">time</span></code> coordinate
+and a <code class="docutils literal notranslate"><span class="pre">title</span></code> global attribute containing either
+<code class="docutils literal notranslate"><span class="pre">&quot;monthly&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;daily&quot;</span></code>.</p></li>
+<li><p><strong>variable</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of the variable to compute the climatology for.
+Must be present in <code class="docutils literal notranslate"><span class="pre">data.data_vars</span></code>.</p></li>
+<li><p><strong>frequency</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Temporal resolution of the output climatology.  One
+of <code class="docutils literal notranslate"><span class="pre">&quot;daily&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;monthly&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;seasonally&quot;</span></code>.</p></li>
+<li><p><strong>start_date</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">datetime-like</span></code>, <em>optional</em>) – Start of the reference period.
+Defaults to the first time step in the dataset.</p></li>
+<li><p><strong>end_date</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">datetime-like</span></code>, <em>optional</em>) – End of the reference period.
+Defaults to the last time step in the dataset.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset containing the climatological average of
+<em>variable</em>, with the time dimension replaced by the climatological
+coordinate (<code class="docutils literal notranslate"><span class="pre">month</span></code>, <code class="docutils literal notranslate"><span class="pre">dayofyear</span></code>, or <code class="docutils literal notranslate"><span class="pre">season</span></code>).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <em>variable</em> is not found in the dataset, if the
+    dataset frequency cannot be determined from its <code class="docutils literal notranslate"><span class="pre">title</span></code>
+    attribute, or if a daily climatology is requested from a monthly
+    dataset.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="compute-average">
+<h2>compute_average<a class="headerlink" href="#compute-average" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.compute_average.compute_average">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.compute_average.</span></span><span class="sig-name descname"><span class="pre">compute_average</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.compute_average.compute_average" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the average of all variables along a specified axis.</p>
+<p>Three axes are supported:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;depth&quot;</span></code>: Computes the depth-weighted vertical average over the full
+depth column using <a class="reference internal" href="#medunda.actions.average_between_layers.average_between_layers" title="medunda.actions.average_between_layers.average_between_layers"><code class="xref py py-func docutils literal notranslate"><span class="pre">average_between_layers()</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;space&quot;</span></code>: Computes a volume-weighted spatial average over all
+(latitude, longitude) grid points using the cell volumes derived from
+the grid mask.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;time&quot;</span></code>: Computes a simple arithmetic mean over the time dimension.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset.  Must include <code class="docutils literal notranslate"><span class="pre">depth</span></code>,
+<code class="docutils literal notranslate"><span class="pre">latitude</span></code>, <code class="docutils literal notranslate"><span class="pre">longitude</span></code>, and <code class="docutils literal notranslate"><span class="pre">time</span></code> coordinates as required
+by the chosen axis.</p></li>
+<li><p><strong>axis</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Axis along which to compute the average.  One of
+<code class="docutils literal notranslate"><span class="pre">&quot;depth&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;space&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;time&quot;</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with the chosen dimension collapsed, containing
+the averaged values for each variable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <em>axis</em> is not one of the valid choices.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="compute-integral">
+<h2>compute_integral<a class="headerlink" href="#compute-integral" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.integration.compute_integral">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.integration.</span></span><span class="sig-name descname"><span class="pre">compute_integral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.integration.compute_integral" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the vertical integral of all depth-dependent variables.</p>
+<p>For each variable in the input dataset that includes a <code class="docutils literal notranslate"><span class="pre">depth</span></code>
+dimension, the function integrates the variable over the full depth column
+by weighting each depth cell by its layer height (in metres).  Variables
+without a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension are omitted from the output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset.  Must include a <code class="docutils literal notranslate"><span class="pre">depth</span></code>
+coordinate from which layer heights can be derived.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset containing the vertically integrated values for
+all depth-dependent variables.  The <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension is collapsed
+in the output.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="extract-annual-extremes">
+<h2>extract_annual_extremes<a class="headerlink" href="#extract-annual-extremes" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.extract_annual_extremes.extract_annual_extremes">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.extract_annual_extremes.</span></span><span class="sig-name descname"><span class="pre">extract_annual_extremes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.extract_annual_extremes.extract_annual_extremes" title="Link to this definition">¶</a></dt>
+<dd><p>Extracts the annual extremes of a variable (maximum and minimum) from the dataset.</p>
+<p>This action groups the data by year and computes the minimum and maximum values for
+each variable across all time and spatial coordinates. The resulting dataset contains
+the annual minimum and maximum values for each variable, indexed by the starting date
+of each year.</p>
+<p>All the spatial coordinates (latitude, longitude, depth) are reduced
+in the process, so the output dataset only contains the “time” dimension, which
+corresponds to the years.</p>
+<p>For each variable in the input dataset, the output dataset
+will contain two variables: one for the minimum values (named “{variable}_min”) and
+one for the maximum values (named “{variable}_max”).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>Dataset</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Dataset</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="extract-annual-extremes-per-layer">
+<h2>extract_annual_extremes_per_layer<a class="headerlink" href="#extract-annual-extremes-per-layer" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.extract_annual_extremes_per_layer.extract_annual_extremes_per_layer">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.extract_annual_extremes_per_layer.</span></span><span class="sig-name descname"><span class="pre">extract_annual_extremes_per_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.extract_annual_extremes_per_layer.extract_annual_extremes_per_layer" title="Link to this definition">¶</a></dt>
+<dd><p>Extracts the annual extremes (maximum and minimum) from the dataset for each layer.</p>
+<p>This action is very similar to <cite>extract_annual_extremes</cite>, but it does not include the depth
+dimension in the reduction process. This means that the minimum and maximum values are computed
+for each depth layer separately, rather than across all depth layers. Therefore, the output
+dataset will have the same depth dimension as the input dataset, and the minimum and maximum
+values will be computed for each depth layer independently.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>Dataset</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Dataset</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="extract-bottom">
+<h2>extract_bottom<a class="headerlink" href="#extract-bottom" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.extract_bottom.extract_bottom">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.extract_bottom.</span></span><span class="sig-name descname"><span class="pre">extract_bottom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.extract_bottom.extract_bottom" title="Link to this definition">¶</a></dt>
+<dd><p>Extract the bottom-most valid grid cell for each spatial location.</p>
+<p>For each variable with a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension, the function uses the
+land-sea mask (derived from the first time step) to identify the deepest
+unmasked (valid) depth level at every (latitude, longitude) grid point and
+returns the corresponding values.  Variables without a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension
+are passed through unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset.  Must include a <code class="docutils literal notranslate"><span class="pre">depth</span></code> coordinate
+and at least one time step for each variable with a depth
+dimension.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with the same variables as the input but with the
+<code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension removed.  Each value corresponds to the deepest
+valid cell at the corresponding spatial location.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="extract-layer">
+<h2>extract_layer<a class="headerlink" href="#extract-layer" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.extract_layer.extract_layer">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.extract_layer.</span></span><span class="sig-name descname"><span class="pre">extract_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.extract_layer.extract_layer" title="Link to this definition">¶</a></dt>
+<dd><p>Extract the layer nearest to a specified depth from the dataset.</p>
+<p>Uses nearest-neighbour selection along the <code class="docutils literal notranslate"><span class="pre">depth</span></code> coordinate, so the
+actually selected depth may differ slightly from the requested value when
+an exact match is not available in the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset containing a <code class="docutils literal notranslate"><span class="pre">depth</span></code> coordinate.</p></li>
+<li><p><strong>depth</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Target depth in metres.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with the same variables as the input but with the
+<code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension removed, containing values at the depth level
+closest to <em>depth</em>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="extract-surface">
+<h2>extract_surface<a class="headerlink" href="#extract-surface" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.extract_surface.extract_surface">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.extract_surface.</span></span><span class="sig-name descname"><span class="pre">extract_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.extract_surface.extract_surface" title="Link to this definition">¶</a></dt>
+<dd><p>Extract the surface layer (first depth level) from the dataset.</p>
+<p>Selects the shallowest depth level (index 0) across all variables,
+removing the <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension from the output dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset containing a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with the same variables as the input but with the
+<code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension removed, containing only surface-level values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="integrate-between-layers">
+<h2>integrate_between_layers<a class="headerlink" href="#integrate-between-layers" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.integrate_between_layers.integrate_between_layers">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.integrate_between_layers.</span></span><span class="sig-name descname"><span class="pre">integrate_between_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.integrate_between_layers.integrate_between_layers" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the vertical integral of variables between two specified depths.</p>
+<p>For each variable in the input dataset that has a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension, the
+function selects the depth levels within <code class="docutils literal notranslate"><span class="pre">[depth_min,</span> <span class="pre">depth_max]</span></code> and
+integrates over those levels by weighting each cell by its layer height.
+Grid points that are masked (NaN) at the shallowest selected level are set
+to NaN in the output, preserving the land-sea mask.  Variables that do not
+have a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension are omitted from the output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset containing the variables to integrate.
+Must include a <code class="docutils literal notranslate"><span class="pre">depth</span></code> coordinate.</p></li>
+<li><p><strong>depth_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Upper bound of the depth range (shallowest depth).</p></li>
+<li><p><strong>depth_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Lower bound of the depth range (deepest depth).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset containing the vertically integrated values for all
+depth-dependent variables over the selected depth range.  The <code class="docutils literal notranslate"><span class="pre">depth</span></code>
+dimension is collapsed in the output.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Medunda User Guide</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="downloader.html">Downloader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Actions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#average-between-layers">average_between_layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#calculate-stats">calculate_stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#climatology">climatology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compute-average">compute_average</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compute-integral">compute_integral</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extract-annual-extremes">extract_annual_extremes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extract-annual-extremes-per-layer">extract_annual_extremes_per_layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extract-bottom">extract_bottom</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extract-layer">extract_layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extract-surface">extract_surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#integrate-between-layers">integrate_between_layers</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="components.html" title="previous chapter">Components</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/actions.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
