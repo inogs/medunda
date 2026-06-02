@@ -1,0 +1,5 @@
+---
+name: CentralMediterranean
+geometry:
+  type: basin
+  uuid: mid3
