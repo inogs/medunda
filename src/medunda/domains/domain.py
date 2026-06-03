@@ -1,3 +1,4 @@
+import argparse
 import logging
 import re
 import tempfile
@@ -23,6 +24,10 @@ MAIN_DIR = Path(__file__).absolute().parent.parent.parent.parent
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+class InvalidBasinUUIDError(ValueError):
+    pass
 
 
 class BoundingBox(BaseModel):
@@ -70,10 +75,10 @@ class BoundingBox(BaseModel):
         maximum_depth: float | None = None
 
         if all(bbox.minimum_depth is not None for bbox in bboxes):
-            minimum_depth = min(bbox.minimum_depth for bbox in bboxes)
+            minimum_depth = min(bbox.minimum_depth for bbox in bboxes)  # pyright: ignore[reportArgumentType]
 
         if all(bbox.maximum_depth is not None for bbox in bboxes):
-            maximum_depth = max(bbox.maximum_depth for bbox in bboxes)
+            maximum_depth = max(bbox.maximum_depth for bbox in bboxes)  # pyright: ignore[reportArgumentType]
 
         return BoundingBox(
             minimum_depth=minimum_depth,
@@ -267,6 +272,7 @@ def domain_from_basin(basin_uuid: str, name: str | None = None):
             simple basins, and a MultiPolygonalDomain for composed basins.
 
     Raises:
+        InvalidBasinUUIDError: If the provided basin UUID is invalid
         ValueError: If processing a composed basin that has no sub-basins.
         NotImplementedError: If encountering a basin type that is not
             supported (only SimplePolygonalBasins are supported).
@@ -275,7 +281,9 @@ def domain_from_basin(basin_uuid: str, name: str | None = None):
     try:
         basin = bitsea_basin.Basin.load_from_uuid(basin_uuid)
     except Exception as e:
-        raise ValueError(f"Could not load basin {basin_uuid}") from e
+        raise InvalidBasinUUIDError(
+            f"Could not load basin {basin_uuid}"
+        ) from e
 
     if name is None:
         name = basin_uuid.split(".")[-1]
@@ -394,8 +402,8 @@ def read_zipped_shapefile(compressed_path: Path, temporary_dir: Path):
     return shapefiles[0]
 
 
-def read_domain(domain_description: Path) -> ConcreteDomain:
-    yaml_content = domain_description.read_text()
+def read_domain_from_yaml(yaml_path: Path) -> ConcreteDomain:
+    yaml_content = yaml_path.read_text()
     domain_description_raw = yaml.safe_load(yaml_content)
 
     # Read the name
@@ -501,3 +509,22 @@ def read_domain(domain_description: Path) -> ConcreteDomain:
         "The geometry type you have chosen should have been implemented "
         "but, because of a bug of the code, it is not recognized"
     )
+
+
+def domain_from_string(domain_description: str) -> ConcreteDomain:
+    if domain_description.startswith("basin:"):
+        basin_uuid = domain_description[len("basin:") :]
+        try:
+            return domain_from_basin(basin_uuid=basin_uuid, name=basin_uuid)
+        except InvalidBasinUUIDError as e:
+            raise argparse.ArgumentTypeError(str(e)) from e
+
+    yaml_path = _read_path(domain_description)
+    if not yaml_path.is_file():
+        raise argparse.ArgumentTypeError(
+            f"The provided domain description {domain_description} is not a "
+            "valid file path nor a valid basin identifier (it should start "
+            "with 'basin:')"
+        )
+
+    return read_domain_from_yaml(yaml_path)
