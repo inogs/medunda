@@ -20,11 +20,25 @@ def configure_parser(subparsers):
         ACTION_NAME, help="Compute the average"
     )
     average_parser.add_argument(
-        "--axis",
+        "--axes",
         type=str,
+        # nargs="+",
         choices=sorted(VALID_AXIS),
         required=True,
-        help="Choose the axis on which the average will be computed.",
+        help="Axes on which the average will be computed.",
+    )
+
+    average_parser.add_argument(
+        "--depth-min",
+        type=float,
+        required=False,
+        help="Minimum depth for the vertical average.",
+    )
+    average_parser.add_argument(
+        "--depth-max",
+        type=float,
+        required=False,
+        help="Maximum depth for the vertical average.",
     )
 
 
@@ -51,7 +65,12 @@ def get_volume(data: "xr.Dataset") -> "xr.DataArray":
     )
 
 
-def compute_average(data: "xr.Dataset", axis) -> "xr.Dataset":
+def compute_average(
+    data: "xr.Dataset",
+    axes: str,
+    depth_min: float = None,
+    depth_max: float = None,
+) -> "xr.Dataset":
     """Compute the average of all variables along a specified axis.
 
     Three axes are supported:
@@ -67,7 +86,7 @@ def compute_average(data: "xr.Dataset", axis) -> "xr.Dataset":
         data (xr.Dataset): Input dataset.  Must include ``depth``,
             ``latitude``, ``longitude``, and ``time`` coordinates as required
             by the chosen axis.
-        axis (str): Axis along which to compute the average.  One of
+        axes (str): Axes along which to compute the average.  One of
             ``"depth"``, ``"space"``, or ``"time"``.
 
     Returns:
@@ -75,22 +94,34 @@ def compute_average(data: "xr.Dataset", axis) -> "xr.Dataset":
         the averaged values for each variable.
 
     Raises:
-        ValueError: If *axis* is not one of the valid choices.
+        ValueError: If *axes* is not one of the valid choices.
     """
-    if axis not in VALID_AXIS.keys():
+
+    if axes not in VALID_AXIS.keys():
         raise ValueError(
-            f"Axis '{axis}' is not valid. Choose from {list(VALID_AXIS.keys())}"
+            f"Axes '{axes}' is not valid. Choose from {list(VALID_AXIS.keys())}"
         )
 
-    LOGGER.info(f"Computing average over axis '{axis}'")
+    LOGGER.info(f"Computing average over axes '{axes}'")
 
-    if axis == "depth":
-        depth_min = float(data.depth.min())
-        depth_max = float(data.depth.max())
+    if axes == "depth":
+        if depth_min is not None:
+            depth_min = float(depth_min)
+        else:
+            depth_min = float(data.depth.min())
+
+        if depth_max is not None:
+            depth_max = float(depth_max)
+        else:
+            depth_max = float(data.depth.max())
+
         averaged_dataset = average_between_layers(data, depth_min, depth_max)
-        LOGGER.info("Depth average computed successfully")
+        LOGGER.info(
+            f"Depth interval: [{depth_min if depth_min is not None else float(data.depth.min())}, "
+            f"{depth_max if depth_max is not None else float(data.depth.max())}]"
+        )
 
-    elif axis == "space":
+    elif axes == "space":
         weights = get_volume(data)
         weights = weights.expand_dims({"time": data.time})
 
@@ -100,12 +131,14 @@ def compute_average(data: "xr.Dataset", axis) -> "xr.Dataset":
             da = data[var]
 
             weighted_sum = (da * weights).sum(dim=("latitude", "longitude"))
+
             total_weights = weights.sum(dim=("latitude", "longitude"))
+
             averaged_dataset[var] = weighted_sum / total_weights
 
         LOGGER.info("Space average computed successfully")
 
-    elif axis == "time":
+    elif axes == "time":
         averaged_dataset = data.mean(dim="time")
 
         LOGGER.info("Time average computed successfully")
