@@ -22,7 +22,7 @@ from medunda.components.frequencies import Frequency
 from medunda.components.geodata import GeoDataCollection
 from medunda.components.variables import VariableDataset
 from medunda.domains.domain import ConcreteDomain
-from medunda.domains.domain import read_domain
+from medunda.domains.domain import domain_from_string
 from medunda.providers import PROVIDERS
 from medunda.providers import get_provider
 from medunda.tools.argparse_utils import date_from_str
@@ -100,9 +100,9 @@ def configure_parser(
     )
     create_subparser.add_argument(
         "--domain",
-        type=Path,
+        type=domain_from_string,
         required=True,
-        help="Choose the domain",
+        help="Choose the domain (path to a YAML file, or 'basin:<uuid>')",
     )
 
     create_subparser.add_argument(
@@ -312,15 +312,13 @@ def validate_dataset(filepath, variable, max_depth: float | None):
 
 def downloader(args):
     if args.action == "create":
-        domain = read_domain(args.domain)
-
         downloaded_files = download_data(
             variables=args.variables,
             output_dir=args.output_dir,
             frequency=Frequency(args.frequency),
             start=args.start_date,
             end=args.end_date,
-            domain=domain,
+            domain=args.domain,
             split_by=args.split_by,
             provider_class_name=args.provider,
             provider_config=args.provider_config,
@@ -331,7 +329,7 @@ def downloader(args):
                 if validate_dataset(
                     filepath,
                     variable,
-                    max_depth=domain.bounding_box.maximum_depth,
+                    max_depth=args.domain.bounding_box.maximum_depth,
                 ):
                     LOGGER.info(
                         f"dataset validated for variable: '{variable}'"
