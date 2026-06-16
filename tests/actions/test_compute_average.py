@@ -15,7 +15,9 @@ def test_compute_average(data4d):
     latitude_levels = data4d.latitude.shape[0]
     longitude_levels = data4d.longitude.shape[0]
 
-    ds = compute_average(data=data4d, axis="depth")
+    ds = compute_average(
+        data=data4d, axes="depth", depth_min=None, depth_max=None
+    )
 
     assert "T" in ds.data_vars, "Variable 'T' not found in output dataset."
     assert "S" in ds.data_vars, "Variable 'S' not found in output dataset."
