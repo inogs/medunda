@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 
 import medunda.tools.lazy_imports.bitsea.mask as bitsea
 from medunda.actions.average_between_layers import average_between_layers
@@ -8,12 +9,6 @@ from medunda.tools.lazy_imports import xr
 LOGGER = logging.getLogger(__name__)
 ACTION_NAME = "compute_average"
 
-VALID_AXIS = {
-    "depth": ["depth"],
-    "space": ["latitude", "longitude"],
-    "time": ["time"],
-}
-
 
 def configure_parser(subparsers):
     average_parser = subparsers.add_parser(
@@ -22,8 +17,8 @@ def configure_parser(subparsers):
     average_parser.add_argument(
         "--axes",
         type=str,
-        # nargs="+",
-        choices=sorted(VALID_AXIS),
+        nargs="+",
+        choices=["depth", "latitude", "longitude", "time"],
         required=True,
         help="Axes on which the average will be computed.",
     )
@@ -42,105 +37,142 @@ def configure_parser(subparsers):
     )
 
 
-def get_volume(data: "xr.Dataset") -> "xr.DataArray":
-    """Compute the cell volume"""
+def get_area(data: "xr.Dataset") -> "xr.DataArray":
+    """Compute the cell area"""
+
     data_var = list(data.data_vars)[0]
+
     if "time" in data[data_var].dims:
         reference = data[data_var].isel(time=0)
     else:
         reference = data[data_var]
+
     tmask = np.logical_not(np.isnan(reference))
+
     mask = bitsea.Mask.from_xarray(dataset=xr.Dataset({"tmask": tmask}))
+
     area = xr.DataArray(mask.area, dims=("latitude", "longitude"))
-    e3t = xr.DataArray(mask.e3t, dims=("depth", "latitude", "longitude"))
-    vol_cell = area * e3t
+
     return xr.DataArray(
-        vol_cell.transpose("depth", "latitude", "longitude"),
-        dims=("depth", "latitude", "longitude"),
+        area,
+        dims=("latitude", "longitude"),
         coords={
-            "depth": data.depth,
             "latitude": data.latitude,
             "longitude": data.longitude,
         },
     )
 
 
-def compute_average(
-    data: "xr.Dataset",
-    axes: str,
-    depth_min: float = None,
-    depth_max: float = None,
-) -> "xr.Dataset":
-    """Compute the average of all variables along a specified axis.
+class Aggregation:
+    def __init__(self, data: xr.Dataset):
+        self.ds = data
+        self.weights = get_area(data)
 
-    Three axes are supported:
+    def reduce_depth(self, data: xr.Dataset, depth_min=None, depth_max=None):
+        if "depth" not in data.dims:
+            LOGGER.warning("Depth dimensions not found, skipping depth")
 
-    * ``"depth"``: Computes the depth-weighted vertical average over the full
-      depth column using :func:`~medunda.actions.average_between_layers.average_between_layers`.
-    * ``"space"``: Computes a volume-weighted spatial average over all
-      (latitude, longitude) grid points using the cell volumes derived from
-      the grid mask.
-    * ``"time"``: Computes a simple arithmetic mean over the time dimension.
+        depth_min = float(data.depth.min()) if depth_min is None else depth_min
+        depth_max = float(data.depth.max()) if depth_max is None else depth_max
 
-    Args:
-        data (xr.Dataset): Input dataset.  Must include ``depth``,
-            ``latitude``, ``longitude``, and ``time`` coordinates as required
-            by the chosen axis.
-        axes (str): Axes along which to compute the average.  One of
-            ``"depth"``, ``"space"``, or ``"time"``.
+        result = average_between_layers(data, depth_min, depth_max)
 
-    Returns:
-        xr.Dataset: Dataset with the chosen dimension collapsed, containing
-        the averaged values for each variable.
+        return result
 
-    Raises:
-        ValueError: If *axes* is not one of the valid choices.
-    """
-
-    if axes not in VALID_AXIS.keys():
-        raise ValueError(
-            f"Axes '{axes}' is not valid. Choose from {list(VALID_AXIS.keys())}"
-        )
-
-    LOGGER.info(f"Computing average over axes '{axes}'")
-
-    if axes == "depth":
-        if depth_min is not None:
-            depth_min = float(depth_min)
-        else:
-            depth_min = float(data.depth.min())
-
-        if depth_max is not None:
-            depth_max = float(depth_max)
-        else:
-            depth_max = float(data.depth.max())
-
-        averaged_dataset = average_between_layers(data, depth_min, depth_max)
-        LOGGER.info(
-            f"Depth interval: [{depth_min if depth_min is not None else float(data.depth.min())}, "
-            f"{depth_max if depth_max is not None else float(data.depth.max())}]"
-        )
-
-    elif axes == "space":
-        weights = get_volume(data)
-        weights = weights.expand_dims({"time": data.time})
+    def reduce_lat_lon(self, data: xr.Dataset):
+        weights = self.weights.broadcast_like(data)
 
         averaged_dataset = xr.Dataset()
 
         for var in data.data_vars:
             da = data[var]
 
-            weighted_sum = (da * weights).sum(dim=("latitude", "longitude"))
+            mask = da.notnull()
+            w = weights * mask
 
-            total_weights = weights.sum(dim=("latitude", "longitude"))
+            weighted_sum = (da.fillna(0) * w).sum(
+                dim=("latitude", "longitude")
+            )
+
+            total_weights = w.sum(dim=("latitude", "longitude"))
 
             averaged_dataset[var] = weighted_sum / total_weights
 
-        LOGGER.info("Space average computed successfully")
+        result = averaged_dataset
+        return result
 
-    elif axes == "time":
-        averaged_dataset = data.mean(dim="time")
+    def reduce_lat(self, data: xr.Dataset):
+        weights = self.weights
 
-        LOGGER.info("Time average computed successfully")
+        if "time" in data.dims:
+            weights = weights.expand_dims({"time": data.time})
 
-    return averaged_dataset
+        averaged_dataset = xr.Dataset()
+
+        for var in data.data_vars:
+            da = data[var]
+
+            weighted_sum = (da * weights).sum(dim="latitude")
+
+            total_weights = weights.sum(dim="latitude")
+
+            averaged_dataset[var] = weighted_sum / total_weights
+
+        result = averaged_dataset
+        return result
+
+    def reduce_lon(self, data: xr.Dataset):
+        weights = self.weights
+
+        if "time" in data.dims:
+            weights = weights.expand_dims({"time": data.time})
+
+        averaged_dataset = xr.Dataset()
+
+        for var in data.data_vars:
+            da = data[var]
+
+            weighted_sum = (da * weights).sum(dim="longitude")
+
+            total_weights = weights.sum(dim="longitude")
+
+            averaged_dataset[var] = weighted_sum / total_weights
+
+        result = averaged_dataset
+        return result
+
+    def reduce_time(self, data: xr.Dataset):
+        result = data.mean(dim="time")
+        return result
+
+    def averaging(
+        self, axes: Sequence[str], depth_min=None, depth_max=None
+    ) -> xr.Dataset:
+        result = self.ds
+
+        if "depth" in axes:
+            result = self.reduce_depth(result, depth_min, depth_max)
+
+        if "latitude" in axes and "longitude" in axes:
+            result = self.reduce_lat_lon(result)
+
+        elif "latitude" in axes:
+            result = self.reduce_lat(result)
+
+        elif "longitude" in axes:
+            result = self.reduce_lon(result)
+
+        if "time" in axes:
+            result = self.reduce_time(result)
+
+        return result
+
+
+def compute_average(data, axes, depth_min, depth_max):
+    aggragator = Aggregation(data)
+
+    return aggragator.averaging(
+        axes=axes,
+        depth_min=depth_min,
+        depth_max=depth_max,
+    )
