@@ -169,9 +169,9 @@ class Aggregation:
 
 
 def compute_average(data, axes, depth_min, depth_max):
-    aggragator = Aggregation(data)
+    aggregator = Aggregation(data)
 
-    return aggragator.averaging(
+    return aggregator.averaging(
         axes=axes,
         depth_min=depth_min,
         depth_max=depth_max,
