@@ -855,3 +855,13 @@ class TarArchiveProvider(Provider):
             start_time=config_content.get("start_time", None),
             end_time=config_content.get("end_time", None),
         )
+
+    @classmethod
+    def get_description(cls) -> str:
+        return (
+            "Tar archive provider that retrieves data from tar archives. "
+            "The tar archives are expected to contain netCDF files with a "
+            "specific naming convention. The provider uses a YAML configuration "
+            "file to define the available variables, their units, and the paths "
+            "to the tar archives for each frequency."
+        )

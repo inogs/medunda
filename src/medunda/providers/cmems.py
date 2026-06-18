@@ -254,6 +254,16 @@ class CMEMSProviderMed(CMEMSProvider):
     def get_name(cls) -> str:
         return "cmems_mediterranean"
 
+    @classmethod
+    def get_description(cls) -> str:
+        return (
+            "Provider that provides physical and biogeochemical data for "
+            "the Mediterranean Sea from the Copernicus Marine Data Store. "
+            "The physical data is available from the "
+            "MEDSEA_MULTIYEAR_PHY_006_004 product, while the biogeochemical "
+            "data is available from the MEDSEA_MULTIYEAR_BGC_006_008 product."
+        )
+
 
 class CMEMSProviderGlobal(CMEMSProvider):
     PRODUCTS = GLOBAL_PRODUCTS
@@ -261,3 +271,12 @@ class CMEMSProviderGlobal(CMEMSProvider):
     @classmethod
     def get_name(cls) -> str:
         return "cmems_global"
+
+    @classmethod
+    def get_description(cls) -> str:
+        return (
+            "Provider that provides physical data for the overall global ocean "
+            "from the Copernicus Marine Data Store. "
+            "The physical data is downloaded from the "
+            "GLOBAL_MULTIYEAR_PHY_001_030 product."
+        )

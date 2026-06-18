@@ -22,6 +22,7 @@ dependencies = [
     "cmocean (>=4.0.3,<5.0.0)",
     "pyyaml (>=6.0.3,<7.0.0)",
     "bitsea @ git+https://github.com/inogs/bit.sea.git",
+    "tabulate (>=0.10.0,<1.0.0)",
 ]
 
 [tool.poetry.group.dev.dependencies]

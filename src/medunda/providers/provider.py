@@ -95,3 +95,14 @@ class Provider(ABC):
             A `VariableDataset` containing all available variables
         """
         return VariableDataset.all_variables()
+
+    @classmethod
+    @abstractmethod
+    def get_description(cls) -> str:
+        """
+        Returns a description of this provider
+
+        Returns:
+            A string describing this provider
+        """
+        raise NotImplementedError
