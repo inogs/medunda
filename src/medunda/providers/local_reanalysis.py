@@ -476,3 +476,12 @@ class LocalReanalysis(Provider):
             start_time=config_content.get("start_time", None),
             end_time=config_content.get("end_time", None),
         )
+
+    @classmethod
+    def get_description(cls) -> str:
+        return (
+            "Local reanalysis provider that retrieves data from a local "
+            "directory structure. The directory structure is defined in a "
+            "YAML configuration file that specifies the available variables, "
+            "their units, and the paths to the data files for each frequency."
+        )
