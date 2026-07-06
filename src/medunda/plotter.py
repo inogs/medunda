@@ -118,7 +118,7 @@ def parse_colormap_description(cmap_desc: str) -> "Colormap":
     if cmap_desc.startswith("cmo:"):
         return lazy_cmocean.get_cmocean_map(cmap_desc[4:])
     else:
-        return clp.Colormap(cmap_desc)
+        return clp.get_cmap(cmap_desc)
 
 
 def check_variable(ds, var):

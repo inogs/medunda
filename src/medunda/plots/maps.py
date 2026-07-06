@@ -116,7 +116,6 @@ def plotting_maps(
 
     fig, ax = plt.subplots(figsize=(10, 5))
     cmap = metadata.get("cmap", "viridis")
-
     im = ax.pcolormesh(data_slice, cmap=cmap)
 
     if actual_time is not None:
