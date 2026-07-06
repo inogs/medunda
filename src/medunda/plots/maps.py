@@ -46,79 +46,71 @@ def plotting_maps(
     output_dir,
     show_plot,
 ):
+    # If data is from a raster file, we always want to
+    # select the first band for plotting, because we do not
+    # generate files with multiple bands.
+    if "band" in data.dims:
+        data_slice = data.isel(band=0)
+    else:
+        data_slice = data
+
     if time is None:
-        if "band" in data.dims:
-            data_slice = data.isel(band=0)
-        else:
-            data_slice = data
-
         actual_time = None
-
     else:
         selected_time = pd.to_datetime(time)
 
+        # Convert the time coordinate to datetime if it's not already
         data["time"] = pd.to_datetime(data["time"].values)
 
         try:
-            data_slice = data.sel(time=selected_time)
-        except Exception:
-            try:
-                data_slice = data.sel(time=selected_time, method="nearest")
-            except Exception as e:
-                raise ValueError(f"Could not select time {selected_time}: {e}")
+            data_slice = data.sel(time=selected_time, method="nearest")
+        except Exception as e:
+            raise ValueError(f"Could not select time {selected_time}: {e}")
 
         n_dims = len(data_slice.dims)
 
-        if n_dims == 2:
-            if (
-                "latitude" not in data_slice.dims
-                or "longitude" not in data_slice.dims
-            ):
+        if n_dims == 2 and aggregation_dimension is not None:
+            LOGGER.warning(
+                "Data has 2 dimensions, but an aggregation dimension was specified. "
+                "Aggregation will be skipped."
+            )
+
+        if n_dims > 2:
+            if aggregation_dimension is None:
                 raise ValueError(
-                    "Data must have 'latitude' and 'longitude' dimensions for 2D plotting."
-                )
-            else:
-                LOGGER.debug(
-                    "Data has 2 dimensions, proceeding with plotting."
-                )
-
-            if aggregation_dimension:
-                if aggregation_dimension in data_slice.dims:
-                    raise ValueError(
-                        f"Aggregation dimension '{aggregation_dimension}' cannot be used for 2D data with dimensions {data_slice.dims}"
-                    )
-                LOGGER.debug(
-                    f"Applying {aggregation_method} aggregation along dimension '{aggregation_dimension}'"
-                )
-
-                data_slice = getattr(data_slice, aggregation_method)(
-                    dim=aggregation_dimension
-                )
-
-        elif n_dims > 2:
-            if not aggregation_method:
-                raise ValueError(
-                    "Data has more than 2 dimensions, an aggregation method must be specified."
-                    " Please provide an aggregation method using the '--aggregation-method'"
+                    "Data has more than 2 dimensions, an aggregation dimension must be specified."
+                    " Please provide an aggregation dimension using the '--aggregation-dimension'"
                 )
 
             if aggregation_dimension not in data_slice.dims:
                 raise ValueError(
-                    f"Aggregation dimension '{aggregation_dimension}' not found in data dimensions: {data_slice.dims}"
+                    f"Aggregation dimension '{aggregation_dimension}' not found in data "
+                    f"dimensions: {data_slice.dims}"
                 )
 
             LOGGER.info(
-                f"Applying {aggregation_method} aggregation along dimension '{aggregation_dimension}'"
+                f"Applying {aggregation_method} aggregation along dimension "
+                f"'{aggregation_dimension}'"
             )
 
             data_slice = getattr(data_slice, aggregation_method)(
                 dim=aggregation_dimension
             )
 
-        else:
+        if n_dims != 2:
             raise ValueError(
-                f"Data has {n_dims} dimensions, expected at least 2 dimensions for plotting."
+                f"Data has {n_dims} dimensions after aggregation, expected 2 dimensions for plotting"
             )
+
+        if (
+            "latitude" not in data_slice.dims
+            or "longitude" not in data_slice.dims
+        ):
+            raise ValueError(
+                "Data must have 'latitude' and 'longitude' dimensions for 2D plotting."
+            )
+        else:
+            LOGGER.debug("Data has 2 dimensions, proceeding with plotting.")
 
         actual_time = pd.to_datetime(data_slice["time"].values)
 
