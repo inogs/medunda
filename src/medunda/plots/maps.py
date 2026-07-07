@@ -17,52 +17,113 @@ def configure_parser(subparsers):
     plotting_maps.add_argument(
         "--time",
         type=date_from_str,
-        required=True,
+        required=False,
         help="Date to plot the map for (format: YYYY-MM-DD)",
     )
+
     plotting_maps.add_argument(
-        "--latitude",
-        type=float,
-        required=False,
-        help="Latitude of the area to plot",
+        "--aggregation-dimension",
+        type=str,
+        help="Dimension along which to aggregate the data"
+        "By default, no aggregation is performed and the data is plotted as is."
+        "If the data has more than 2 dimensions, an aggregation method must be "
+        "specified using '--aggregation-method'",
     )
     plotting_maps.add_argument(
-        "--longitude",
-        type=float,
-        required=False,
-        help="Longitude of the area to plot",
+        "--aggregation-method",
+        type=str,
+        choices=["mean", "max", "min"],
+        default="mean",
+        help="Method to use for aggregating data along the specified dimension",
     )
 
 
-def plotting_maps(data: "xr.DataArray", metadata: dict, time):
-    selected_time = pd.to_datetime(time)
+def plotting_maps(
+    data: "xr.DataArray",
+    metadata: dict,
+    time,
+    aggregation_dimension,
+    aggregation_method,
+    output_dir,
+    show_plot,
+):
+    # If data is from a raster file, we always want to
+    # select the first band for plotting, because we do not
+    # generate files with multiple bands.
+    if "band" in data.dims:
+        data_slice = data.isel(band=0)
+    else:
+        data_slice = data
 
-    data["time"] = pd.to_datetime(data["time"].values)
+    if time is None:
+        actual_time = None
+    else:
+        selected_time = pd.to_datetime(time)
 
-    try:
-        data_slice = data.sel(time=selected_time)
-    except Exception:
+        # Convert the time coordinate to datetime if it's not already
+        data["time"] = pd.to_datetime(data["time"].values)
+
         try:
             data_slice = data.sel(time=selected_time, method="nearest")
         except Exception as e:
             raise ValueError(f"Could not select time {selected_time}: {e}")
 
-    non_spatial_dims = [
-        dim
-        for dim in data_slice.dims
-        if dim not in ["lat", "latitude", "lon", "longitude"]
-    ]
-    if non_spatial_dims:
-        data_slice = data_slice.mean(dim=non_spatial_dims)
+        actual_time = pd.to_datetime(data_slice["time"].values)
 
-    actual_time = pd.to_datetime(data_slice["time"].values)
+    n_dims = len(data_slice.dims)
+
+    if n_dims == 2 and aggregation_dimension is not None:
+        LOGGER.warning(
+            "Data has 2 dimensions, but an aggregation dimension was specified. "
+            "Aggregation will be skipped."
+        )
+
+    if n_dims > 2:
+        if aggregation_dimension is None:
+            raise ValueError(
+                "Data has more than 2 dimensions, an aggregation dimension must be specified."
+                " Please provide an aggregation dimension using the '--aggregation-dimension'"
+            )
+
+        if aggregation_dimension not in data_slice.dims:
+            raise ValueError(
+                f"Aggregation dimension '{aggregation_dimension}' not found in data "
+                f"dimensions: {data_slice.dims}"
+            )
+
+        LOGGER.info(
+            f"Applying {aggregation_method} aggregation along dimension "
+            f"'{aggregation_dimension}'"
+        )
+
+        data_slice = getattr(data_slice, aggregation_method)(
+            dim=aggregation_dimension
+        )
+
+        if n_dims != 2:
+            raise ValueError(
+                f"Data has {n_dims} dimensions after aggregation, expected 2 "
+                f"dimensions for plotting"
+            )
+
+    if "latitude" not in data_slice.dims or "longitude" not in data_slice.dims:
+        raise ValueError(
+            "Data must have 'latitude' and 'longitude' dimensions for 2D plotting."
+        )
+    else:
+        LOGGER.debug("Data has 2 dimensions, proceeding with plotting.")
 
     fig, ax = plt.subplots(figsize=(10, 5))
     cmap = metadata.get("cmap", "viridis")
-
     im = ax.pcolormesh(data_slice, cmap=cmap)
 
-    title_str = f"{metadata['label']} at {actual_time.strftime('%Y-%m-%d')}"
+    if actual_time is not None:
+        title_str = (
+            f"{metadata['label']} at {actual_time.strftime('%Y-%m-%d')}"
+        )
+    else:
+        title_str = metadata["label"]
+
     ax.set_title(title_str)
     ax.set_xlabel("Longitude")
     ax.set_ylabel("Latitude")
@@ -70,4 +131,8 @@ def plotting_maps(data: "xr.DataArray", metadata: dict, time):
     cbar = fig.colorbar(im, ax=ax, orientation="vertical")
     cbar.set_label(f"{metadata['label']} ({metadata.get('unit', '')})")
 
-    plt.show()
+    if output_dir:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        plt.savefig(output_dir / f"{metadata['label']}_map.png")
+    if show_plot:
+        plt.show()

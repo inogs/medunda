@@ -9,4 +9,9 @@ def __getattr__(name: str):
         from matplotlib.colors import Colormap
 
         return Colormap
+
+    if name == "get_cmap":
+        from matplotlib.pyplot import get_cmap
+
+        return get_cmap
     raise AttributeError(f"module {__name__} has no attribute {name}")

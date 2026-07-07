@@ -10,10 +10,10 @@ from medunda.tools.typing import VarName
 
 # The _DEFAULT_COLORMAP is defined as a function so that it is not evaluated
 # at the time of the definition of the variables, but only when it is actually
-# needed. This is important because the colormap module is lazily imported
+# necessary. This is important because the colormap module is lazily imported,
 # and we want to avoid importing it if it is not necessary.
 def _get_default_colormap():
-    return clp.Colormap("viridis")
+    return clp.get_cmap("viridis")
 
 
 @dataclass(frozen=True)
@@ -44,20 +44,20 @@ class Variable:
 
     def get_colormap(self) -> "clp.Colormap":
         """
-        Returns the colormap associated to this variable.
+        Returns the colormap associated with this variable.
 
         Calling this method is safer than reading directly the `.cmap`
         attribute, because this method takes care of returning a default
         value when the `cmap` attribute is `None`.
 
         Returns:
-            A colormap associated to the variable
+            A colormap associated with the variable
         """
         if self.cmap is None:
             return _get_default_colormap()
         if self.cmap.lower().startswith("cmo:"):
             return lazy_cmocean.get_cmocean_map(self.cmap[4:])
-        return clp.Colormap(self.cmap)
+        return clp.get_cmap(self.cmap)
 
     def get_label(self) -> str:
         """
