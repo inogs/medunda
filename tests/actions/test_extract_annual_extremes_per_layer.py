@@ -17,8 +17,8 @@ def test_extract_extremes(data4d):
 
     for t in range(len(dates_str)):
         for d in range(depth_levels):
-            data4d.T.isel(time=t, depth=d)[:] = t + d
-            data4d.S.isel(time=t, depth=d)[:] = 10 - t - 2 * d
+            data4d.thetao.isel(time=t, depth=d)[:] = t + d
+            data4d.so.isel(time=t, depth=d)[:] = 10 - t - 2 * d
 
     ds = extract_annual_extremes_per_layer(data=data4d)
 
@@ -31,12 +31,19 @@ def test_extract_extremes(data4d):
         ds.indexes["time"],
         pd.DatetimeIndex(["2024-01-01", "2025-01-01"], name="time"),
     )
-    assert set(ds.data_vars) == {"T_min", "T_max", "S_min", "S_max"}
-    np.testing.assert_allclose(ds["T_min"].isel(depth=0).values, [0, 12])
-    np.testing.assert_allclose(ds["T_min"].isel(depth=-1).values, [2, 14])
-    np.testing.assert_allclose(ds["T_max"].isel(depth=0).values, [11, 23])
-    np.testing.assert_allclose(ds["T_max"].isel(depth=-1).values, [13, 25])
-    np.testing.assert_allclose(ds["S_min"].isel(depth=0).values, [-1, -13])
-    np.testing.assert_allclose(ds["S_min"].isel(depth=-1).values, [-5, -17])
-    np.testing.assert_allclose(ds["S_max"].isel(depth=0).values, [10, -2])
-    np.testing.assert_allclose(ds["S_max"].isel(depth=-1).values, [6, -6])
+    assert set(ds.data_vars) == {
+        "thetao_min",
+        "thetao_max",
+        "so_min",
+        "so_max",
+    }
+    np.testing.assert_allclose(ds["thetao_min"].isel(depth=0).values, [0, 12])
+    np.testing.assert_allclose(ds["thetao_min"].isel(depth=-1).values, [2, 14])
+    np.testing.assert_allclose(ds["thetao_max"].isel(depth=0).values, [11, 23])
+    np.testing.assert_allclose(
+        ds["thetao_max"].isel(depth=-1).values, [13, 25]
+    )
+    np.testing.assert_allclose(ds["so_min"].isel(depth=0).values, [-1, -13])
+    np.testing.assert_allclose(ds["so_min"].isel(depth=-1).values, [-5, -17])
+    np.testing.assert_allclose(ds["so_max"].isel(depth=0).values, [10, -2])
+    np.testing.assert_allclose(ds["so_max"].isel(depth=-1).values, [6, -6])

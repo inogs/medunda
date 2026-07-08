@@ -3,16 +3,16 @@ import numpy as np
 from medunda.actions.extract_bottom import extract_bottom
 
 
-def test_extract_surface(data4d):
-    """Test the extract_surface function."""
+def test_extract_bottom(data4d):
+    """Test the extract_bottom function."""
 
     depth_levels = data4d.depth.shape[0]
     for d in range(depth_levels):
-        data4d.T.isel(depth=d)[:] = d
-        data4d.S.isel(depth=d)[:] = 10 + d
+        data4d.thetao.isel(depth=d)[:] = d
+        data4d.so.isel(depth=d)[:] = 10 + d
 
-    last_T_value = depth_levels - 1
-    last_S_value = 10 + depth_levels - 1
+    last_thetao_value = depth_levels - 1
+    last_so_value = 10 + depth_levels - 1
 
     time_levels = data4d.time.shape[0]
     latitude_levels = data4d.latitude.shape[0]
@@ -20,28 +20,32 @@ def test_extract_surface(data4d):
 
     ds = extract_bottom(data=data4d)
 
-    assert "T" in ds.data_vars, "Variable 'T' not found in output dataset."
-    assert "S" in ds.data_vars, "Variable 'S' not found in output dataset."
-    assert ds.T.shape == (time_levels, latitude_levels, longitude_levels), (
-        "Shape of 'T' variable is incorrect."
+    assert "thetao" in ds.data_vars, (
+        "Variable 'thetao' not found in output dataset."
     )
-    assert ds.S.shape == (time_levels, latitude_levels, longitude_levels), (
-        "Shape of 'S' variable is incorrect."
+    assert "so" in ds.data_vars, "Variable 'so' not found in output dataset."
+    assert ds.thetao.shape == (
+        time_levels,
+        latitude_levels,
+        longitude_levels,
+    ), "Shape of 'thetao' variable is incorrect."
+    assert ds.so.shape == (time_levels, latitude_levels, longitude_levels), (
+        "Shape of 'so' variable is incorrect."
     )
 
-    S_range = ds.S.max() - ds.S.min()
-    T_range = ds.T.max() - ds.T.min()
-    assert S_range < 1e-6, (
-        "Difference between max and min of 'S' variable is incorrect."
+    so_range = ds.so.max() - ds.so.min()
+    thetao_range = ds.thetao.max() - ds.thetao.min()
+    assert so_range < 1e-6, (
+        "Difference between max and min of 'so' variable is incorrect."
     )
-    assert T_range < 1e-6, (
-        "Difference between max and min of 'S' variable is incorrect."
+    assert thetao_range < 1e-6, (
+        "Difference between max and min of 'thetao' variable is incorrect."
     )
-    T_value = ds.T.max()
-    S_value = ds.S.max()
-    assert np.abs(T_value - last_T_value) < 1e-6, (
-        "Minimum value of 'T' variable is incorrect."
+    thetao_value = ds.thetao.max()
+    so_value = ds.so.max()
+    assert np.abs(thetao_value - last_thetao_value) < 1e-6, (
+        "Minimum value of 'thetao' variable is incorrect."
     )
-    assert np.abs(S_value - last_S_value) < 1e-6, (
-        "Minimum value of 'S' variable is incorrect."
+    assert np.abs(so_value - last_so_value) < 1e-6, (
+        "Minimum value of 'so' variable is incorrect."
     )

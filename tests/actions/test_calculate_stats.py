@@ -12,7 +12,7 @@ def test_depth_average(data4d):
 
     ds = calculate_stats(data=data4d, operations=operations)
 
-    for var_name in ["T", "S"]:
+    for var_name in ["thetao", "so"]:
         for op in operations:
             output_name = f"{var_name}_{op}"
             assert output_name in ds.data_vars, (
