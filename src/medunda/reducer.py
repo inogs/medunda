@@ -7,7 +7,6 @@ from medunda.actions import ActionNotFound
 from medunda.actions import average_between_layers
 from medunda.actions import calculate_stats
 from medunda.actions import climatology
-from medunda.actions import compute_average
 from medunda.actions import extract_annual_extremes
 from medunda.actions import extract_annual_extremes_per_layer
 from medunda.actions import extract_bottom
@@ -15,6 +14,7 @@ from medunda.actions import extract_layer
 from medunda.actions import extract_surface
 from medunda.actions import integrate_between_layers
 from medunda.actions import integration
+from medunda.actions import reduce_axes
 from medunda.components.geodata import GeoDataCollection
 from medunda.tools.lazy_imports import dask_array as da
 from medunda.tools.lazy_imports import numpy as np
@@ -33,7 +33,7 @@ ACTION_MODULES = [
     average_between_layers,
     calculate_stats,
     climatology,
-    compute_average,
+    reduce_axes,
     extract_bottom,
     extract_annual_extremes,
     extract_layer,

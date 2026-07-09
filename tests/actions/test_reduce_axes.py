@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 import medunda.tools.lazy_imports.bitsea.mask as bitsea_mask
-from medunda.actions.compute_average import compute_average
+from medunda.actions.reduce_axes import reduce_axes
 from medunda.tools.lazy_imports import xarray as xr
 
 
@@ -33,7 +33,7 @@ def _build_dataset_mask(dataset, dataset_id):
 
 
 @pytest.mark.parametrize("average_also_on_time_axis", [True, False])
-def test_compute_average_on_depth(
+def test_reduce_axes_on_depth(
     dataset, request, average_also_on_time_axis: bool
 ):
     """
@@ -91,10 +91,13 @@ def test_compute_average_on_depth(
         average_axes = ("depth",)
 
     with ctx:
-        ds = compute_average(
-            data=dataset, axes=average_axes, depth_min=None, depth_max=None
+        ds = reduce_axes(
+            data=dataset,
+            axes=average_axes,
+            depth_min=None,
+            depth_max=None,
+            operator="mean",
         )
-    print(ds)
 
     # Check that all the vars with a depth have the same mask of the first
     # layer
