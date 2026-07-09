@@ -42,6 +42,43 @@ def configure_parser(subparsers):
     )
 
 
+def _drop_unused(ds: "xr.Dataset") -> "xr.Dataset":
+    """Remove unused coordinates from a Dataset.
+
+    A coordinate is considered unused if none of its dimensions are referenced
+    by any data variable in the dataset. Removing such coordinates also causes
+    any dimensions that are no longer referenced by any variable or coordinate
+    to disappear automatically from the resulting dataset.
+
+    Args:
+        ds: The input ``xarray.Dataset``.
+
+    Returns:
+        A new ``xarray.Dataset`` with all unused coordinates removed.
+
+    Notes:
+        This function only removes coordinates. Dimensions are not explicitly
+        dropped because, in xarray, they are defined by variables and
+        coordinates. Once all references to a dimension are removed, the
+        dimension disappears automatically.
+    """
+    # Dimensions used by data variables
+    used_dims = set()
+    for da in ds.data_vars.values():
+        used_dims.update(da.dims)
+
+    # Coordinates that should be kept
+    used_coords = set(used_dims)
+
+    for name, coord in ds.coords.items():
+        if any(dim in used_dims for dim in coord.dims):
+            used_coords.add(name)
+
+    # Drop unused coordinates
+    unused_coords = set(ds.coords) - used_coords
+    return ds.drop_vars(unused_coords)
+
+
 def compute_average(data, axes, depth_min, depth_max):
     valid_axis_names = ("depth", "latitude", "longitude", "time")
     for axis_name in axes:
@@ -184,4 +221,4 @@ def compute_average(data, axes, depth_min, depth_max):
             .mean(dim=aggregated_axis)
         )
 
-    return new_data
+    return _drop_unused(new_data)
