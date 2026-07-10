@@ -232,11 +232,54 @@ def compute_average(
 
 def reduce_axes(
     data: "xr.Dataset",
-    axes: Sequence[str],
+    axes: Sequence[Literal["depth", "latitude", "longitude", "time"]],
     depth_min: float | None,
     depth_max: float | None,
     operator: Literal["mean", "integral", "max", "min"],
 ):
+    """
+    Reduce one or more dimensions of a dataset by applying an operator.
+
+    The supported axes are ``depth``, ``latitude``, ``longitude``, and
+    ``time``. Each variable is reduced only along the requested axes that it
+    actually contains; variables that contain none of the requested axes are
+    returned unchanged. Axes that are not present in the dataset, or that have
+    only one coordinate value, are ignored and produce a warning.
+
+    The supported operators are ``"mean"``, ``"integral"``, ``"max"``, and
+    ``"min"``. Means and integrals are weighted when reducing spatial or depth
+    axes: horizontal cell areas are used for latitude and longitude, and layer
+    heights are used for depth. The ``"integral"`` operator returns the
+    corresponding weighted sum. Maximum and minimum reductions are unweighted.
+    NaN values are ignored by the reductions; when all values contributing to a
+    reduction are NaN, the result is NaN.
+
+    ``depth_min`` and ``depth_max`` can be used to restrict the calculation to
+    a depth interval. This is useful, for example, when computing the average
+    chlorophyll concentration between two depths. If either limit is provided,
+    the dataset must contain a ``depth`` dimension.
+
+    Args:
+        data (xr.Dataset): Input dataset to reduce.
+        axes (Sequence[str]): Axes to reduce. Valid values are ``"depth"``,
+            ``"latitude"``, ``"longitude"``, and ``"time"``. A dimension is
+            removed from variables that contain it and for which it is
+            requested in this sequence.
+        depth_min (float | None): Shallowest depth to include, in metres. If
+            omitted, the selection starts at the shallowest available depth.
+        depth_max (float | None): Deepest depth to include, in metres. If
+            omitted, the selection extends to the deepest available depth.
+        operator (str): Reduction operator. Must be one of ``"mean"``,
+            ``"integral"``, ``"max"``, or ``"min"``.
+
+    Returns:
+        xr.Dataset: A new dataset containing the reduced variables and any
+        remaining dimensions. Coordinates that are no longer used are removed.
+
+    Raises:
+        ValueError: If an axis or operator is invalid, or if depth limits are
+            provided for a dataset without a ``depth`` dimension.
+    """
     valid_axis_names = ("depth", "latitude", "longitude", "time")
     for axis_name in axes:
         if axis_name not in valid_axis_names:
