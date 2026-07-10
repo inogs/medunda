@@ -4,10 +4,10 @@ from itertools import product as cart_prod
 import numpy as np
 import pytest
 
-import medunda.tools.lazy_imports.bitsea.geodistances as bitsea_geodistances
 import medunda.tools.lazy_imports.bitsea.grid as bitsea_grid
 import medunda.tools.lazy_imports.bitsea.mask as bitsea_mask
 from medunda.actions.reduce_axes import reduce_axes
+from medunda.tools.layers import compute_layer_height
 from medunda.tools.lazy_imports import xarray as xr
 
 
@@ -272,11 +272,7 @@ def test_reduce_axes_on_all_spatial_dimensions(
 
     volumes = cell_area
     if depth_reduced:
-        depths = dataset.depth.values
-        level_boundaries = bitsea_geodistances.extend_from_average(
-            depths, 0, 0.0
-        )
-        e3t = level_boundaries[1:] - level_boundaries[:-1]
+        e3t = compute_layer_height(dataset.depth.values)
         volumes = e3t[:, None, None] * cell_area[None, :, :]
 
     n_time = dataset.time.shape[0] if "time" in dataset.sizes else 1

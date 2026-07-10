@@ -5,8 +5,8 @@ from warnings import warn
 
 import numpy as np
 
-import medunda.tools.lazy_imports.bitsea.geodistances as bitsea_geodistances
 import medunda.tools.lazy_imports.bitsea.grid as bitsea_grid
+from medunda.tools.layers import compute_layer_height
 from medunda.tools.lazy_imports import xarray as xr
 
 LOGGER = logging.getLogger(__name__)
@@ -158,11 +158,7 @@ def compute_average(
     # Now we check if we also need the depth information
     if "depth" in data.coords and "depth" in axes:
         LOGGER.debug("Computing volumes because we must aggregate on depth.")
-        depths = data.depth.values
-        level_boundaries = bitsea_geodistances.extend_from_average(
-            depths, 0, 0.0
-        )
-        e3t = level_boundaries[1:] - level_boundaries[:-1]
+        e3t = compute_layer_height(data.depth.values)
         volumes = e3t[:, None, None] * cell_area
     else:
         LOGGER.debug(

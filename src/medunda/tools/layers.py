@@ -1,5 +1,6 @@
 from numpy.typing import ArrayLike
 
+import medunda.tools.lazy_imports.bitsea.geodistances as bitsea_geodistances
 from medunda.tools.lazy_imports import numpy as np
 
 
@@ -17,12 +18,7 @@ def compute_layer_height(layer_centers: ArrayLike) -> "np.ndarray":
         Array of the same length as `layer_centers` containing the computed
         thickness of each layer.
     """
-    layer_height = []
-    layer_centers = np.asarray(layer_centers)
-    for i in range(len(layer_centers)):
-        if i == 0:
-            layer_height.append(layer_centers[0] * 2)
-        else:
-            current_layer = (layer_centers[i] - sum(layer_height[:i])) * 2
-            layer_height.append(current_layer)
-    return np.array(layer_height)
+    level_boundaries = bitsea_geodistances.extend_from_average(
+        layer_centers, 0, 0.0
+    )
+    return level_boundaries[1:] - level_boundaries[:-1]
