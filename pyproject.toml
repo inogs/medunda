@@ -24,6 +24,7 @@ dependencies = [
     "bitsea @ git+https://github.com/inogs/bit.sea.git",
     "rioxarray (>=0.19.0,<1.0.0)",
     "tabulate (>=0.10.0,<1.0.0)",
+    "pystac (>=1.14.0,<1.15.0)",
 ]
 
 [tool.poetry.group.dev.dependencies]
@@ -34,10 +35,11 @@ deptry = ">=0.24.0"
 ipython = ">9"
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^8"
-myst-parser = "^4.0.1"
+sphinx = "^9"
+myst-parser = ">5.0.1"
 sphinx-rtd-theme = "^3.0.2"
 sphinx-autodoc-typehints = "^3.5"
+roman-numerals-py = "^4.1.0"
 
 [tool.poetry]
 packages = [{include = "medunda", from = "src"}]
@@ -54,7 +56,7 @@ force-single-line = true
 
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["h5py"]
+DEP002 = ["h5py", "pystac"]
 
 
 [tool.bandit]

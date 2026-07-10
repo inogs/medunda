@@ -1,7 +1,7 @@
 # Components
 
 ```{eval-rst}
-.. autoclass:: medunda.components.dataset.Dataset
+.. autoclass:: medunda.components.geodata.GeoDataCollection
    :members:
    :show-inheritance:
 ```
