@@ -11,10 +11,10 @@ from multiprocessing import Process
 from pathlib import Path
 from queue import Queue
 
-import netCDF4
 import yaml
 
 import medunda.tools.lazy_imports.bitsea.mask as bitsea
+import medunda.tools.lazy_imports.netCDF4 as netCDF4
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import Variable
@@ -114,7 +114,7 @@ def allocate_medunda_data_file(
     meshmask: "xr.Dataset",
     spatial_slices,
     time_steps: np.ndarray,
-    f_pointer: netCDF4.Dataset,
+    f_pointer: "netCDF4.Dataset",
 ):
     """
     Allocates and initializes variables in an empty netCDF file.
