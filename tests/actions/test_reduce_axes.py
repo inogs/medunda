@@ -334,3 +334,48 @@ def test_reduce_axes_on_all_spatial_dimensions(
             np.testing.assert_array_almost_equal(
                 ds[var_name].values, expected_per_time, decimal=3
             )
+
+
+@pytest.mark.parametrize("average_also_on_time_axis", [True, False])
+def test_reduce_axes_using_max(dataset, average_also_on_time_axis: bool):
+    if average_also_on_time_axis:
+        reduced_axes = ("depth", "time")
+    else:
+        reduced_axes = ("depth",)
+
+    ds = reduce_axes(
+        data=dataset,
+        axes=reduced_axes,
+        depth_min=None,
+        depth_max=None,
+        operator="max",
+    )
+
+    # Now we change reduced_axes to remove the axis that are not present in
+    # the dataset. The action handles also the case where depth is not present
+    # in the dataset and ignores it, but the max method of xarray does not.
+    if dataset.sizes.get("depth", 0) < 1 and "depth" in reduced_axes:
+        reduced_axes = reduced_axes[1:]
+    if dataset.sizes.get("time", 0) < 1 and "time" in reduced_axes:
+        reduced_axes = reduced_axes[:-1]
+
+    for v in ds.data_vars:
+        if v in ["depth", "latitude", "longitude", "time"]:
+            continue
+        current_axes = []
+        for axis in ["time", "depth", "latitude", "longitude"]:
+            if axis in ds[v].dims:
+                current_axes.append(axis)
+
+        if len(reduced_axes) > 0:
+            np.testing.assert_array_equal(
+                ds[v].transpose(*current_axes).values,
+                dataset.max(dim=reduced_axes)[v]
+                .transpose(*current_axes)
+                .values,
+            )
+        else:
+            np.testing.assert_array_equal(
+                ds[v].transpose(*current_axes).values,
+                dataset[v].transpose(*current_axes).values,
+            )
