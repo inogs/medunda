@@ -34,9 +34,13 @@ def _build_dataset_mask(dataset, dataset_id):
     return bitsea_mask.Mask.from_xarray(tmask)
 
 
+@pytest.mark.parametrize("integral_instead_of_average", [True, False])
 @pytest.mark.parametrize("average_also_on_time_axis", [True, False])
 def test_reduce_axes_on_depth(
-    dataset, request, average_also_on_time_axis: bool
+    dataset,
+    request,
+    average_also_on_time_axis: bool,
+    integral_instead_of_average: bool,
 ):
     """
     Tests the computation of weighted averages along the depth axis for a
@@ -98,7 +102,7 @@ def test_reduce_axes_on_depth(
             axes=average_axes,
             depth_min=None,
             depth_max=None,
-            operator="mean",
+            operator="integral" if integral_instead_of_average else "mean",
         )
 
     # Check that all the vars with a depth have the same mask of the first
@@ -149,7 +153,7 @@ def test_reduce_axes_on_depth(
                     if np.isnan(current_value):
                         if k == 0:
                             current_sum = np.nan
-                        else:
+                        elif not integral_instead_of_average:
                             current_sum /= sum(depth_weights[:k])
                         break
 
@@ -157,7 +161,8 @@ def test_reduce_axes_on_depth(
                 else:
                     # If we reach the end of the loop, we have not found a NaN,
                     # so we divide by the sum of the weights
-                    current_sum /= sum(depth_weights)
+                    if not integral_instead_of_average:
+                        current_sum /= sum(depth_weights)
 
                 expected_values.loc[dict(time=t, latitude=i, longitude=j)] = (
                     current_sum
@@ -171,7 +176,12 @@ def test_reduce_axes_on_depth(
             computed_values = ds[var_name].transpose("latitude", "longitude")
 
         if average_also_on_time_axis:
-            expected_values = expected_values.mean(dim="time")
+            if integral_instead_of_average:
+                data_mask = np.isfinite(expected_values).all(dim="time")
+                expected_values = expected_values.sum(dim="time")
+                expected_values = xr.where(data_mask, expected_values, np.nan)
+            else:
+                expected_values = expected_values.mean(dim="time")
         elif "time" not in dataset[var_name].dims:
             expected_values = expected_values.isel(time=0, drop=True)
 
@@ -186,12 +196,21 @@ def test_reduce_axes_on_depth(
                 dataset[var_name].values, ds[var_name].values
             )
     else:
-        # If we average on the time axis, then the 2d maps we have compute must
-        # be equal to the average in time of the original maps
+        # If we average on the time axis, then the 2d maps we have computed
+        # must be equal to the average in time of the original maps
         for var_name in maps:
-            np.testing.assert_array_almost_equal(
-                dataset[var_name].mean(dim="time").values, ds[var_name].values
-            )
+            if integral_instead_of_average:
+                expected_values = dataset[var_name].sum(dim="time")
+                data_mask = np.isfinite(dataset[var_name]).all(dim="time")
+                expected_values = xr.where(data_mask, expected_values, np.nan)
+                np.testing.assert_array_almost_equal(
+                    ds[var_name].values, expected_values.values
+                )
+            else:
+                np.testing.assert_array_almost_equal(
+                    ds[var_name].values,
+                    dataset[var_name].mean(dim="time").values,
+                )
 
 
 @pytest.mark.parametrize("average_also_on_time_axis", [True, False])
@@ -339,17 +358,10 @@ def test_reduce_axes_on_all_spatial_dimensions(
 @pytest.mark.parametrize("average_also_on_time_axis", [True, False])
 def test_reduce_axes_using_max(dataset, average_also_on_time_axis: bool):
     if average_also_on_time_axis:
-        reduced_axes = ("depth", "time")
+        original_reduced_axes = ("depth", "time")
     else:
-        reduced_axes = ("depth",)
-
-    ds = reduce_axes(
-        data=dataset,
-        axes=reduced_axes,
-        depth_min=None,
-        depth_max=None,
-        operator="max",
-    )
+        original_reduced_axes = ("depth",)
+    reduced_axes = original_reduced_axes
 
     # Now we change reduced_axes to remove the axis that are not present in
     # the dataset. The action handles also the case where depth is not present
@@ -358,6 +370,20 @@ def test_reduce_axes_using_max(dataset, average_also_on_time_axis: bool):
         reduced_axes = reduced_axes[1:]
     if dataset.sizes.get("time", 0) < 1 and "time" in reduced_axes:
         reduced_axes = reduced_axes[:-1]
+
+    if reduced_axes != original_reduced_axes:
+        ctx = pytest.warns(UserWarning)
+    else:
+        ctx = nullcontext()
+
+    with ctx:
+        ds = reduce_axes(
+            data=dataset,
+            axes=original_reduced_axes,
+            depth_min=None,
+            depth_max=None,
+            operator="max",
+        )
 
     for v in ds.data_vars:
         if v in ["depth", "latitude", "longitude", "time"]:

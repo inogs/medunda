@@ -106,14 +106,14 @@ def compute_average(
     data arrays.
 
     Args:
-    data: The input dataset represented as an ``xarray.Dataset`` containing
-        data variables and coordinates.
-    axes: A list of string axis names along which the averaging should be
-        performed (e.g., "latitude", "longitude", "depth").
-    :param compute_integral: An optional flag to indicate whether an integral
-        calculation is required instead of an average. If this is ``True``,
-        we sum the values (along the required axes taking into account the
-        relative weights). Defaults to ``False``.
+        data: The input dataset represented as an ``xarray.Dataset`` containing
+            data variables and coordinates.
+        axes: A list of string axis names along which the averaging should be
+            performed (e.g., "latitude", "longitude", "depth").
+        compute_integral: An optional flag to indicate whether an integral
+            calculation is required instead of an average. If this is ``True``,
+            we sum the values (along the required axes taking into account the
+            relative weights). Defaults to ``False``.
 
     Returns:
          An ``xarray.Dataset`` object containing the aggregated data with
@@ -179,7 +179,8 @@ def compute_average(
     )
     new_data = data.copy()
 
-    # For each variable, we need to understand along
+    # For each variable, we need to understand along which axis we need to
+    # reduce
     for var_name in data.data_vars:
         # Ignore variables that are coordinates
         if var_name in ("depth", "latitude", "longitude", "time"):
@@ -221,6 +222,14 @@ def compute_average(
         new_data[var_name] = getattr(
             data[var_name].weighted(var_weights), operator
         )(dim=aggregated_axis)
+
+        # A mean of values that are all nan is a nan, but the sum is 0. We need
+        # to fix this by setting to NaN those zeros
+        if operator == "sum":
+            data_mask = np.isfinite(data[var_name]).any(dim=aggregated_axis)
+            new_data[var_name] = xr.where(
+                data_mask, new_data[var_name], np.nan
+            )
 
     return _drop_unused(new_data)
 
