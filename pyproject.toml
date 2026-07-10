@@ -66,6 +66,9 @@ skips = ["B101"]
 
 [tool.pytest.ini_options]
 markers = ["integration: mark a test as an integration test"]
+filterwarnings = [
+    "ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2\\.5\\..*:DeprecationWarning",
+]
 
 
 [build-system]
