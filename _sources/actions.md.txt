@@ -37,10 +37,10 @@ Each action is exposed as a sub-command of the CLI and as a Python function that
 
 ---
 
-## compute\_average
+## reduce\_axes
 
 ```{eval-rst}
-.. autofunction:: medunda.actions.compute_average.compute_average
+.. autofunction:: medunda.actions.reduce_axes.reduce_axes
 ```
 
 ---

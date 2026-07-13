@@ -10,8 +10,8 @@
     <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Components" href="components.html" />
@@ -77,7 +77,7 @@ depth-weighted average over the selected depth range.</p>
 <h2>calculate_stats<a class="headerlink" href="#calculate-stats" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="medunda.actions.calculate_stats.Stats">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">medunda.actions.calculate_stats.</span></span><span class="sig-name descname"><span class="pre">Stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.calculate_stats.Stats" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">medunda.actions.calculate_stats.</span></span><span class="sig-name descname"><span class="pre">Stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.calculate_stats.Stats" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Provides methods to compute basic statistical operations on an array.</p>
 <p>All operations reduce along axis 0, which is assumed to correspond to the
@@ -259,40 +259,54 @@ coordinate (<code class="docutils literal notranslate"><span class="pre">month</
 
 </section>
 <hr class="docutils" />
-<section id="compute-average">
-<h2>compute_average<a class="headerlink" href="#compute-average" title="Link to this heading">¶</a></h2>
+<section id="reduce-axes">
+<h2>reduce_axes<a class="headerlink" href="#reduce-axes" title="Link to this heading">¶</a></h2>
 <dl class="py function">
-<dt class="sig sig-object py" id="medunda.actions.compute_average.compute_average">
-<span class="sig-prename descclassname"><span class="pre">medunda.actions.compute_average.</span></span><span class="sig-name descname"><span class="pre">compute_average</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.compute_average.compute_average" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the average of all variables along a specified axis.</p>
-<p>Three axes are supported:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;depth&quot;</span></code>: Computes the depth-weighted vertical average over the full
-depth column using <a class="reference internal" href="#medunda.actions.average_between_layers.average_between_layers" title="medunda.actions.average_between_layers.average_between_layers"><code class="xref py py-func docutils literal notranslate"><span class="pre">average_between_layers()</span></code></a>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;space&quot;</span></code>: Computes a volume-weighted spatial average over all
-(latitude, longitude) grid points using the cell volumes derived from
-the grid mask.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;time&quot;</span></code>: Computes a simple arithmetic mean over the time dimension.</p></li>
-</ul>
+<dt class="sig sig-object py" id="medunda.actions.reduce_axes.reduce_axes">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.reduce_axes.</span></span><span class="sig-name descname"><span class="pre">reduce_axes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.reduce_axes.reduce_axes" title="Link to this definition">¶</a></dt>
+<dd><p>Reduce one or more dimensions of a dataset by applying an operator.</p>
+<p>The supported axes are <code class="docutils literal notranslate"><span class="pre">depth</span></code>, <code class="docutils literal notranslate"><span class="pre">latitude</span></code>, <code class="docutils literal notranslate"><span class="pre">longitude</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">time</span></code>. Each variable is reduced only along the requested axes that it
+actually contains; variables that contain none of the requested axes are
+returned unchanged. Axes that are not present in the dataset, or that have
+only one coordinate value, are ignored and produce a warning.</p>
+<p>The supported operators are <code class="docutils literal notranslate"><span class="pre">&quot;mean&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;integral&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">&quot;min&quot;</span></code>. Means and integrals are weighted when reducing spatial or depth
+axes: horizontal cell areas are used for latitude and longitude, and layer
+heights are used for depth. The <code class="docutils literal notranslate"><span class="pre">&quot;integral&quot;</span></code> operator returns the
+corresponding weighted sum. Maximum and minimum reductions are unweighted.
+NaN values are ignored by the reductions; when all values contributing to a
+reduction are NaN, the result is NaN.</p>
+<p><code class="docutils literal notranslate"><span class="pre">depth_min</span></code> and <code class="docutils literal notranslate"><span class="pre">depth_max</span></code> can be used to restrict the calculation to
+a depth interval. This is useful, for example, when computing the average
+chlorophyll concentration between two depths. If either limit is provided,
+the dataset must contain a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset.  Must include <code class="docutils literal notranslate"><span class="pre">depth</span></code>,
-<code class="docutils literal notranslate"><span class="pre">latitude</span></code>, <code class="docutils literal notranslate"><span class="pre">longitude</span></code>, and <code class="docutils literal notranslate"><span class="pre">time</span></code> coordinates as required
-by the chosen axis.</p></li>
-<li><p><strong>axis</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Axis along which to compute the average.  One of
-<code class="docutils literal notranslate"><span class="pre">&quot;depth&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;space&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;time&quot;</span></code>.</p></li>
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset to reduce.</p></li>
+<li><p><strong>axes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence[str]</span></code>) – Axes to reduce. Valid values are <code class="docutils literal notranslate"><span class="pre">&quot;depth&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;latitude&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;longitude&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;time&quot;</span></code>. A dimension is
+removed from variables that contain it and for which it is
+requested in this sequence.</p></li>
+<li><p><strong>depth_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">None</span></code>) – Shallowest depth to include, in metres. If
+omitted, the selection starts at the shallowest available depth.</p></li>
+<li><p><strong>depth_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">None</span></code>) – Deepest depth to include, in metres. If
+omitted, the selection extends to the deepest available depth.</p></li>
+<li><p><strong>operator</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Reduction operator. Must be one of <code class="docutils literal notranslate"><span class="pre">&quot;mean&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;integral&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;min&quot;</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Dataset with the chosen dimension collapsed, containing
-the averaged values for each variable.</p>
+<dd class="field-even"><p>A new dataset containing the reduced variables and any
+remaining dimensions. Coordinates that are no longer used are removed.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>xr.Dataset</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If <em>axis</em> is not one of the valid choices.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If an axis or operator is invalid, or if depth limits are
+    provided for a dataset without a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -531,7 +545,7 @@ dimension is collapsed in the output.</p>
 <li class="toctree-l2"><a class="reference internal" href="#average-between-layers">average_between_layers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#calculate-stats">calculate_stats</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#climatology">climatology</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#compute-average">compute_average</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reduce-axes">reduce_axes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#compute-integral">compute_integral</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#extract-annual-extremes">extract_annual_extremes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#extract-annual-extremes-per-layer">extract_annual_extremes_per_layer</a></li>
@@ -567,7 +581,7 @@ dimension is collapsed in the output.</p>
       &#169;.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |
