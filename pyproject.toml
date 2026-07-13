@@ -13,7 +13,7 @@ dependencies = [
     "numpy (>=2.3.0,<3.0.0)",
     "xarray (>=2025.6.1,<2028.0.0)",
     "netcdf4 (>=1.7.2,<2.0.0)",
-    "h5py (>=3.13.1, <3.15)",
+    "h5py (>=3.13.1, <4.0)",
     "dask[complete] (>=2025.7.0,<2028.0.0)",
     "copernicusmarine (>=2.1.2,<3.0.0)",
     "geopandas (>=1.1.1,<2.0.0)",
@@ -24,6 +24,7 @@ dependencies = [
     "bitsea @ git+https://github.com/inogs/bit.sea.git",
     "rioxarray (>=0.19.0,<1.0.0)",
     "tabulate (>=0.10.0,<1.0.0)",
+    "pystac (>=1.14.0,<1.15.0)",
 ]
 
 [tool.poetry.group.dev.dependencies]
@@ -34,10 +35,11 @@ deptry = ">=0.24.0"
 ipython = ">9"
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^8"
-myst-parser = "^4.0.1"
+sphinx = "^9"
+myst-parser = ">5.0.1"
 sphinx-rtd-theme = "^3.0.2"
 sphinx-autodoc-typehints = "^3.5"
+roman-numerals-py = "^4.1.0"
 
 [tool.poetry]
 packages = [{include = "medunda", from = "src"}]
@@ -54,7 +56,7 @@ force-single-line = true
 
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["h5py"]
+DEP002 = ["h5py", "pystac"]
 
 
 [tool.bandit]
@@ -64,6 +66,9 @@ skips = ["B101"]
 
 [tool.pytest.ini_options]
 markers = ["integration: mark a test as an integration test"]
+filterwarnings = [
+    "ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2\\.5\\..*:DeprecationWarning",
+]
 
 
 [build-system]

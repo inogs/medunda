@@ -236,7 +236,7 @@ class GeoDataCollection(BaseModel):
             # biochemical ones. We need to put the same value before merging the
             # datasets, otherwise this value will be repeated twice
             var_longitude = xr_dataset.coords["longitude"]
-            greenwich_index = np.abs(var_longitude).argmin()
+            greenwich_index = np.argmin(np.abs(var_longitude.values))
             if var_longitude[greenwich_index].item() > 1e-6:
                 # This dataset does not contain the Greenwich meridian.
                 # We can skip this process

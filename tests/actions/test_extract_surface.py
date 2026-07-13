@@ -6,8 +6,8 @@ def test_extract_surface(data4d):
 
     depth_levels = data4d.depth.shape[0]
     for d in range(depth_levels):
-        data4d.T.isel(depth=d)[:] = d
-        data4d.S.isel(depth=d)[:] = 10 + d
+        data4d.thetao.isel(depth=d)[:] = d
+        data4d.so.isel(depth=d)[:] = 10 + d
 
     time_levels = data4d.time.shape[0]
     latitude_levels = data4d.latitude.shape[0]
@@ -15,13 +15,19 @@ def test_extract_surface(data4d):
 
     ds = extract_surface(data=data4d)
 
-    assert "T" in ds.data_vars, "Variable 'T' not found in output dataset."
-    assert "S" in ds.data_vars, "Variable 'S' not found in output dataset."
-    assert ds.T.shape == (time_levels, latitude_levels, longitude_levels), (
-        "Shape of 'T' variable is incorrect."
+    assert "thetao" in ds.data_vars, (
+        "Variable 'thetao' not found in output dataset."
     )
-    assert ds.S.shape == (time_levels, latitude_levels, longitude_levels), (
-        "Shape of 'S' variable is incorrect."
+    assert "so" in ds.data_vars, "Variable 'so' not found in output dataset."
+    assert ds.thetao.shape == (
+        time_levels,
+        latitude_levels,
+        longitude_levels,
+    ), "Shape of 'thetao' variable is incorrect."
+    assert ds.so.shape == (time_levels, latitude_levels, longitude_levels), (
+        "Shape of 'so' variable is incorrect."
     )
-    assert ds.T.min() == 0, "Minimum value of 'T' variable is incorrect."
-    assert ds.S.min() == 10, "Minimum value of 'S' variable is incorrect."
+    assert ds.thetao.min() == 0, (
+        "Minimum value of 'thetao' variable is incorrect."
+    )
+    assert ds.so.min() == 10, "Minimum value of 'so' variable is incorrect."

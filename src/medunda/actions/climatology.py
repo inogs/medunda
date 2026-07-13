@@ -71,7 +71,7 @@ SEASON_MAP = {
 
 def weighted_monthly_average(group, days_in_month):
     """This function calculates the monthly weighted average
-    taking in account the diffrent months lengths"""
+    taking into account the different months lengths"""
 
     group_time_indices = group.time.values
     group_days_weights = days_in_month.sel(time=group_time_indices)
@@ -168,7 +168,7 @@ def climatology(
         if frequency == "monthly":
             data_var.coords["month"] = data_var["time"].dt.month
             days_in_month = data_var["time"].dt.days_in_month
-            climatology_data = data_var.groupby("month").apply(
+            climatology_data = data_var.groupby("month").map(
                 weighted_monthly_average, days_in_month=days_in_month
             )
 
