@@ -16,13 +16,13 @@ def configure_parser(subparsers):
     average_between_layers_parser.add_argument(
         "--depth-min",
         type=float,
-        required=True,
+        required=False,
         help="minimum limit of the layer",
     )
     average_between_layers_parser.add_argument(
         "--depth-max",
         type=float,
-        required=True,
+        required=False,
         help="maximum limit of the layer",
     )
 
@@ -59,6 +59,13 @@ def average_between_layers(
         if "depth" not in data.data_vars[variable].dims:
             averaged_variables[variable] = data.data_vars[variable]
             continue
+
+        if depth_min is None and depth_max is None:
+            depth_min = data.depth.min().values
+            depth_max = data.depth.max().values
+        else:
+            depth_min = depth_min
+            depth_max = depth_max
 
         selected_layer = data[variable].sel(depth=slice(depth_min, depth_max))
         selected_depth = selected_layer.depth.values
