@@ -1,10 +1,10 @@
 import numpy as np
 
-from medunda.actions.average_between_layers import average_between_layers
+from medunda.actions.compute_integral import integrate_between_layers
 
 
-def test_averaging_between_layers(data4d):
-    """Test the averaging between layers function."""
+def test_integrate_between_layers(data4d):
+    """Test the integrating between layers function."""
 
     depth_levels = data4d.depth.shape[0]
     for d in range(depth_levels):
@@ -15,7 +15,7 @@ def test_averaging_between_layers(data4d):
     latitude_levels = data4d.latitude.shape[0]
     longitude_levels = data4d.longitude.shape[0]
 
-    ds = average_between_layers(
+    ds = integrate_between_layers(
         data=data4d,
         depth_min=0.0,
         depth_max=3.0,
@@ -37,16 +37,17 @@ def test_averaging_between_layers(data4d):
     so_range = ds.so.max() - ds.so.min()
     thetao_range = ds.thetao.max() - ds.thetao.min()
     assert so_range < 1e-6, (
-        "Difference between max and min of 'so' variable is incorrect."
+        "Difference between max and min of 'S' variable is incorrect."
     )
     assert thetao_range < 1e-6, (
-        "Difference between max and min of 'thetao' variable is incorrect."
+        "Difference between max and min of 'S' variable is incorrect."
     )
     thetao_value = ds.thetao.max()
     so_value = ds.so.max()
-    assert np.abs(thetao_value - 2.0) < 1e-6, (
-        "Maximum value of 'thetao' variable is incorrect."
+
+    assert np.abs(thetao_value - 6.0) < 1e-6, (
+        "Maximum value of 'T' variable is incorrect."
     )
-    assert np.abs(so_value - 12.0) < 1e-6, (
-        "Maximum value of 'so' variable is incorrect."
+    assert np.abs(so_value - 36.0) < 1e-6, (
+        "Maximum value of 'S' variable is incorrect."
     )
