@@ -30,7 +30,12 @@ def configure_parser(subparsers):
 def average_between_layers(
     data: "xr.Dataset", depth_min, depth_max
 ) -> "xr.Dataset":
-    """Compute the depth-weighted vertical average between two specified depths.
+    """Compute the depth-weighted vertical average across the water column
+    or between two specified depths.
+
+    If ``depth_min`` and ``depth_max`` are not specified, the average is computed
+    across the entire water column. In this case, the minimum and maximum depths
+    are automatically determined from the dataset.
 
     For each variable in the input dataset that has a ``depth`` dimension, the
     function selects the depth levels within ``[depth_min, depth_max]`` and
