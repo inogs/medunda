@@ -16,13 +16,13 @@ def configure_parser(subparsers):
     integrate_between_layers_parser.add_argument(
         "--depth-min",
         type=float,
-        required=True,
+        required=False,
         help="minimum limit of the layer",
     )
     integrate_between_layers_parser.add_argument(
         "--depth-max",
         type=float,
-        required=True,
+        required=False,
         help="maximum limit of the layer",
     )
 
@@ -30,11 +30,14 @@ def configure_parser(subparsers):
 def integrate_between_layers(
     data: "xr.Dataset", depth_min: float, depth_max: float
 ) -> "xr.Dataset":
-    """Compute the vertical integral of variables between two specified depths.
+    """Compute the vertical integral of variables across the water column
+    or between two specified depths.
 
     For each variable in the input dataset that has a ``depth`` dimension, the
     function selects the depth levels within ``[depth_min, depth_max]`` and
     integrates over those levels by weighting each cell by its layer height.
+    If ``depth_min`` and ``depth_max`` are not specified, the function integrates
+    the variable aver the full depth column.
     Grid points that are masked (NaN) at the shallowest selected level are set
     to NaN in the output, preserving the land-sea mask.  Variables that do not
     have a ``depth`` dimension are omitted from the output.
@@ -54,6 +57,13 @@ def integrate_between_layers(
     for variable in data.data_vars:
         if variable in ["depth", "latitude", "longitude", "time"]:
             continue
+
+        if depth_min is None and depth_max is None:
+            depth_min = data.depth.min().values
+            depth_max = data.depth.max().values
+        else:
+            depth_min = depth_min
+            depth_max = depth_max
 
         selected_layer = data[variable].sel(depth=slice(depth_min, depth_max))
         selected_depth = selected_layer.depth.values
