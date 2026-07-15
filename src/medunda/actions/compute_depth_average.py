@@ -5,21 +5,21 @@ from medunda.tools.lazy_imports import np
 from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
-ACTION_NAME = "average_between_layers"
+ACTION_NAME = "compute_depth_average"
 
 
 def configure_parser(subparsers):
-    average_between_layers_parser = subparsers.add_parser(
+    compute_depth_average_parser = subparsers.add_parser(
         ACTION_NAME,
         help="Compute the vertical average between two specific depths",
     )
-    average_between_layers_parser.add_argument(
+    compute_depth_average_parser.add_argument(
         "--depth-min",
         type=float,
         required=False,
         help="minimum limit of the layer",
     )
-    average_between_layers_parser.add_argument(
+    compute_depth_average_parser.add_argument(
         "--depth-max",
         type=float,
         required=False,
@@ -27,7 +27,7 @@ def configure_parser(subparsers):
     )
 
 
-def average_between_layers(
+def compute_depth_average(
     data: "xr.Dataset", depth_min, depth_max
 ) -> "xr.Dataset":
     """Compute the depth-weighted vertical average across the water column

@@ -5,21 +5,21 @@ from medunda.tools.lazy_imports import np
 from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
-ACTION_NAME = "integrate_between_layers"
+ACTION_NAME = "compute_depth_integral"
 
 
 def configure_parser(subparsers):
-    integrate_between_layers_parser = subparsers.add_parser(
+    compute_depth_integral_parser = subparsers.add_parser(
         ACTION_NAME,
         help="Compute the vertical integral between two specific depths",
     )
-    integrate_between_layers_parser.add_argument(
+    compute_depth_integral_parser.add_argument(
         "--depth-min",
         type=float,
         required=False,
         help="minimum limit of the layer",
     )
-    integrate_between_layers_parser.add_argument(
+    compute_depth_integral_parser.add_argument(
         "--depth-max",
         type=float,
         required=False,
@@ -27,7 +27,7 @@ def configure_parser(subparsers):
     )
 
 
-def integrate_between_layers(
+def compute_depth_integral(
     data: "xr.Dataset", depth_min: float, depth_max: float
 ) -> "xr.Dataset":
     """Compute the vertical integral of variables across the water column

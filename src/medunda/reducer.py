@@ -6,8 +6,8 @@ from typing import Any
 from medunda.actions import ActionNotFound
 from medunda.actions import calculate_stats
 from medunda.actions import climatology
-from medunda.actions import compute_average
-from medunda.actions import compute_integral
+from medunda.actions import compute_depth_average
+from medunda.actions import compute_depth_integral
 from medunda.actions import extract_annual_extremes
 from medunda.actions import extract_annual_extremes_per_layer
 from medunda.actions import extract_bottom
@@ -30,8 +30,8 @@ else:
 # executed by the reducer.
 ACTION_MODULES = [
     calculate_stats,
-    compute_average,
-    compute_integral,
+    compute_depth_average,
+    compute_depth_integral,
     climatology,
     extract_bottom,
     extract_annual_extremes,

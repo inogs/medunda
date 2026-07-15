@@ -7,14 +7,6 @@ Each action is exposed as a sub-command of the CLI and as a Python function that
 
 ---
 
-## average\_between\_layers
-
-```{eval-rst}
-.. autofunction:: medunda.actions.average_between_layers.average_between_layers
-```
-
----
-
 ## calculate\_stats
 
 ```{eval-rst}
@@ -29,26 +21,26 @@ Each action is exposed as a sub-command of the CLI and as a Python function that
 
 ---
 
+## compute\_depth\_average
+
+```{eval-rst}
+.. autofunction:: medunda.actions.compute_depth_average.compute_depth_average
+```
+
+---
+
+## compute\_depth\_integral
+
+```{eval-rst}
+.. autofunction:: medunda.actions.compute_depth_integral.compute_depth_integral
+```
+
+---
+
 ## climatology
 
 ```{eval-rst}
 .. autofunction:: medunda.actions.climatology.climatology
-```
-
----
-
-## reduce\_axes
-
-```{eval-rst}
-.. autofunction:: medunda.actions.reduce_axes.reduce_axes
-```
-
----
-
-## compute\_integral
-
-```{eval-rst}
-.. autofunction:: medunda.actions.integration.compute_integral
 ```
 
 ---
@@ -93,8 +85,8 @@ Each action is exposed as a sub-command of the CLI and as a Python function that
 
 ---
 
-## integrate\_between\_layers
+## reduce\_axes
 
 ```{eval-rst}
-.. autofunction:: medunda.actions.integrate_between_layers.integrate_between_layers
+.. autofunction:: medunda.actions.reduce_axes.reduce_axes
 ```
