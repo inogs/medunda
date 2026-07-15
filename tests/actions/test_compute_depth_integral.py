@@ -1,10 +1,10 @@
 import numpy as np
 
-from medunda.actions.integrate_between_layers import integrate_between_layers
+from medunda.actions.compute_depth_integral import compute_depth_integral
 
 
-def test_integrate_between_layers(data4d):
-    """Test the integrating between layers function."""
+def test_compute_depth_integral(data4d):
+    """Test the computing depth integral function."""
 
     depth_levels = data4d.depth.shape[0]
     for d in range(depth_levels):
@@ -15,7 +15,7 @@ def test_integrate_between_layers(data4d):
     latitude_levels = data4d.latitude.shape[0]
     longitude_levels = data4d.longitude.shape[0]
 
-    ds = integrate_between_layers(
+    ds = compute_depth_integral(
         data=data4d,
         depth_min=0.0,
         depth_max=3.0,

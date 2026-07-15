@@ -4,16 +4,15 @@ from pathlib import Path
 from typing import Any
 
 from medunda.actions import ActionNotFound
-from medunda.actions import average_between_layers
 from medunda.actions import calculate_stats
 from medunda.actions import climatology
+from medunda.actions import compute_depth_average
+from medunda.actions import compute_depth_integral
 from medunda.actions import extract_annual_extremes
 from medunda.actions import extract_annual_extremes_per_layer
 from medunda.actions import extract_bottom
 from medunda.actions import extract_layer
 from medunda.actions import extract_surface
-from medunda.actions import integrate_between_layers
-from medunda.actions import integration
 from medunda.actions import reduce_axes
 from medunda.components.geodata import GeoDataCollection
 from medunda.tools.lazy_imports import dask_array as da
@@ -30,17 +29,16 @@ else:
 # This is a list of all the modules that define an action that can be
 # executed by the reducer.
 ACTION_MODULES = [
-    average_between_layers,
     calculate_stats,
+    compute_depth_average,
+    compute_depth_integral,
     climatology,
-    reduce_axes,
     extract_bottom,
     extract_annual_extremes,
     extract_layer,
     extract_annual_extremes_per_layer,
     extract_surface,
-    integration,
-    integrate_between_layers,
+    reduce_axes,
 ]
 
 # This is a dictionary that maps the name of an action to the function that

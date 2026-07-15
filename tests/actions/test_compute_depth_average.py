@@ -1,6 +1,6 @@
 import numpy as np
 
-from medunda.actions.average_between_layers import average_between_layers
+from medunda.actions.compute_depth_average import compute_depth_average
 
 
 def test_averaging_between_layers(data4d):
@@ -15,7 +15,7 @@ def test_averaging_between_layers(data4d):
     latitude_levels = data4d.latitude.shape[0]
     longitude_levels = data4d.longitude.shape[0]
 
-    ds = average_between_layers(
+    ds = compute_depth_average(
         data=data4d,
         depth_min=0.0,
         depth_max=3.0,
