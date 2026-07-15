@@ -38,41 +38,6 @@
 Each action is exposed as a sub-command of the CLI and as a Python function that accepts an
 <code class="docutils literal notranslate"><span class="pre">xarray.Dataset</span></code> and returns a transformed dataset.</p>
 <hr class="docutils" />
-<section id="average-between-layers">
-<h2>average_between_layers<a class="headerlink" href="#average-between-layers" title="Link to this heading">¶</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="medunda.actions.average_between_layers.average_between_layers">
-<span class="sig-prename descclassname"><span class="pre">medunda.actions.average_between_layers.</span></span><span class="sig-name descname"><span class="pre">average_between_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.average_between_layers.average_between_layers" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the depth-weighted vertical average between two specified depths.</p>
-<p>For each variable in the input dataset that has a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension, the
-function selects the depth levels within <code class="docutils literal notranslate"><span class="pre">[depth_min,</span> <span class="pre">depth_max]</span></code> and
-computes a weighted average, where the weight of each depth cell is its
-layer height.  Masked (NaN) cells are excluded from both the weighted sum
-and the normalisation, so the result is always a proper average of the
-valid cells.  Variables that do not have a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension are passed
-through unchanged.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset containing the variables to average.
-Must include a <code class="docutils literal notranslate"><span class="pre">depth</span></code> coordinate.</p></li>
-<li><p><strong>depth_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Upper bound of the depth range (shallowest depth).</p></li>
-<li><p><strong>depth_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Lower bound of the depth range (deepest depth).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Dataset with the same variables as the input, but with the
-<code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension collapsed.  Each variable is replaced by its
-depth-weighted average over the selected depth range.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>xr.Dataset</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<hr class="docutils" />
 <section id="calculate-stats">
 <h2>calculate_stats<a class="headerlink" href="#calculate-stats" title="Link to this heading">¶</a></h2>
 <dl class="py class">
@@ -195,6 +160,82 @@ statistical operations.</p>
 
 </section>
 <hr class="docutils" />
+<section id="compute-depth-average">
+<h2>compute_depth_average<a class="headerlink" href="#compute-depth-average" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.compute_depth_average.compute_depth_average">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.compute_depth_average.</span></span><span class="sig-name descname"><span class="pre">compute_depth_average</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.compute_depth_average.compute_depth_average" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the depth-weighted vertical average across the water column
+or between two specified depths.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">depth_min</span></code> and <code class="docutils literal notranslate"><span class="pre">depth_max</span></code> are not specified, the average is computed
+across the entire water column. In this case, the minimum and maximum depths
+are automatically determined from the dataset.</p>
+<p>For each variable in the input dataset that has a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension, the
+function selects the depth levels within <code class="docutils literal notranslate"><span class="pre">[depth_min,</span> <span class="pre">depth_max]</span></code> and
+computes a weighted average, where the weight of each depth cell is its
+layer height.  Masked (NaN) cells are excluded from both the weighted sum
+and the normalisation, so the result is always a proper average of the
+valid cells.  Variables that do not have a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension are passed
+through unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset containing the variables to average.
+Must include a <code class="docutils literal notranslate"><span class="pre">depth</span></code> coordinate.</p></li>
+<li><p><strong>depth_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Upper bound of the depth range (shallowest depth).</p></li>
+<li><p><strong>depth_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Lower bound of the depth range (deepest depth).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset with the same variables as the input, but with the
+<code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension collapsed.  Each variable is replaced by its
+depth-weighted average over the selected depth range.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="compute-depth-integral">
+<h2>compute_depth_integral<a class="headerlink" href="#compute-depth-integral" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.actions.compute_depth_integral.compute_depth_integral">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.compute_depth_integral.</span></span><span class="sig-name descname"><span class="pre">compute_depth_integral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.compute_depth_integral.compute_depth_integral" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the vertical integral of variables across the water column
+or between two specified depths.</p>
+<p>For each variable in the input dataset that has a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension, the
+function selects the depth levels within <code class="docutils literal notranslate"><span class="pre">[depth_min,</span> <span class="pre">depth_max]</span></code> and
+integrates over those levels by weighting each cell by its layer height.
+If <code class="docutils literal notranslate"><span class="pre">depth_min</span></code> and <code class="docutils literal notranslate"><span class="pre">depth_max</span></code> are not specified, the function integrates
+the variable aver the full depth column.
+Grid points that are masked (NaN) at the shallowest selected level are set
+to NaN in the output, preserving the land-sea mask.  Variables that do not
+have a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension are omitted from the output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset containing the variables to integrate.
+Must include a <code class="docutils literal notranslate"><span class="pre">depth</span></code> coordinate.</p></li>
+<li><p><strong>depth_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Upper bound of the depth range (shallowest depth).</p></li>
+<li><p><strong>depth_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Lower bound of the depth range (deepest depth).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dataset containing the vertically integrated values for all
+depth-dependent variables over the selected depth range.  The <code class="docutils literal notranslate"><span class="pre">depth</span></code>
+dimension is collapsed in the output.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
 <section id="climatology">
 <h2>climatology<a class="headerlink" href="#climatology" title="Link to this heading">¶</a></h2>
 <dl class="py function">
@@ -253,88 +294,6 @@ coordinate (<code class="docutils literal notranslate"><span class="pre">month</
     dataset frequency cannot be determined from its <code class="docutils literal notranslate"><span class="pre">title</span></code>
     attribute, or if a daily climatology is requested from a monthly
     dataset.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<hr class="docutils" />
-<section id="reduce-axes">
-<h2>reduce_axes<a class="headerlink" href="#reduce-axes" title="Link to this heading">¶</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="medunda.actions.reduce_axes.reduce_axes">
-<span class="sig-prename descclassname"><span class="pre">medunda.actions.reduce_axes.</span></span><span class="sig-name descname"><span class="pre">reduce_axes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.reduce_axes.reduce_axes" title="Link to this definition">¶</a></dt>
-<dd><p>Reduce one or more dimensions of a dataset by applying an operator.</p>
-<p>The supported axes are <code class="docutils literal notranslate"><span class="pre">depth</span></code>, <code class="docutils literal notranslate"><span class="pre">latitude</span></code>, <code class="docutils literal notranslate"><span class="pre">longitude</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">time</span></code>. Each variable is reduced only along the requested axes that it
-actually contains; variables that contain none of the requested axes are
-returned unchanged. Axes that are not present in the dataset, or that have
-only one coordinate value, are ignored and produce a warning.</p>
-<p>The supported operators are <code class="docutils literal notranslate"><span class="pre">&quot;mean&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;integral&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">&quot;min&quot;</span></code>. Means and integrals are weighted when reducing spatial or depth
-axes: horizontal cell areas are used for latitude and longitude, and layer
-heights are used for depth. The <code class="docutils literal notranslate"><span class="pre">&quot;integral&quot;</span></code> operator returns the
-corresponding weighted sum. Maximum and minimum reductions are unweighted.
-NaN values are ignored by the reductions; when all values contributing to a
-reduction are NaN, the result is NaN.</p>
-<p><code class="docutils literal notranslate"><span class="pre">depth_min</span></code> and <code class="docutils literal notranslate"><span class="pre">depth_max</span></code> can be used to restrict the calculation to
-a depth interval. This is useful, for example, when computing the average
-chlorophyll concentration between two depths. If either limit is provided,
-the dataset must contain a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset to reduce.</p></li>
-<li><p><strong>axes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence[str]</span></code>) – Axes to reduce. Valid values are <code class="docutils literal notranslate"><span class="pre">&quot;depth&quot;</span></code>,
-<code class="docutils literal notranslate"><span class="pre">&quot;latitude&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;longitude&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;time&quot;</span></code>. A dimension is
-removed from variables that contain it and for which it is
-requested in this sequence.</p></li>
-<li><p><strong>depth_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">None</span></code>) – Shallowest depth to include, in metres. If
-omitted, the selection starts at the shallowest available depth.</p></li>
-<li><p><strong>depth_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">None</span></code>) – Deepest depth to include, in metres. If
-omitted, the selection extends to the deepest available depth.</p></li>
-<li><p><strong>operator</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Reduction operator. Must be one of <code class="docutils literal notranslate"><span class="pre">&quot;mean&quot;</span></code>,
-<code class="docutils literal notranslate"><span class="pre">&quot;integral&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;min&quot;</span></code>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A new dataset containing the reduced variables and any
-remaining dimensions. Coordinates that are no longer used are removed.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>xr.Dataset</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If an axis or operator is invalid, or if depth limits are
-    provided for a dataset without a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<hr class="docutils" />
-<section id="compute-integral">
-<h2>compute_integral<a class="headerlink" href="#compute-integral" title="Link to this heading">¶</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="medunda.actions.integration.compute_integral">
-<span class="sig-prename descclassname"><span class="pre">medunda.actions.integration.</span></span><span class="sig-name descname"><span class="pre">compute_integral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.integration.compute_integral" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the vertical integral of all depth-dependent variables.</p>
-<p>For each variable in the input dataset that includes a <code class="docutils literal notranslate"><span class="pre">depth</span></code>
-dimension, the function integrates the variable over the full depth column
-by weighting each depth cell by its layer height (in metres).  Variables
-without a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension are omitted from the output.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset.  Must include a <code class="docutils literal notranslate"><span class="pre">depth</span></code>
-coordinate from which layer heights can be derived.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Dataset containing the vertically integrated values for
-all depth-dependent variables.  The <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension is collapsed
-in the output.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>xr.Dataset</p>
 </dd>
 </dl>
 </dd></dl>
@@ -475,34 +434,54 @@ removing the <code class="docutils literal notranslate"><span class="pre">depth<
 
 </section>
 <hr class="docutils" />
-<section id="integrate-between-layers">
-<h2>integrate_between_layers<a class="headerlink" href="#integrate-between-layers" title="Link to this heading">¶</a></h2>
+<section id="reduce-axes">
+<h2>reduce_axes<a class="headerlink" href="#reduce-axes" title="Link to this heading">¶</a></h2>
 <dl class="py function">
-<dt class="sig sig-object py" id="medunda.actions.integrate_between_layers.integrate_between_layers">
-<span class="sig-prename descclassname"><span class="pre">medunda.actions.integrate_between_layers.</span></span><span class="sig-name descname"><span class="pre">integrate_between_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_max</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.integrate_between_layers.integrate_between_layers" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the vertical integral of variables between two specified depths.</p>
-<p>For each variable in the input dataset that has a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension, the
-function selects the depth levels within <code class="docutils literal notranslate"><span class="pre">[depth_min,</span> <span class="pre">depth_max]</span></code> and
-integrates over those levels by weighting each cell by its layer height.
-Grid points that are masked (NaN) at the shallowest selected level are set
-to NaN in the output, preserving the land-sea mask.  Variables that do not
-have a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension are omitted from the output.</p>
+<dt class="sig sig-object py" id="medunda.actions.reduce_axes.reduce_axes">
+<span class="sig-prename descclassname"><span class="pre">medunda.actions.reduce_axes.</span></span><span class="sig-name descname"><span class="pre">reduce_axes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.actions.reduce_axes.reduce_axes" title="Link to this definition">¶</a></dt>
+<dd><p>Reduce one or more dimensions of a dataset by applying an operator.</p>
+<p>The supported axes are <code class="docutils literal notranslate"><span class="pre">depth</span></code>, <code class="docutils literal notranslate"><span class="pre">latitude</span></code>, <code class="docutils literal notranslate"><span class="pre">longitude</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">time</span></code>. Each variable is reduced only along the requested axes that it
+actually contains; variables that contain none of the requested axes are
+returned unchanged. Axes that are not present in the dataset, or that have
+only one coordinate value, are ignored and produce a warning.</p>
+<p>The supported operators are <code class="docutils literal notranslate"><span class="pre">&quot;mean&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;integral&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">&quot;min&quot;</span></code>. Means and integrals are weighted when reducing spatial or depth
+axes: horizontal cell areas are used for latitude and longitude, and layer
+heights are used for depth. The <code class="docutils literal notranslate"><span class="pre">&quot;integral&quot;</span></code> operator returns the
+corresponding weighted sum. Maximum and minimum reductions are unweighted.
+NaN values are ignored by the reductions; when all values contributing to a
+reduction are NaN, the result is NaN.</p>
+<p><code class="docutils literal notranslate"><span class="pre">depth_min</span></code> and <code class="docutils literal notranslate"><span class="pre">depth_max</span></code> can be used to restrict the calculation to
+a depth interval. This is useful, for example, when computing the average
+chlorophyll concentration between two depths. If either limit is provided,
+the dataset must contain a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset containing the variables to integrate.
-Must include a <code class="docutils literal notranslate"><span class="pre">depth</span></code> coordinate.</p></li>
-<li><p><strong>depth_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Upper bound of the depth range (shallowest depth).</p></li>
-<li><p><strong>depth_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Lower bound of the depth range (deepest depth).</p></li>
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">xr.Dataset</span></code>) – Input dataset to reduce.</p></li>
+<li><p><strong>axes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence[str]</span></code>) – Axes to reduce. Valid values are <code class="docutils literal notranslate"><span class="pre">&quot;depth&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;latitude&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;longitude&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;time&quot;</span></code>. A dimension is
+removed from variables that contain it and for which it is
+requested in this sequence.</p></li>
+<li><p><strong>depth_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">None</span></code>) – Shallowest depth to include, in metres. If
+omitted, the selection starts at the shallowest available depth.</p></li>
+<li><p><strong>depth_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span> <span class="pre">|</span> <span class="pre">None</span></code>) – Deepest depth to include, in metres. If
+omitted, the selection extends to the deepest available depth.</p></li>
+<li><p><strong>operator</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Reduction operator. Must be one of <code class="docutils literal notranslate"><span class="pre">&quot;mean&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;integral&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;min&quot;</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Dataset containing the vertically integrated values for all
-depth-dependent variables over the selected depth range.  The <code class="docutils literal notranslate"><span class="pre">depth</span></code>
-dimension is collapsed in the output.</p>
+<dd class="field-even"><p>A new dataset containing the reduced variables and any
+remaining dimensions. Coordinates that are no longer used are removed.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>xr.Dataset</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If an axis or operator is invalid, or if depth limits are
+    provided for a dataset without a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -542,17 +521,16 @@ dimension is collapsed in the output.</p>
 <li class="toctree-l1"><a class="reference internal" href="downloader.html">Downloader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Actions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#average-between-layers">average_between_layers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#calculate-stats">calculate_stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compute-depth-average">compute_depth_average</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compute-depth-integral">compute_depth_integral</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#climatology">climatology</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#reduce-axes">reduce_axes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#compute-integral">compute_integral</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#extract-annual-extremes">extract_annual_extremes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#extract-annual-extremes-per-layer">extract_annual_extremes_per_layer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#extract-bottom">extract_bottom</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#extract-layer">extract_layer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#extract-surface">extract_surface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#integrate-between-layers">integrate_between_layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reduce-axes">reduce_axes</a></li>
 </ul>
 </li>
 </ul>
