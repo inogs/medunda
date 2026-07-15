@@ -1,7 +1,6 @@
 import logging
 
-from medunda.tools.layers import compute_layer_height
-from medunda.tools.lazy_imports import np
+from medunda.actions.reduce_axes import reduce_axes
 from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
@@ -17,13 +16,15 @@ def configure_parser(subparsers):
         "--depth-min",
         type=float,
         required=False,
-        help="minimum limit of the layer",
+        help="minimum limit of the layer (if not specified, the "
+        "shallowest depth in the dataset is used)",
     )
     compute_depth_integral_parser.add_argument(
         "--depth-max",
         type=float,
         required=False,
-        help="maximum limit of the layer",
+        help="maximum limit of the layer (if not specified, the "
+        "deepest depth in the dataset is used)",
     )
 
 
@@ -53,42 +54,10 @@ def compute_depth_integral(
         depth-dependent variables over the selected depth range.  The ``depth``
         dimension is collapsed in the output.
     """
-    integrated_variables = {}
-    for variable in data.data_vars:
-        if variable in ["depth", "latitude", "longitude", "time"]:
-            continue
-
-        if depth_min is None and depth_max is None:
-            depth_min = data.depth.min().values
-            depth_max = data.depth.max().values
-        else:
-            depth_min = depth_min
-            depth_max = depth_max
-
-        selected_layer = data[variable].sel(depth=slice(depth_min, depth_max))
-        selected_depth = selected_layer.depth.values
-
-        layer_height = compute_layer_height(selected_depth)
-        layer_height_extended = xr.DataArray(layer_height, dims=["depth"])
-
-        weighted_average = (selected_layer * layer_height_extended).sum(
-            dim="depth", skipna=True
-        )
-
-        selection = {"depth": 0}
-        if "time" in data.dims:
-            selection["time"] = 0
-
-        dims = tuple(d for d in weighted_average.dims)
-
-        weighted_average = xr.where(
-            np.isnan(data[variable].isel(**selection)),
-            np.nan,
-            weighted_average,
-        ).transpose(*dims)
-
-        integrated_variables[variable] = weighted_average
-
-    final_dataset = xr.Dataset(integrated_variables)
-
-    return final_dataset
+    return reduce_axes(
+        data=data,
+        axes=["depth"],
+        depth_min=depth_min,
+        depth_max=depth_max,
+        operator="integral",
+    )

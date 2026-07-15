@@ -1,7 +1,6 @@
 import logging
 
-from medunda.tools.layers import compute_layer_height
-from medunda.tools.lazy_imports import np
+from medunda.actions.reduce_axes import reduce_axes
 from medunda.tools.lazy_imports import xr
 
 LOGGER = logging.getLogger(__name__)
@@ -17,13 +16,15 @@ def configure_parser(subparsers):
         "--depth-min",
         type=float,
         required=False,
-        help="minimum limit of the layer",
+        help="minimum limit of the layer (if not specified, the "
+        "shallowest depth in the dataset is used)",
     )
     compute_depth_average_parser.add_argument(
         "--depth-max",
         type=float,
         required=False,
-        help="maximum limit of the layer",
+        help="maximum limit of the layer (if not specified, the "
+        "deepest depth in the dataset is used)",
     )
 
 
@@ -56,44 +57,10 @@ def compute_depth_average(
         ``depth`` dimension collapsed.  Each variable is replaced by its
         depth-weighted average over the selected depth range.
     """
-    averaged_variables = {}
-    for variable in data.data_vars:
-        if variable in ["depth", "latitude", "longitude", "time"]:
-            continue
-
-        if "depth" not in data.data_vars[variable].dims:
-            averaged_variables[variable] = data.data_vars[variable]
-            continue
-
-        if depth_min is None and depth_max is None:
-            depth_min = data.depth.min().values
-            depth_max = data.depth.max().values
-        else:
-            depth_min = depth_min
-            depth_max = depth_max
-
-        selected_layer = data[variable].sel(depth=slice(depth_min, depth_max))
-        selected_depth = selected_layer.depth.values
-
-        layer_height = compute_layer_height(selected_depth)
-        layer_height_extended = xr.DataArray(layer_height, dims=["depth"])
-
-        mask = np.ma.getmaskarray(selected_layer.to_masked_array(copy=False))[
-            0, :, :, :
-        ]
-        mask_extended = xr.DataArray(
-            mask, dims=("depth", "latitude", "longitude")
-        )
-
-        total_height = (layer_height_extended * ~mask_extended).sum(
-            dim="depth"
-        )
-
-        weighted_average = (selected_layer * layer_height_extended).sum(
-            dim="depth", skipna=True
-        ) / total_height
-        averaged_variables[variable] = weighted_average
-
-    final_dataset = xr.Dataset(averaged_variables)
-
-    return final_dataset
+    return reduce_axes(
+        data=data,
+        axes=["depth"],
+        depth_min=depth_min,
+        depth_max=depth_max,
+        operator="mean",
+    )
