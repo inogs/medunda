@@ -1,3 +1,13 @@
+"""
+The reducer is a command line tool that allows users to perform
+various statistical operations on downloaded Medunda datasets.
+
+It supports multiple actions, each corresponding to a specific operation.
+
+The reducer reads the input dataset, applies the selected action to the specified variables
+and writes the results to an output file in the desired format (NetCDF, CSV, GeoTIFF, or ASCII).
+"""
+
 import argparse
 import logging
 from pathlib import Path

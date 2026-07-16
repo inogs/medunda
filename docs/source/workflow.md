@@ -1,4 +1,8 @@
 # Workflow
 
 Medunda is built around three main tools:
-- the **{ref}`downloaderdoc`**: ...
+- The **{ref}`downloaderdoc`**: ...
+
+- The **{ref}`reducerdoc`**:
+
+- The **{ref}`plotterdoc`**:
