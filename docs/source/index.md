@@ -8,6 +8,8 @@
 intro
 workflow
 downloader
+reducer
+plotter
 components
 actions
 ```
