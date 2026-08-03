@@ -46,16 +46,16 @@ variables:
     dataset_name: B1p
     unit: mmol P/m3
 
-  - variable: P1c
+  - variable: diatoC
     dataset_name: P1c
     unit: mg C/m3
-  - variable: P2c
+  - variable: nanoC
     dataset_name: P2c
     unit: mg C/m3
-  - variable: P3c
+  - variable: picoC
     dataset_name: P3c
     unit: mg C/m3
-  - variable: P4c
+  - variable: dinoC
     dataset_name: P4c
     unit: mg C/m3
 
@@ -90,5 +90,5 @@ frequencies:
     variables: [o2, no3, po4, si, chl, ph, nppv]
     path: "/leonardo_store/DRES_EchoArch/NECCTON/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_1_tar"
   - frequency: monthly
-    variables: [thetao, so, o2, no3, po4, si, chl, ph, nppv, B1c, B1n, B1p, P1c, P2c, P3c, P4c, Z3c, Z4c, Z5c, Z6c, R1c, R2c, R3c, R6c]
+    variables: [thetao, so, o2, no3, po4, si, chl, ph, nppv, B1c, B1n, B1p, diatoC, nanoC, picoC, dinoC, Z3c, Z4c, Z5c, Z6c, R1c, R2c, R3c, R6c]
     path: "/leonardo_store/DRES_EchoArch/NECCTON/Neccton_hindcast1999_2022/v22/wrkdir/MODEL/AVE_FREQ_2_tar"

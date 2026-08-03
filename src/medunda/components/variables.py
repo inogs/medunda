@@ -136,8 +136,15 @@ Variable("uo", label="Zonal Velocity", cmap="cmo:balance")
 Variable("vo", label="Meridional Velocity", cmap="cmo:balance")
 Variable("mlotst", label="Mixed Layer Depth", cmap="cmo:deep")
 Variable("ph", label="pH", cmap="cmo:balance")
-Variable("no3", label="Nitrate", cmap="cmo:matter")
-Variable("po4", label="Phosphate", cmap="cmo:matter")
+Variable(
+    "no3", label="Concentration of nitrate in sea water", cmap="cmo:matter"
+)
+Variable(
+    "po4", label="Concentration of phosphate in sea water", cmap="cmo:matter"
+)
+Variable(
+    "nh4", label="Concentration of ammonium in sea water", cmap="cmo:matter"
+)
 Variable("si", label="Silicate", cmap="cmo:matter")
 Variable("B1c", label="Aerobic and Anaerobic Bacteria carbon", cmap="viridis")
 Variable(
@@ -146,15 +153,23 @@ Variable(
 Variable(
     "B1p", label="Aerobic and Anaerobic Bacteria phosphorous", cmap="viridis"
 )
-Variable("P1c", label="Diatoms Biomass_carbon", cmap="cmo:matter")
-Variable("P2c", label="Flagellates Biomass_carbon", cmap="cmo:matter")
-Variable("P3c", label="PicoPhytoplankton Biomass_carbon", cmap="cmo:matter")
-Variable("P4c", label="Large Phytoplankton Biomass_carbon", cmap="cmo:matter")
-Variable("Z3c", label="Carnivorous Mesozooplankton_carbon", cmap="viridis")
-Variable("Z4c", label="Omnivorous Mesozooplankton_carbon", cmap="viridis")
-Variable("Z5c", label="Microzooplankton_carbon", cmap="viridis")
+Variable("diatoC", label="Diatoms Biomass carbon", cmap="cmo:matter")
+Variable("nanoC", label="Flagellates Biomass carbon", cmap="cmo:matter")
+Variable("picoC", label="PicoPhytoplankton Biomass carbon", cmap="cmo:matter")
+Variable(
+    "dinoC", label="Large Phytoplankton Biomass carbon", cmap="cmo:matter"
+)
+Variable("Z3c", label="Carnivorous Mesozooplankton carbon", cmap="viridis")
+Variable("Z4c", label="Omnivorous Mesozooplankton carbon", cmap="viridis")
+Variable("Z5c", label="Microzooplankton carbon", cmap="viridis")
 Variable("Z6c", label="Heterotrophic Nanoflagellates", cmap="viridis")
 
+Variable(
+    "dissic",
+    label="Concentration of dissolved inorganic carbon in sea water",
+    cmap="cmo:matter",
+)
+Variable("talk", label="Sea water alkalinity", cmap="cmo:matter")
 Variable("R1c", label="Dissolved Organic Carbon", cmap="cmo:matter")
 Variable(
     "R2c", label="Semi-labile Dissolved Organic Carbon", cmap="cmo:matter"
