@@ -40,12 +40,12 @@ MED_PRODUCTS = {
         Frequency.YEARLY: "cmems_mod_med_phy-mld_my_4.2km_P1Y-m",
     },
     # "MEDSEA_MULTIYEAR_BGC_006_008":
-    ("ph",): {
+    ("ph", "dissic", "talk"): {
         Frequency.DAILY: "cmems_mod_med_bgc-car_my_4.2km_P1D-m",
         Frequency.MONTHLY: "cmems_mod_med_bgc-car_my_4.2km_P1M-m",
         Frequency.YEARLY: "cmems_mod_med_bgc-car_my_4.2km_P1Y-m",
     },
-    ("no3", "po4", "si"): {
+    ("no3", "po4", "nh4"): {
         Frequency.DAILY: "cmems_mod_med_bgc-nut_my_4.2km_P1D-m",
         Frequency.MONTHLY: "cmems_mod_med_bgc-nut_my_4.2km_P1M-m",
         Frequency.YEARLY: "cmems_mod_med_bgc-nut_my_4.2km_P1Y-m",
