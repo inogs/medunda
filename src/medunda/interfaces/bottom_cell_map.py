@@ -151,6 +151,7 @@ class BottomCellMap:
             values. Defaults to "longitude".
         time_column (str): The name of the column in the point table that contains time
             values. Defaults to "time".
+
     """
 
     def __init__(

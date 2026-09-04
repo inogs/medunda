@@ -1,3 +1,5 @@
+"""Temporary directory context manager for Medunda tools."""
+
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory as _TemporaryDirectory

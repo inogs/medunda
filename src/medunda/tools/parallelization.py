@@ -1,3 +1,6 @@
+"""In this module, we provide parallelization utilities for managing
+and utilizing multiple processes."""
+
 import os
 from logging import getLogger
 from multiprocessing import cpu_count

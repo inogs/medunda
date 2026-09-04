@@ -12,4 +12,7 @@ reducer
 plotter
 components
 actions
+domains
+interfaces
+tools
 ```
