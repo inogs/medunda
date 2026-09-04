@@ -1,3 +1,5 @@
+"""Logging utilities for Medunda tools."""
+
 import logging
 import time
 

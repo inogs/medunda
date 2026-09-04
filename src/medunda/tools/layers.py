@@ -1,8 +1,12 @@
+"""This module contains functions for computing layer thicknesses from cell center depths."""
+
+from numpy.typing import ArrayLike
+
 import medunda.tools.lazy_imports.bitsea.geodistances as bitsea_geodistances
 from medunda.tools.lazy_imports import numpy as np
 
 
-def compute_layer_height(layer_centers: "np.ndarray") -> "np.ndarray":
+def compute_layer_height(layer_centers: ArrayLike) -> "np.ndarray":
     """Computes layer thicknesses from cell center depths.
 
     Calculates the thickness of each layer in a vertical column based on the
