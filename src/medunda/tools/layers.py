@@ -1,3 +1,5 @@
+"""This module contains functions for computing layer thicknesses from cell center depths."""
+
 from numpy.typing import ArrayLike
 
 import medunda.tools.lazy_imports.bitsea.geodistances as bitsea_geodistances
