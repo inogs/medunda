@@ -1,6 +1,8 @@
 import logging
+from collections.abc import Hashable
 from collections.abc import Sequence
 from typing import Literal
+from typing import cast
 from warnings import warn
 
 import numpy as np
@@ -183,7 +185,7 @@ def compute_average(
             continue
         LOGGER.debug("Aggregating variable %s", var_name)
 
-        aggregated_axis = []
+        aggregated_axis: list[Hashable] = []
         for axis in data[var_name].dims:
             if axis in axes:
                 aggregated_axis.append(axis)
@@ -206,7 +208,7 @@ def compute_average(
             if axis not in aggregated_axis:
                 not_needed_for_weights.append(axis)
         var_weights = weights.isel(
-            **{dim: 0 for dim in not_needed_for_weights}
+            indexers={dim: 0 for dim in not_needed_for_weights}
         )
 
         # Finally, we can perform the weighted average
@@ -222,7 +224,11 @@ def compute_average(
         # A mean of values that are all nan is a nan, but the sum is 0. We need
         # to fix this by setting to NaN those zeros
         if operator == "sum":
-            data_mask = np.isfinite(data[var_name]).any(dim=aggregated_axis)
+            # np.isfinite is typed by numpy's stubs as always returning a
+            # plain ndarray, but here it actually returns an xr.DataArray,
+            # since xarray implements the __array_ufunc__ protocol.
+            is_finite = cast("xr.DataArray", np.isfinite(data[var_name]))
+            data_mask = is_finite.any(dim=aggregated_axis)
             new_data[var_name] = xr.where(
                 data_mask, new_data[var_name], np.nan
             )

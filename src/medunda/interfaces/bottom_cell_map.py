@@ -1,11 +1,13 @@
 import logging
 import warnings
+from collections.abc import Hashable
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 from typing import Callable
 from typing import Literal
 from typing import Sequence
+from typing import cast
 
 import dask.dataframe
 import numpy as np
@@ -15,6 +17,7 @@ from bitsea.commons.mask import Mask
 from dask.dataframe.dispatch import make_meta
 from dask.delayed import Delayed
 from dask.delayed import delayed
+from numpy.typing import NDArray
 
 from medunda.components.geodata import GeoDataCollection
 from medunda.tools.lazy_imports import xr
@@ -38,7 +41,7 @@ TARGET_SPATIAL_CHUNK_SIZE = 100
 @delayed
 def _extract_points(
     f: Callable,
-    dataset: DelayedDataset,
+    delayed_dataset: DelayedDataset,
     point_table: pd.DataFrame,
     depth_indices: xr.DataArray | None,
     indices_shift: dict[Literal["latitude", "longitude", "depth"], int],
@@ -101,9 +104,14 @@ def _extract_points(
         same order. Each dictionary contains the columns listed in
         `preserve_columns` plus all the keys returned by `f`.
     """
-    dataset = from_delayed(dataset)
+    dataset = from_delayed(delayed_dataset)
 
     output = []
+
+    if depth_indices is None and has_depth:
+        raise ValueError(
+            "depth_indices must be provided when has_depth is True"
+        )
 
     for local_i, (global_i, point) in enumerate(point_table.iterrows()):
         point_time = point[column_names["time"]]
@@ -128,12 +136,18 @@ def _extract_points(
             time_index_slice,
         )
 
-        dataset_selection = dict(
-            time=time_index_slice,
-            latitude=point["model_lat_index"] - indices_shift["latitude"],
-            longitude=point["model_lon_index"] - indices_shift["longitude"],
-        )
+        dataset_selection = {
+            "time": time_index_slice,
+            "latitude": point["model_lat_index"] - indices_shift["latitude"],
+            "longitude": point["model_lon_index"] - indices_shift["longitude"],
+        }
         if has_depth:
+            # Specify that the depth_indices can not be None when has_depth is
+            # True to pylint
+            assert depth_indices is not None, (
+                "depth_indices cannot be None when has_depth is True"
+            )
+            depth_indices = cast(xr.DataArray, depth_indices)
             dataset_selection["depth"] = (
                 depth_indices[local_i] - indices_shift["depth"]
             )
@@ -188,6 +202,16 @@ def _extract_points(
             raise ValueError(
                 f"Function {f.__name__} must always return a dictionary. It "
                 f"returned a {type(point_output)} instead."
+            )
+
+        conflicting_columns = set(point_output) & set(preserve_columns)
+        if conflicting_columns:
+            raise ValueError(
+                f"Function {f.__name__} returned the following keys, "
+                f"which conflict with columns of point_table that must "
+                f"be preserved: {sorted(conflicting_columns)}. Rename "
+                "either the columns of point_table or the keys returned "
+                "by the function."
             )
 
         point_as_dict = {
@@ -245,7 +269,7 @@ def _merge_together(
 
 
 def _get_lat_lon_chunks(
-    dataset: "xr.Dataset", var3d: Sequence[str]
+    dataset: "xr.Dataset", var3d: Sequence[Hashable]
 ) -> tuple["xr.Dataset", tuple[int, ...], tuple[int, ...]]:
     """
     Returns the chunks of `dataset` along the `latitude` and
@@ -367,13 +391,25 @@ class BottomCellMap:
     ):
         """
         Initializes the mapping between points and the model's bottom
-        cell, using `dataset` as the source of model data.
+        cell, using `data_collection` as the source of model data.
 
         See the class docstring for a description of the arguments.
         """
         LOGGER.debug("Initializing a new %s instance", self.__class__.__name__)
         self._data_collection = data_collection
         self._time_range = time_range
+
+        truncated_time_range = timedelta(
+            seconds=np.timedelta64(time_range, "s") / np.timedelta64(1, "s")
+        )
+        if truncated_time_range != time_range:
+            warnings.warn(
+                f"time_range ({time_range}) has a sub-second component "
+                f"that will be truncated to {truncated_time_range} when "
+                "computing the time windows used to read the model data; "
+                "use a time_range with whole-second precision to avoid "
+                "this."
+            )
 
         self._lat_column = lat_column
         self._lon_column = lon_column
@@ -496,8 +532,12 @@ class BottomCellMap:
         original_columns = point_table.columns.tolist()
         self._add_model_grid_columns(point_table, mask)
 
-        lat_indices = point_table["model_lat_index"].values.astype(int)
-        lon_indices = point_table["model_lon_index"].values.astype(int)
+        lat_indices = np.asarray(
+            point_table["model_lat_index"].to_numpy(), dtype=int
+        )
+        lon_indices = np.asarray(
+            point_table["model_lon_index"].to_numpy(), dtype=int
+        )
 
         if geo_data_2d:
             bottom_indices = None
@@ -517,10 +557,10 @@ class BottomCellMap:
             lon_indices=lon_indices,
             lat_chunks=lat_chunks,
             lon_chunks=lon_chunks,
-            times=point_table[self._time_column],
+            times=cast(pd.Series, point_table[self._time_column]),
         )
 
-        column_names = {
+        column_names: dict[Literal["time", "latitude", "longitude"], str] = {
             "time": self._time_column,
             "latitude": self._lat_column,
             "longitude": self._lon_column,
@@ -532,6 +572,7 @@ class BottomCellMap:
             point_table=point_table,
             data=data,
             column_names=column_names,
+            original_columns=original_columns,
             bottom_indices=bottom_indices,
         )
 
@@ -616,6 +657,19 @@ class BottomCellMap:
                 place.
             mask: The bit.sea `Mask` of the model grid.
         """
+        added_columns = (
+            "model_lon_index",
+            "model_lat_index",
+            "model_lat",
+            "model_lon",
+            "distance_from_model",
+        )
+        conflicting_columns = set(added_columns) & set(point_table.columns)
+        if conflicting_columns:
+            warnings.warn(
+                "point_table already contains the following columns, "
+                f"which will be overwritten: {sorted(conflicting_columns)}"
+            )
 
         def get_model_indices(row):
             """
@@ -783,11 +837,11 @@ class BottomCellMap:
 
     def _split_into_chunks(
         self,
-        lat_indices: xr.DataArray,
-        lon_indices: xr.DataArray,
+        lat_indices: NDArray[np.integer],
+        lon_indices: NDArray[np.integer],
         lat_chunks: Sequence[int],
         lon_chunks: Sequence[int],
-        times: Sequence[np.datetime64],
+        times: pd.Series | Sequence[np.datetime64] | NDArray[np.datetime64],
     ) -> tuple[_Section, ...]:
         """
         Groups points into "sections", where each section corresponds
@@ -902,18 +956,24 @@ class BottomCellMap:
                 local_lon_indices = lon_indices[positions]
                 local_lat_indices = lat_indices[positions]
 
-                # We apply some assetion to check that all the points that we
-                # have selected have indices that are inside our portion
+                # We apply assertions to check that all the points that we
+                # have selected have indices inside our portion
                 if lon_slice.start is not None:
                     assert np.min(local_lon_indices) >= lon_slice.start, (
                         f"lon_indices = {local_lon_indices}, lon_slice = {lon_slice}"
                     )
                 if lon_slice.stop is not None:
-                    assert np.max(local_lon_indices) < lon_slice.stop
+                    assert np.max(local_lon_indices) < lon_slice.stop, (
+                        f"lon_indices = {local_lon_indices}, lon_slice = {lon_slice}"
+                    )
                 if lat_slice.start is not None:
-                    assert np.min(local_lat_indices) >= lat_slice.start
+                    assert np.min(local_lat_indices) >= lat_slice.start, (
+                        f"lat_indices = {local_lat_indices}, lat_slice = {lat_slice}"
+                    )
                 if lat_slice.stop is not None:
-                    assert np.max(local_lat_indices) < lat_slice.stop
+                    assert np.max(local_lat_indices) < lat_slice.stop, (
+                        f"lat_indices = {local_lat_indices}, lat_slice = {lat_slice}"
+                    )
 
                 current_time = start_date
                 while current_time <= self._data_collection.end_date:
@@ -1002,16 +1062,22 @@ class BottomCellMap:
         point_table: pd.DataFrame,
         data: "xr.Dataset",
         column_names: dict[Literal["time", "latitude", "longitude"], str],
+        original_columns: list[str],
         bottom_indices: "xr.DataArray | None",
     ) -> pd.DataFrame:
         """
         Resolves the dask meta describing the columns that `map` will
         return.
 
-        If `func_meta` is given, it is translated into an empty Pandas
-        DataFrame via `dask.dataframe.dispatch.make_meta`. Otherwise,
-        the meta is inferred by actually calling `func` on the first
-        point of `point_table` (see `_guess_func_meta`).
+        The returned meta always covers both `original_columns` (the
+        columns of `point_table` that `map` copies unchanged into its
+        output) and the columns returned by `func`, in that order,
+        since that is the column order `_extract_points` actually
+        produces. If `func_meta` is given, the `func`-related part is
+        translated into an empty Pandas DataFrame via
+        `dask.dataframe.dispatch.make_meta`. Otherwise, it is inferred
+        by actually calling `func` on the first point of `point_table`
+        (see `_guess_func_meta`).
 
         Args:
             func_meta: The user-provided dtypes for the columns
@@ -1023,6 +1089,8 @@ class BottomCellMap:
             column_names: Maps the logical roles `"time"`,
                 `"latitude"` and `"longitude"` to the actual column
                 names used in `point_table`.
+            original_columns: The columns of the original
+                `point_table`, preserved unchanged in the output.
             bottom_indices: The absolute bottom cell index, along
                 `depth`, for every point of `point_table`, or `None`
                 when the underlying `GeoDataCollection` is 2D.
@@ -1033,12 +1101,20 @@ class BottomCellMap:
         """
         if func_meta is not None:
             LOGGER.debug("func_meta is: %s", func_meta)
-            dask_f_meta = make_meta(func_meta)
+            preserved_meta = point_table[original_columns].iloc[:0]
+            dask_f_meta = pd.concat(
+                [preserved_meta, make_meta(func_meta)], axis=1
+            )
             LOGGER.debug("func_meta has been translated as: %s", dask_f_meta)
             return dask_f_meta
 
         return self._guess_func_meta(
-            func, point_table, data, column_names, bottom_indices
+            func,
+            point_table,
+            data,
+            column_names,
+            original_columns,
+            bottom_indices,
         )
 
     def _guess_func_meta(
@@ -1047,6 +1123,7 @@ class BottomCellMap:
         point_table: pd.DataFrame,
         data: "xr.Dataset",
         column_names: dict[Literal["time", "latitude", "longitude"], str],
+        original_columns: list[str],
         bottom_indices: "xr.DataArray | None",
     ) -> pd.DataFrame:
         """
@@ -1061,13 +1138,16 @@ class BottomCellMap:
             column_names: Maps the logical roles `"time"`,
                 `"latitude"` and `"longitude"` to the actual column
                 names used in `point_table`.
+            original_columns: The columns of the original
+                `point_table`, preserved unchanged in the output.
             bottom_indices: The absolute bottom cell index, along
                 `depth`, for every point of `point_table`, or `None`
                 when the underlying `GeoDataCollection` is 2D.
 
         Returns:
-            An empty Pandas DataFrame with the columns and dtypes
-            returned by `func` for the first point.
+            An empty Pandas DataFrame with the columns and dtypes of
+            `original_columns` plus the ones returned by `func` for
+            the first point.
         """
         LOGGER.debug("We use the first point to guess the func_meta")
         test_point = point_table.iloc[0]
@@ -1080,12 +1160,14 @@ class BottomCellMap:
         )
         lat_index = test_point["model_lat_index"]
         lon_index = test_point["model_lon_index"]
-        test_selection = dict(
-            time=time_index_slice,
-            latitude=slice(lat_index, lat_index + 1),
-            longitude=slice(lon_index, lon_index + 1),
-        )
-        local_shifts = {
+        test_selection: dict[
+            Literal["time", "latitude", "longitude", "depth"], slice
+        ] = {
+            "time": time_index_slice,
+            "latitude": slice(lat_index, lat_index + 1),
+            "longitude": slice(lon_index, lon_index + 1),
+        }
+        local_shifts: dict[Literal["latitude", "longitude", "depth"], int] = {
             "latitude": lat_index,
             "longitude": lon_index,
         }
@@ -1099,12 +1181,12 @@ class BottomCellMap:
             point_subset=point_table.iloc[[0]],
             indices_shift=local_shifts,
             column_names=column_names,
-            preserve_columns=[],
+            preserve_columns=original_columns,
             bottom_indices=bottom_indices,
             bottom_positions=slice(0, 1),
         )
         meta_task = _extract_points(
-            func, dataset=to_delayed(test_dataset), **extract_kwargs
+            func, delayed_dataset=to_delayed(test_dataset), **extract_kwargs
         ).compute()
 
         LOGGER.debug("func returned the following output: %s", meta_task)
@@ -1176,12 +1258,17 @@ class BottomCellMap:
             LOGGER.debug(
                 "Slicing a section in the time window %s", section.time_window
             )
-            isel_selection = dict(
-                time=time_slice,
-                latitude=section.lat_slice,
-                longitude=section.lon_slice,
-            )
-            local_shifts = {
+            isel_selection: dict[
+                Literal["time", "latitude", "longitude", "depth"],
+                np.ndarray | slice,
+            ] = {
+                "time": time_slice,
+                "latitude": section.lat_slice,
+                "longitude": section.lon_slice,
+            }
+            local_shifts: dict[
+                Literal["latitude", "longitude", "depth"], int
+            ] = {
                 "latitude": lat_shift,
                 "longitude": lon_shift,
             }
@@ -1210,7 +1297,9 @@ class BottomCellMap:
                 bottom_positions=section.positions,
             )
             delayed_task = _extract_points(
-                func, dataset=to_delayed(point_ds), **extract_points_kwargs
+                func,
+                delayed_dataset=to_delayed(point_ds),
+                **extract_points_kwargs,
             )
 
             delayed_computations.append(delayed_task)

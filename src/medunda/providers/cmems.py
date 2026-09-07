@@ -97,7 +97,7 @@ GLOBAL_PRODUCTS = {
 
 
 class CMEMSProvider(Provider, ABC):
-    PRODUCTS: dict[VarName, dict[Frequency, str]] = {}
+    PRODUCTS: dict[tuple[VarName, ...], dict[Frequency, str]] = {}
 
     def __init__(self) -> None:
         super().__init__()
