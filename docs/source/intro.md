@@ -17,13 +17,13 @@ line, making data access manipulation more intuitive.
 
 ## What is Medunda for?
 
-Medunda is designed to automate the downloading, processing, and visualization of environmental data for the **Mediterranean Sea** with a focus on both **physical and biogeochemical variables** provided by the **Copernicus Marine Environment Monitoring Service**.
+Medunda is designed to automate the downloading, processing, and visualization of environmental data for the **Mediterranean Sea and global oceans**, with a focus on both **physical and biogeochemical variables** provided by the **Copernicus Marine Environment Monitoring Service**.
 It offers structured access to these datasets and helps researchers efficiently prepare data for use in ecosystem models.
 The toolkit is user-friendly and flexible, allowing users to customize data downloads and processing based on their needs and choices.
 
 ## General Overview of MEDUNDA
 
-The name **MEDUNDA** combines **"Med"**, referring to the **Mediterranean Sea**, and **"Unda"**, the Latin word for **wave** emphazing its relation to global oceanography
+The name **MEDUNDA** combines **"Med"**, referring to the **Mediterranean Sea**, and **"Unda"**, the Latin word for **wave**, emphasizing its relation to global oceanography.
 
 The toolkit is organized around three main tools:
 

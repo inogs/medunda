@@ -7,6 +7,7 @@
 
 intro
 workflow
+examples
 downloader
 reducer
 plotter

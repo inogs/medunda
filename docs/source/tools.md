@@ -2,7 +2,7 @@
 
 # Tools
 
-The `medunda.tools` package provides utility modules used throughout MEDUNDA for command-line argument handling, file naming, logging, parallel processing, temporal directory management, time-table operations, and type definitions.
+The `medunda.tools` package provides utility modules used throughout MEDUNDA for command-line argument handling, file naming, logging, parallel processing, temporary directory management, time-table operations, and type definitions.
 
 ## Argparse\_Utilities
 

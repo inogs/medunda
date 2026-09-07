@@ -56,8 +56,8 @@ python -m medunda plotter \
     --variable <variable_name> \
     --output-dir <output_path> \
     plotting_timeseries \
-    --start-time <YYYY-MM-DD> \
-    --end-time <YYYY-MM-DD>
+    --start-date <YYYY-MM-DD> \
+    --end-date <YYYY-MM-DD>
 ```
 
 The `--start-time` and `--end-time` options define the period to be plotted.
@@ -141,9 +141,9 @@ Time series plotting from GeoTIFF files is not supported.
 
 ## Displaying plots
 
-By default, plots are saved to the directory specified with `--output-dir`.
+Plots are saved only when a directory is specified with `--output-dir`.
 
-Alternatively, the `--show-plot` option can be used to display the plot in an interactive window:
+Alternatively, use `--show-plot` to display the plot in an interactive window.
 
 ```bash
 python -m medunda plotter \
