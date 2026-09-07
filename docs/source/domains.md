@@ -1,6 +1,6 @@
 (domaindoc)=
 
-# Doamins
+# Domains
 
 A **domain** defines the geographical and, optionally, vertical extent of the data to be retrieved or processed by MEDUNDA.
 Domains are used to restrict oceanographic datasets to a specific geographical area. A domain can be defined as a rectangular area, a polygon, or a collection of polygons.

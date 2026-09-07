@@ -18,7 +18,7 @@ python -m medunda reducer\
 
 you can choose a subset of variables from the dataset.
 Each action defines its own command-line options. See **{ref}actionsdoc** for the available actions and their specific arguments.
-Each action return a dataset with the processed data.
+Each action returns a dataset with the processed data.
 
 ## Output formats
 
