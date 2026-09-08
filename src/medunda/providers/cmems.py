@@ -324,6 +324,18 @@ class CMEMSProviderMed(CMEMSProvider):
         else:
             domain_box["maximum_depth"] = cls.MAX_DEPTH
 
+        if domain_box["minimum_longitude"] > domain_box["maximum_longitude"]:
+            raise ValueError(
+                "The requested domain is outside the supported longitude range"
+            )
+        if (
+            "minimum_depth" in domain_box
+            and domain_box["minimum_depth"] > domain_box["maximum_depth"]
+        ):
+            raise ValueError(
+                "The requested domain is outside the supported depth range"
+            )
+
         return domain_box
 
 
