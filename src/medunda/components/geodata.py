@@ -244,7 +244,9 @@ class GeoDataCollection(BaseModel):
                 return xr_dataset
             new_longitude = var_longitude.values.copy()
             new_longitude[greenwich_index] = 0.0
-            return xr_dataset.assign_coords(longitude=new_longitude)
+            return xr_dataset.assign_coords(
+                longitude=var_longitude.copy(data=new_longitude)
+            )
 
         data_paths = []
         for variable in variables:
