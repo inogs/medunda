@@ -1,10 +1,12 @@
 # Examples
 
+The following section presents three examples demonstrating the complete Medunda workflow, from data download and processing to visualization.
+
 ## Extraction of the bottom dissolved oxygen in the Mediterranean Sea
 
 **Downloader command**:
 ```bash
-poetry run medunda downloader create --start-date 1994-01-01 --end-date 2024-12-31 --variables  --domain domains/MediterraneanSea.yaml --frequency monthly --provider cmems_mediterranean --split-by year --output-dir "./medunda_dataset/medsea"
+poetry run medunda downloader create --start-date 1994-01-01 --end-date 2024-12-31 --variables o2  --domain domains/MediterraneanSea.yaml --frequency monthly --provider cmems_mediterranean --split-by year --output-dir "./medunda_dataset/medsea"
 ```
 
 **Reducer command**:
@@ -14,17 +16,17 @@ poetry run medunda reducer --input-dataset "./medunda_dataset/medsea" --variable
 
 **Plotter command**:
 
-Pour générer des timeseries:
+To generate *timeseries*:
 ```bash
-poetry run medunda plotter --input-file "./medunda_dataset/medsea/bottom_oxygen.nc" --variable o2 plotting_timeseries
+poetry run medunda plotter --input-file "./medunda_dataset/medsea/bottom_oxygen.nc" --variable o2 --show-plot plotting_timeseries
 ```
 
-Pour générer des cartes:
+To generate *maps*:
 ```bash
-poetry run medunda plotter --input-file "./medunda_dataset/medsea/bottom_oxygen.nc" --variable o2 plotting_maps --time 2020-01-01
+poetry run medunda plotter --input-file "./medunda_dataset/medsea/bottom_oxygen.nc" --variable o2 --show-plot plotting_maps --time 2020-01-01
 ```
 
-## A scope  of primary production whithin GSA 9
+## A scope  of primary production within GSA 9
 
 **Downloader command**:
 ```bash
@@ -38,14 +40,14 @@ poetry run medunda reducer --input-dataset "./medunda_dataset/gsa9" --variable c
 
 **Plotter command**:
 
-Pour générer des timeseries:
+To generate *timeseries*:
 ```bash
-poetry run medunda plotter --input-file "./medunda_dataset/gsa9/intg_chl.nc" --variable chl plotting_timeseries
+poetry run medunda plotter --input-file "./medunda_dataset/gsa9/intg_chl.nc" --variable chl --show-plot plotting_timeseries
 ```
 
-Pour générer des cartes:
+To generate *maps*:
 ```bash
-poetry run medunda plotter --input-file "./medunda_dataset/gsa9/intg_chl.nc" --variable chl plotting_maps --time 2000-01-01
+poetry run medunda plotter --input-file "./medunda_dataset/gsa9/intg_chl.nc" --variable chl --show-plot plotting_maps --time 2000-01-01
 ```
 
 ## Global ocean climatology
@@ -62,7 +64,7 @@ poetry run medunda reducer --input-dataset "./medunda_dataset/global" --variable
 
 **Plotter command**:
 
-Pour générer des timeseries:
+To generate *timeseries*:
 ```bash
-poetry run medunda plotter --input-file "./medunda_dataset/global/temperature_climatology.nc" --variable thetao plotting_timeseries
+poetry run medunda plotter --input-file "./medunda_dataset/global/temperature_climatology.nc" --variable thetao --show-plot plotting_timeseries
 ```

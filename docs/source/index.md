@@ -7,7 +7,6 @@
 
 intro
 workflow
-examples
 downloader
 reducer
 plotter
@@ -16,4 +15,5 @@ actions
 domains
 interfaces
 tools
+examples
 ```

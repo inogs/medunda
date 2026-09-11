@@ -20,11 +20,6 @@ Two plotting modes are available:
 
 The generated plots can either be saved to an output directory or displayed in an interactive window using `--show-plot`.
 
-```{eval-rst}
-.. automodule:: medunda.plotter
-   :no-members:
-```
-
 The plotter can be executed from the command line using:
 
 ```bash

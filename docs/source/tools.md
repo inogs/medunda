@@ -44,7 +44,7 @@ The `medunda.tools` package provides utility modules used throughout MEDUNDA for
 
 ---
 
-## Temporal\_Directories
+## Temporary\_Directories
 
 ```{eval-rst}
 .. automodule:: medunda.tools.temp_dirs
