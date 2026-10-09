@@ -184,8 +184,8 @@ def reducer(
         dataset_result.to_netcdf(output_file)
 
     elif format == "csv":
-        if isinstance(dataset_result, xr.Dataset):
-            raise TypeError("ASCII configuration requires a Dataset")
+        if not isinstance(dataset_result, xr.Dataset):
+            raise TypeError("CSV configuration requires a Dataset")
 
         if len(dataset_result.data_vars) == 1:
             dataset_result = dataset_result[
