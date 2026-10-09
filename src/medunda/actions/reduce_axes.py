@@ -30,7 +30,7 @@ def configure_parser(subparsers):
     )
 
     average_parser.add_argument(
-        "--operation",
+        "--operator",
         type=str,
         choices=["mean", "integral", "max", "min"],
         required=False,
