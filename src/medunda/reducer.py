@@ -188,7 +188,9 @@ def reducer(
             raise TypeError("ASCII configuration requires a Dataset")
 
         if len(dataset_result.data_vars) == 1:
-            dataset_result = dataset_result[list(dataset_result.data_vars)[0]]
+            dataset_result = dataset_result[
+                next(iter(dataset_result.data_vars))
+            ]
         else:
             raise ValueError("CSV configuration requires a single variable")
 
@@ -202,7 +204,6 @@ def reducer(
         dataset_result = dataset_result.rio.set_spatial_dims(
             x_dim="longitude", y_dim="latitude"
         )
-        dataset_result.rio.crs
         dataset_result.rio.write_crs("epsg:4326", inplace=True)
         dataset_result.rio.to_raster(output_file)
 
@@ -211,7 +212,9 @@ def reducer(
             raise TypeError("ASCII configuration requires a Dataset")
 
         if len(dataset_result.data_vars) == 1:
-            dataset_result = dataset_result[list(dataset_result.data_vars)[0]]
+            dataset_result = dataset_result[
+                next(iter(dataset_result.data_vars))
+            ]
         else:
             raise ValueError("ASCII configuration requires a single variable")
 

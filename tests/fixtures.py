@@ -61,9 +61,13 @@ def generate_test_array_with_mask():
             if v_name in ["depth", "latitude", "longitude", "time"]:
                 continue
             for t, d in cart_prod(range(data.sizes["time"]), range(n_depth)):
-                data[v_name][
-                    dict(time=t, depth=d, latitude=i, longitude=j)
-                ] = k + 1000 * (t + 1) * d
+                selection = {
+                    "time": t,
+                    "depth": d,
+                    "latitude": i,
+                    "longitude": j,
+                }
+                data[v_name][selection] = k + 1000 * (t + 1) * d
 
     mask = xr.DataArray(mask, dims=["depth", "latitude", "longitude"])
 

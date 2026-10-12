@@ -164,9 +164,8 @@ def test_reduce_axes_on_depth(
                     if not integral_instead_of_average:
                         current_sum /= sum(depth_weights)
 
-                expected_values.loc[dict(time=t, latitude=i, longitude=j)] = (
-                    current_sum
-                )
+                data_pos = {"time": t, "latitude": i, "longitude": j}
+                expected_values.loc[data_pos] = current_sum
 
         if "time" in ds.dims:
             computed_values = ds[var_name].transpose(

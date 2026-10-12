@@ -336,7 +336,7 @@ class LocalReanalysis(Provider):
                     'Each frequency in the "frequencies" section must be a '
                     "dictionary with the following keys: {}. "
                     "Received: {}".format(
-                        ", ".join([f for f in sorted(list(required_keys))]),
+                        ", ".join(sorted(required_keys)),
                         frequency,
                     )
                 )
@@ -346,17 +346,15 @@ class LocalReanalysis(Provider):
                 raise ValueError(
                     'Each frequency in the "frequencies" section must contain '
                     "the following keys: {}. Missing keys in {} ---> {}".format(
-                        ", ".join([f for f in sorted(list(required_keys))]),
+                        ", ".join(sorted(required_keys)),
                         frequency,
-                        ", ".join([f for f in sorted(list(missing_keys))]),
+                        ", ".join(sorted(missing_keys)),
                     )
                 )
 
-            for key in frequency.keys():
+            for key in frequency:
                 if key not in required_keys:
-                    supported_keys = ", ".join(
-                        [f for f in sorted(list(required_keys))]
-                    )
+                    supported_keys = ", ".join(sorted(required_keys))
                     raise ValueError(
                         f'Invalid key "{key}" in frequency {frequency}. '
                         f"Supported keys are: {supported_keys}."
@@ -423,7 +421,7 @@ class LocalReanalysis(Provider):
                     'the keys "variable" and "unit". Optional keys are: '
                     f"dataset_name. Received: {raw_var}"
                 )
-            for key in raw_var.keys():
+            for key in raw_var:
                 if key not in {"variable", "unit", "dataset_name"}:
                     raise ValueError(
                         f'Invalid key "{key}" in variable {raw_var}. '
