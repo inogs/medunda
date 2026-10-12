@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from fixtures import *  # noqa: F401, F403
+from fixtures import *  # noqa: F403
 
 
 def pytest_collection_modifyitems(items):

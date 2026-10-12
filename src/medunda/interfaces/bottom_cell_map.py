@@ -1,12 +1,12 @@
 import logging
 import warnings
+from collections.abc import Callable
 from collections.abc import Hashable
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
-from typing import Callable
 from typing import Literal
-from typing import Sequence
 from typing import cast
 
 import dask.dataframe
@@ -26,6 +26,14 @@ from medunda.tools.xarray_utils import from_delayed
 from medunda.tools.xarray_utils import to_delayed
 
 LOGGER = logging.getLogger(__name__)
+
+
+class PointFunctionError(RuntimeError):
+    """
+    Raised when the function applied by `BottomCellMap` fails on one of the
+    points. The original exception is available as `__cause__`.
+    """
+
 
 # If the chunks that come natively from the files on the disk are
 # already smaller than these many grid points (along latitude and along
@@ -194,15 +202,15 @@ def _extract_points(
                 f"the function received the following data: {point_data}\n\n"
                 f"Error raised: \n{e}"
             )
-            raise Exception(
-                f"Error in function {f.__name__} for point {global_i}"
-            ) from e
+            error_msg = f"Error in function {f.__name__} for point {global_i}"
+            raise PointFunctionError(error_msg) from e
 
         if not isinstance(point_output, dict):
-            raise ValueError(
+            error_msg = (
                 f"Function {f.__name__} must always return a dictionary. It "
                 f"returned a {type(point_output)} instead."
             )
+            raise TypeError(error_msg)
 
         conflicting_columns = set(point_output) & set(preserve_columns)
         if conflicting_columns:
@@ -379,6 +387,7 @@ class BottomCellMap:
             values. Defaults to "longitude".
         time_column (str): The name of the column in the point table that contains time
             values. Defaults to "time".
+
     """
 
     def __init__(
@@ -450,6 +459,7 @@ class BottomCellMap:
         that contains water and that is on the same longitude and latitude
         of the surface cell.
         The Xarray Dataset contains also the following scalar coordinates:
+
         - latitude: the latitude of the original point.
         - longitude: the longitude of the original point.
         - time: the time of the original point.
@@ -1043,17 +1053,17 @@ class BottomCellMap:
             `_extract_points` except `f` and `dataset`.
         """
         has_depth = bottom_indices is not None
-        return dict(
-            point_table=point_subset,
-            depth_indices=(
+        return {
+            "point_table": point_subset,
+            "depth_indices": (
                 bottom_indices[bottom_positions] if has_depth else None
             ),
-            indices_shift=indices_shift,
-            column_names=column_names,
-            time_range=self._time_range,
-            preserve_columns=preserve_columns,
-            has_depth=has_depth,
-        )
+            "indices_shift": indices_shift,
+            "column_names": column_names,
+            "time_range": self._time_range,
+            "preserve_columns": preserve_columns,
+            "has_depth": has_depth,
+        }
 
     def _resolve_func_meta(
         self,

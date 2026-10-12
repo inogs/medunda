@@ -33,6 +33,8 @@ hypothesis = "^6.135.26"
 pre-commit = "^4.4.0"
 deptry = ">=0.24.0"
 ipython = ">9"
+mypy = "^2.4.0"
+pyright = "^1.1.414"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^9"
@@ -49,7 +51,25 @@ medunda = "medunda.__main__:main"
 
 
 [tool.ruff.lint]
-extend-select = ["I"]
+extend-select = ["I", "F403", "TID253"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+banned-module-level-imports = [
+    "geopandas",
+    "matplotlib",
+    "netCDF4",
+    "numpy",
+    "xarray",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["TID253"]
+# The interfaces are meant to be imported explicitly by user scripts, never
+# at startup, so they are allowed to import heavy modules directly.
+"src/medunda/interfaces/**" = ["TID253"]
+# Each lazy module has the same name of the library it wraps, even when the
+# name of the library does not follow PEP 8.
+"src/medunda/tools/lazy_imports/netCDF4.py" = ["N999"]
 
 [tool.ruff.lint.isort]
 force-single-line = true

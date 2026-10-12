@@ -1,10 +1,11 @@
 import logging
 import shutil
 from abc import ABC
-from datetime import timezone
+from collections.abc import Mapping
+from datetime import UTC
 from pathlib import Path
 from typing import Any
-from typing import Mapping
+from typing import ClassVar
 from warnings import warn
 
 from medunda.components.data_files import DataFile
@@ -97,7 +98,9 @@ GLOBAL_PRODUCTS = {
 
 
 class CMEMSProvider(Provider, ABC):
-    PRODUCTS: dict[tuple[VarName, ...], dict[Frequency, str]] = {}
+    PRODUCTS: ClassVar[
+        Mapping[tuple[VarName, ...], Mapping[Frequency, str]]
+    ] = {}
 
     def __init__(self) -> None:
         super().__init__()
@@ -152,7 +155,7 @@ class CMEMSProvider(Provider, ABC):
         return cls()
 
     def available_variables(self, frequency: Frequency) -> VariableDataset:
-        variables_names = []
+        variables_names: list[VarName] = []
         for var_names, product_by_freq in self.PRODUCTS.items():
             if frequency in product_by_freq:
                 variables_names.extend(var_names)
@@ -244,8 +247,8 @@ class CMEMSProvider(Provider, ABC):
                 # Copernicusmarine API interprets datetimes as UTC,
                 # so we need to ensure that the start and end datetimes
                 # are timezone-aware and set to UTC.
-                start = file.start_date.replace(tzinfo=timezone.utc)
-                end = file.end_date.replace(tzinfo=timezone.utc)
+                start = file.start_date.replace(tzinfo=UTC)
+                end = file.end_date.replace(tzinfo=UTC)
                 copernicusmarine.subset(
                     dataset_id=product_id,
                     variables=[var_name],

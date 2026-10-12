@@ -8,6 +8,12 @@
 intro
 workflow
 downloader
+reducer
+plotter
 components
 actions
+domains
+interfaces
+tools
+examples
 ```

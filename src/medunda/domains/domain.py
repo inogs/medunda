@@ -7,11 +7,13 @@ from abc import ABC
 from abc import abstractmethod
 from collections import deque
 from pathlib import Path
+from typing import Annotated
 from typing import Literal
-from typing import Union
+from typing import TypeAlias
 
 import yaml
 from pydantic import BaseModel
+from pydantic import Field
 from pydantic import field_validator
 
 import medunda.tools.lazy_imports.bitsea.basin as bitsea_basin
@@ -27,6 +29,10 @@ LOGGER = logging.getLogger(__name__)
 
 
 class InvalidBasinUUIDError(ValueError):
+    pass
+
+
+class InvalidGeometry(Exception):
     pass
 
 
@@ -239,8 +245,9 @@ class MultiPolygonalDomain(Domain):
         return cls(name=name, bounding_box=bounding_box, polygons=polygons)
 
 
-ConcreteDomain = Union[
-    RectangularDomain, PolygonalDomain, MultiPolygonalDomain
+ConcreteDomain: TypeAlias = Annotated[
+    RectangularDomain | PolygonalDomain | MultiPolygonalDomain,
+    Field(discriminator="type"),
 ]
 
 
@@ -328,7 +335,7 @@ def domain_from_basin(basin_uuid: str, name: str | None = None):
         )
 
     if len(simple_basins) == 1:
-        basin = list(simple_basins.values())[0]
+        basin = next(iter(simple_basins.values()))
         if not hasattr(basin, "borders"):
             raise NotImplementedError(
                 f"Medunda only supports SimplePolygonalBasins, your current "
@@ -385,7 +392,7 @@ def read_zipped_shapefile(compressed_path: Path, temporary_dir: Path):
         if not f.is_file():
             LOGGER.debug("Skipping path %s because it is not a file", f)
             continue
-        if not f.suffix.lower() == ".shp":
+        if f.suffix.lower() != ".shp":
             LOGGER.debug("Skipping path %s because it is not a shapefile", f)
             continue
         LOGGER.debug("Found shapefile %s", f)
@@ -505,10 +512,11 @@ def read_domain_from_yaml(yaml_path: Path) -> ConcreteDomain:
     elif geo_type == "basin":
         return domain_from_basin(geometry["uuid"], name=name)
 
-    raise Exception(
+    error_msg = (
         "The geometry type you have chosen should have been implemented "
         "but, because of a bug of the code, it is not recognized"
     )
+    raise InvalidGeometry(error_msg)
 
 
 def domain_from_string(domain_description: str) -> ConcreteDomain:

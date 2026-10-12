@@ -10,17 +10,18 @@ from multiprocessing import Pool
 from multiprocessing import Process
 from pathlib import Path
 from queue import Queue
+from typing import TypeAlias
 
 import yaml
 
 import medunda.tools.lazy_imports.bitsea.mask as bitsea
-import medunda.tools.lazy_imports.netCDF4 as netCDF4
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import Variable
 from medunda.components.variables import VariableDataset
 from medunda.domains.domain import Domain
 from medunda.providers.provider import Provider
+from medunda.tools.lazy_imports import netCDF4
 from medunda.tools.lazy_imports import np
 from medunda.tools.lazy_imports import xr
 from medunda.tools.parallelization import get_n_of_processes
@@ -32,9 +33,9 @@ LOGGER = logging.getLogger(__name__)
 AVE_FILE_MASK = re.compile(
     r"^ave\.(?P<date>\d{8}-\d{2}:\d{2}:\d{2})\.(?P<varname>[^.]+)\.nc$"
 )
-TASK = tuple[
-    Path, VarName, str, str | None, np.ndarray, list[tuple[str, Path]]
-]
+TASK: TypeAlias = (
+    "tuple[Path, VarName, str, str | None, np.ndarray, list[tuple[str, Path]]]"
+)
 
 
 def reader(
@@ -95,7 +96,7 @@ def reader(
                 np.ma.getdata(ds[nc_var_name][slices]), dtype=np.float32
             )
     except Exception as e:
-        raise IOError(f"Error reading file {nc_data_file}") from e
+        raise OSError(f"Error reading file {nc_data_file}") from e
     LOGGER.debug("Read an array of shape %s", data.shape)
 
     LOGGER.debug("Inserting data for time %s into the queue", time_step)
@@ -105,15 +106,13 @@ def reader(
     LOGGER.debug("Removing temporary file %s", nc_data_file)
     nc_data_file.unlink()
 
-    return None
-
 
 def allocate_medunda_data_file(
     var_name: VarName,
     var_units: str | None,
     meshmask: "xr.Dataset",
     spatial_slices,
-    time_steps: np.ndarray,
+    time_steps: "np.ndarray",
     f_pointer: "netCDF4.Dataset",
 ):
     """
@@ -153,7 +152,7 @@ def allocate_medunda_data_file(
         "longitude": {"units": "degrees_east", "axis": "X"},
         "depth": {"units": "m", "axis": "Z", "long_name": "Depth"},
     }
-    for coord in coords:
+    for coord, coord_attrs in coords.items():
         coord_elements = meshmask[coord].values[spatial_slices[coord]]
         f_pointer.createDimension(coord, coord_elements.shape[0])
         coord_var = f_pointer.createVariable(
@@ -162,9 +161,9 @@ def allocate_medunda_data_file(
             dimensions=(coord,),
         )
         coord_var[:] = coord_elements
-        coord_var.units = coords[coord]["units"]
-        coord_var.axis = coords[coord]["axis"]
-        coord_var.long_name = coords[coord].get("long_name", coord)
+        coord_var.units = coord_attrs["units"]
+        coord_var.axis = coord_attrs["axis"]
+        coord_var.long_name = coord_attrs.get("long_name", coord)
         coord_var.standard_name = coord
         if coord == "depth":
             coord_var.positive = "down"
@@ -207,7 +206,7 @@ def writer(
     var_units: str | None,
     meshmask: "xr.Dataset",
     spatial_slices: dict[str, slice],
-    time_steps: np.ndarray,
+    time_steps: "np.ndarray",
 ):
     """
     Writes data to a Medunda NetCDF file in a time-stepped manner.
@@ -285,7 +284,8 @@ def execute_writing_task(args: tuple[TASK, dict, "xr.Dataset", int]):
     ) = task
     LOGGER.debug("Starting writing task for file %s", output_file_path)
     if n_processors < 2:
-        raise ValueError("n_processors must be at least 2")
+        error_msg = "n_processors must be at least 2"
+        raise ValueError(error_msg)
 
     queue_size = min(6, n_processors - 1)
 
@@ -428,7 +428,7 @@ class TarArchiveProvider(Provider):
 
         nc_files = {}
 
-        tar_files = sorted(list(archive_path.rglob(f"{dataset_name}.tar")))
+        tar_files = sorted(archive_path.rglob(f"{dataset_name}.tar"))
         for archive_path in tar_files:
             if archive_path.parent.name == "bottom":
                 LOGGER.debug(f"Ignoring {archive_path} because is on bottom")
@@ -446,25 +446,28 @@ class TarArchiveProvider(Provider):
                         )
                         continue
                     if member_path.parent != Path("."):
-                        raise ValueError(
+                        error_msg = (
                             f"Tar archive {archive_path} contains file "
                             f"'{member.name}' with subfolder path. All files "
                             f"must be in root of archive."
                         )
+                        raise ValueError(error_msg)
                     ave_match = AVE_FILE_MASK.match(member_path.name)
                     if ave_match is None:
-                        raise ValueError(
+                        error_msg = (
                             f"Tar archive {archive_path} contains file "
                             f"'{member.name}' with invalid name. All files "
                             f"must match the pattern 'ave.<date>.<varname>.nc'."
                         )
+                        raise ValueError(error_msg)
                     if ave_match.group("varname") != dataset_name:
-                        raise ValueError(
+                        error_msg = (
                             "Tar archive contains files with different "
                             f"variable names: found var "
                             f"{ave_match.group('varname')} from file "
                             f"{member.name}, inside archive {archive_path}"
                         )
+                        raise ValueError(error_msg)
                     ave_date = datetime.strptime(
                         ave_match.group("date"), "%Y%m%d-%H:%M:%S"
                     )
@@ -676,72 +679,79 @@ class TarArchiveProvider(Provider):
     ) -> dict[Frequency, dict]:
         output: dict[Frequency, dict] = {}
         if "frequencies" not in config_content:
-            raise ValueError(
+            error_msg = (
                 'The configuration file must contain a "frequencies" section.'
             )
+            raise ValueError(error_msg)
         if not isinstance(config_content["frequencies"], list):
-            raise ValueError('The "frequencies" section must be a list')
+            error_msg = 'The "frequencies" section must be a list'
+            raise TypeError(error_msg)
 
         required_keys = {"frequency", "variables", "path"}
         for frequency in config_content["frequencies"]:
             if not isinstance(frequency, Mapping):
-                raise ValueError(
+                error_msg = (
                     'Each frequency in the "frequencies" section must be a '
                     "dictionary with the following keys: {}. "
                     "Received: {}".format(
-                        ", ".join([f for f in sorted(list(required_keys))]),
+                        ", ".join(sorted(required_keys)),
                         frequency,
                     )
                 )
+                raise TypeError(error_msg)
 
             missing_keys = required_keys - set(frequency.keys())
             if missing_keys:
-                raise ValueError(
+                error_msg = (
                     'Each frequency in the "frequencies" section must contain '
                     "the following keys: {}. Missing keys in {} ---> {}".format(
-                        ", ".join([f for f in sorted(list(required_keys))]),
+                        ", ".join(sorted(required_keys)),
                         frequency,
-                        ", ".join([f for f in sorted(list(missing_keys))]),
+                        ", ".join(sorted(missing_keys)),
                     )
                 )
+                raise ValueError(error_msg)
 
-            for key in frequency.keys():
+            for key in frequency:
                 if key not in required_keys:
-                    supported_keys = ", ".join(
-                        [f for f in sorted(list(required_keys))]
-                    )
-                    raise ValueError(
+                    supported_keys = ", ".join(sorted(required_keys))
+                    error_msg = (
                         f'Invalid key "{key}" in frequency {frequency}. '
                         f"Supported keys are: {supported_keys}."
                     )
+                    raise ValueError(error_msg)
 
             try:
                 frequency_value = Frequency(frequency["frequency"].lower())
             except Exception as e:
-                raise ValueError(
+                error_msg = (
                     f"Invalid frequency '{frequency['frequency']}' in the "
                     f"section {frequency}. Supported frequencies are 'monthly' "
                     "and 'daily'."
-                ) from e
+                )
+                raise ValueError(error_msg) from e
 
             frequency_path = Path(frequency["path"])
             frequency_vars = frequency["variables"]
             if not isinstance(frequency_vars, list):
-                raise ValueError(
+                error_msg = (
                     f'The "variables" key in frequency {frequency} must be a '
                     f"list. Received: {frequency_vars}"
                 )
+                raise TypeError(error_msg)
             for var in frequency_vars:
                 if var not in variables:
-                    raise ValueError(
+                    error_msg = (
                         f'Variable "{var}" in frequency {frequency} is not '
                         f'defined in the "variables" section.'
                     )
+                    raise ValueError(error_msg)
 
             if frequency_value in output:
-                raise ValueError(
+                error_msg = (
                     f"Frequency '{frequency_value}' is defined multiple times."
                 )
+                raise ValueError(error_msg)
 
             output[frequency_value] = {
                 "path": frequency_path,
@@ -756,41 +766,47 @@ class TarArchiveProvider(Provider):
     ) -> dict[VarName, dict[str, str]]:
         variables_config: dict[VarName, dict[str, str]] = {}
         if "variables" not in config_content:
-            raise ValueError(
+            error_msg = (
                 'The configuration file must contain a "variables" section.'
             )
+            raise ValueError(error_msg)
         if not isinstance(config_content["variables"], list):
-            raise ValueError('The "variables" section must be a list.')
+            error_msg = 'The "variables" section must be a list.'
+            raise TypeError(error_msg)
 
         for raw_var in config_content["variables"]:
             if not isinstance(raw_var, Mapping):
-                raise ValueError(
+                error_msg = (
                     'Each variable in the "variables" section must be a '
                     "dictionary with the following mandatory keys: "
                     "variable and unit. Optional keys are: dataset_name. "
                     f"Received: {raw_var}"
                 )
+                raise TypeError(error_msg)
             if "variable" not in raw_var or "unit" not in raw_var:
-                raise ValueError(
+                error_msg = (
                     'Each variable in the "variables" section must contain '
                     'the keys "variable" and "unit". Optional keys are: '
                     f"dataset_name. Received: {raw_var}"
                 )
-            for key in raw_var.keys():
+                raise ValueError(error_msg)
+            for key in raw_var:
                 if key not in {"variable", "unit", "dataset_name"}:
-                    raise ValueError(
+                    error_msg = (
                         f'Invalid key "{key}" in variable {raw_var}. '
                         'Supported keys are: "variable", "unit", and '
                         '"dataset_name".'
                     )
+                    raise ValueError(error_msg)
             var_name = raw_var["variable"]
             try:
                 current_var = Variable.get_by_name(var_name)
             except ValueError as e:
-                raise ValueError(
+                error_msg = (
                     f'Invalid variable "{var_name}" in the "variables" '
                     "section. Medunda does not support this variable."
-                ) from e
+                )
+                raise ValueError(error_msg) from e
 
             variables_config[var_name] = {
                 "unit": raw_var["unit"],
@@ -804,17 +820,18 @@ class TarArchiveProvider(Provider):
         config_content: dict,
     ) -> dict[str, str | Path]:
         if "meshmask" not in config_content:
-            raise ValueError(
+            error_msg = (
                 'The configuration file must contain a "meshmask" section.'
             )
+            raise ValueError(error_msg)
         meshmask_dict = config_content["meshmask"]
         if not isinstance(meshmask_dict, Mapping):
-            raise ValueError('The "meshmask" section must be a dictionary.')
+            error_msg = 'The "meshmask" section must be a dictionary.'
+            raise TypeError(error_msg)
 
         if "type" not in meshmask_dict:
-            raise ValueError(
-                'The "meshmask" section must contain a "type" key.'
-            )
+            error_msg = 'The "meshmask" section must contain a "type" key.'
+            raise ValueError(error_msg)
 
         if "path" in meshmask_dict:
             config_content["meshmask"]["path"] = Path(

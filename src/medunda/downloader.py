@@ -125,7 +125,7 @@ def configure_parser(
         "--provider",
         type=str,
         required=False,
-        choices=sorted(list(PROVIDERS.keys())),
+        choices=sorted(PROVIDERS.keys()),
         default="cmems_mediterranean",
         help="The provider from which to download the data (default: cmems_mediterranean)",
     )
@@ -146,6 +146,10 @@ def configure_parser(
     )
 
     return parser
+
+
+class GeoDataCollectionAlreadyInitialized(OSError):
+    pass
 
 
 def download_data(
@@ -183,7 +187,7 @@ def download_data(
         config_file=provider_config
     )
     if hasattr(provider, "name"):
-        provider_name = getattr(provider, "name")
+        provider_name = provider.name
     else:
         provider_name = provider_class_name
 
@@ -214,12 +218,13 @@ def download_data(
     # Dataset file
     dataset_file = output_dir / "medunda_geodata_collection.json"
     if dataset_file.exists():
-        raise IOError(
-            f"Dataset file {dataset_file} already exists. "
+        error_msg = (
+            f"GeoDataCollection file {dataset_file} already exists. "
             f"This means that the output directory {output_dir} has been "
             "already used for a previous download. Please choose a different "
-            "output directory or delete the existing dataset file."
+            "output directory or delete the existing geodata collection file."
         )
+        raise GeoDataCollectionAlreadyInitialized(error_msg)
 
     for variable in variables:
         # We save here the files that we download for this variable

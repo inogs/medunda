@@ -2,9 +2,8 @@ from typing import Any
 from typing import Literal
 from typing import TypeAlias
 
-import numpy as np
-from dask.delayed import Delayed
-
+from medunda.tools.lazy_imports import dask_delayed
+from medunda.tools.lazy_imports import np
 from medunda.tools.lazy_imports import xr
 
 DelayedDataset: TypeAlias = dict[Literal["data", "coords", "attrs"], Any]
@@ -29,7 +28,7 @@ def to_delayed(dataset: "xr.Dataset") -> DelayedDataset:
         delayed_data = var_dataarray.data.rechunk(-1).to_delayed()
         while isinstance(delayed_data, np.ndarray):
             delayed_data = delayed_data[0]
-        assert isinstance(delayed_data, Delayed), (
+        assert isinstance(delayed_data, dask_delayed.Delayed), (
             f"Expected Delayed object, got {type(delayed_data)}"
         )
 

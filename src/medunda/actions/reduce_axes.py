@@ -5,10 +5,9 @@ from typing import Literal
 from typing import cast
 from warnings import warn
 
-import numpy as np
-
 import medunda.tools.lazy_imports.bitsea.grid as bitsea_grid
 from medunda.tools.layers import compute_layer_height
+from medunda.tools.lazy_imports import numpy as np
 from medunda.tools.lazy_imports import xarray as xr
 
 LOGGER = logging.getLogger(__name__)

@@ -1,3 +1,13 @@
+"""
+The reducer is a command line tool that allows users to perform
+various statistical operations on downloaded Medunda datasets.
+
+It supports multiple actions, each corresponding to a specific operation.
+
+The reducer reads the input dataset, applies the selected action to the specified variables
+and writes the results to an output file in the desired format (NetCDF, CSV, GeoTIFF, or ASCII).
+"""
+
 import argparse
 import logging
 from pathlib import Path
@@ -119,8 +129,7 @@ def build_action_args(args: argparse.Namespace) -> dict[str, Any]:
     del args_values["format"]
     del args_values["action"]
 
-    if "tool" in args_values:
-        del args_values["tool"]
+    args_values.pop("tool", None)
 
     return args_values
 
@@ -179,7 +188,9 @@ def reducer(
             raise TypeError("ASCII configuration requires a Dataset")
 
         if len(dataset_result.data_vars) == 1:
-            dataset_result = dataset_result[list(dataset_result.data_vars)[0]]
+            dataset_result = dataset_result[
+                next(iter(dataset_result.data_vars))
+            ]
         else:
             raise ValueError("CSV configuration requires a single variable")
 
@@ -193,7 +204,6 @@ def reducer(
         dataset_result = dataset_result.rio.set_spatial_dims(
             x_dim="longitude", y_dim="latitude"
         )
-        dataset_result.rio.crs
         dataset_result.rio.write_crs("epsg:4326", inplace=True)
         dataset_result.rio.to_raster(output_file)
 
@@ -202,7 +212,9 @@ def reducer(
             raise TypeError("ASCII configuration requires a Dataset")
 
         if len(dataset_result.data_vars) == 1:
-            dataset_result = dataset_result[list(dataset_result.data_vars)[0]]
+            dataset_result = dataset_result[
+                next(iter(dataset_result.data_vars))
+            ]
         else:
             raise ValueError("ASCII configuration requires a single variable")
 

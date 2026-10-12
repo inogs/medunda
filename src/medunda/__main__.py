@@ -79,7 +79,7 @@ def parse_args() -> argparse.Namespace:
         "--provider",
         type=str,
         required=False,
-        choices=sorted(list(PROVIDERS.keys())),
+        choices=sorted(PROVIDERS.keys()),
         default=None,
         help="The provider to filter the variables by. If not "
         "specified, all variables will be shown.",
