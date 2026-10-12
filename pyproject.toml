@@ -49,7 +49,22 @@ medunda = "medunda.__main__:main"
 
 
 [tool.ruff.lint]
-extend-select = ["I", "F403"]
+extend-select = ["I", "F403", "TID253"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+banned-module-level-imports = [
+    "geopandas",
+    "matplotlib",
+    "netCDF4",
+    "numpy",
+    "xarray",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["TID253"]
+# The interfaces are meant to be imported explicitly by user scripts, never
+# at startup, so they are allowed to import heavy modules directly.
+"src/medunda/interfaces/**" = ["TID253"]
 
 [tool.ruff.lint.isort]
 force-single-line = true

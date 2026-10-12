@@ -10,6 +10,7 @@ from multiprocessing import Pool
 from multiprocessing import Process
 from pathlib import Path
 from queue import Queue
+from typing import TypeAlias
 
 import yaml
 
@@ -32,9 +33,9 @@ LOGGER = logging.getLogger(__name__)
 AVE_FILE_MASK = re.compile(
     r"^ave\.(?P<date>\d{8}-\d{2}:\d{2}:\d{2})\.(?P<varname>[^.]+)\.nc$"
 )
-TASK = tuple[
-    Path, VarName, str, str | None, np.ndarray, list[tuple[str, Path]]
-]
+TASK: TypeAlias = (
+    "tuple[Path, VarName, str, str | None, np.ndarray, list[tuple[str, Path]]]"
+)
 
 
 def reader(

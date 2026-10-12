@@ -144,9 +144,9 @@ def check_variable(ds, var):
         raise ValueError("Unsupported dataset type")
 
     if var in VAR_METADATA:
-        var_metadata: dict[str, "str | Colormap"] = dict(VAR_METADATA[var])
+        var_metadata: dict[str, str | Colormap] = dict(VAR_METADATA[var])
     else:
-        var_metadata: dict[str, "str | Colormap"] = dict(DEFAULT_VAR)
+        var_metadata: dict[str, str | Colormap] = dict(DEFAULT_VAR)
         var_metadata["label"] = var
 
     cmap_name = cast(str, var_metadata["cmap_name"])
@@ -215,7 +215,7 @@ def plotter(filepath: Path, variable: str, mode: str, args):
         if variable not in df.columns:
             raise ValueError(f"Variable '{variable}' not found in CSV")
         else:
-            metadata: dict[str, "str | Colormap"] = dict(DEFAULT_VAR)
+            metadata: dict[str, str | Colormap] = dict(DEFAULT_VAR)
             try:
                 var_object = Variable.get_by_name(variable)
                 metadata["label"] = var_object.get_label()
