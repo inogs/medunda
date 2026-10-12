@@ -14,7 +14,7 @@
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Components" href="components.html" />
+    <link rel="next" title="Reducer" href="reducer.html" />
     <link rel="prev" title="Workflow" href="workflow.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -42,18 +42,129 @@ is the core data structure used by Medunda to manage and process the data
 produced by one or more model runs.</p>
 <p>It provides a command line interface that allows users to specify the
 variables, frequencies, and other parameters for the data download.</p>
-<p>To start a new download:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>medunda<span class="w"> </span>downloader<span class="w"> </span>create<span class="w"> </span>--variables<span class="w"> </span>&lt;variable_name&gt;<span class="w"> </span>--start-date<span class="w"> </span>&lt;YYYY-MM-DD&gt;<span class="w"> </span>--end-date<span class="w"> </span>&lt;YYYY-MM-DD&gt;<span class="w"> </span>--frequency<span class="w"> </span>&lt;daily<span class="p">|</span>weekly<span class="p">|</span>monthly<span class="p">|</span>yearly&gt;<span class="w"> </span>--domain<span class="w"> </span>&lt;domain_file&gt;<span class="w"> </span>--provider<span class="w"> </span>&lt;data_source&gt;<span class="w"> </span>--provider-config<span class="w"> </span>&lt;configuration<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>provider&gt;<span class="w"> </span>--split-by<span class="w"> </span>&lt;whole<span class="p">|</span>year<span class="p">|</span>month&gt;<span class="w"> </span>--output-dir<span class="w"> </span>&lt;output_path&gt;
+<p>The downloader has two commands: <code class="docutils literal notranslate"><span class="pre">create</span></code>, which starts a new download, and <code class="docutils literal notranslate"><span class="pre">resume</span></code>, which completes a download that has been interrupted.</p>
+<section id="starting-a-new-download">
+<h2>Starting a new download<a class="headerlink" href="#starting-a-new-download" title="Link to this heading">¶</a></h2>
+<p>To run the downloader, provide the following required and optional arguments:</p>
+<p><strong>I. Required:</strong></p>
+<ol class="arabic">
+<li><p><strong>variables</strong>: one or more variables to download. The variables supported by Medunda can be listed with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>medunda<span class="w"> </span>show<span class="w"> </span>variables
 </pre></div>
 </div>
-<p>To resume an interrupted download:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>medunda<span class="w"> </span>downloader<span class="w"> </span>resume<span class="w"> </span>--dataset-dir<span class="w"> </span>&lt;path_of_the_dataset&gt;
+<p>This prints all the variables supported by Medunda from all providers. To see only the variables available from a specific provider (and, optionally, at a specific frequency), use:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>medunda<span class="w"> </span>show<span class="w"> </span>variables<span class="w"> </span>--provider<span class="w"> </span>&lt;provider_name&gt;<span class="w"> </span>--frequency<span class="w"> </span>&lt;frequency&gt;
+</pre></div>
+</div>
+</li>
+<li><p><strong>start-date</strong> and <strong>end-date</strong>: the time range to download, written in the format <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span></code>.</p></li>
+<li><p><strong>domain</strong>: the geographical (and, optionally, vertical) region to download. It can be either the path to a YAML file describing a rectangular, shapefile, WKT, or BitSea basin domain, or a string in the form <code class="docutils literal notranslate"><span class="pre">basin:&lt;uuid&gt;</span></code> that identifies a BitSea basin. Some ready-to-use YAML files (e.g. <code class="docutils literal notranslate"><span class="pre">MediterraneanSea.yaml</span></code>, <code class="docutils literal notranslate"><span class="pre">AdriaticSea.yaml</span></code>, <code class="docutils literal notranslate"><span class="pre">GSA9.yaml</span></code>, <code class="docutils literal notranslate"><span class="pre">GlobalOcean.yaml</span></code>) are available in the <code class="docutils literal notranslate"><span class="pre">domains</span></code> directory of the repository. See <strong><a class="reference internal" href="domains.html#domaindoc"><span class="std std-ref">Domains</span></a></strong> for the supported domain types.</p></li>
+<li><p><strong>output-dir</strong>: the directory where the downloaded dataset is saved. The directory is created if it does not exist. Each directory can contain only one dataset: the download fails if the directory already contains a dataset from a previous download.</p></li>
+</ol>
+<p><strong>II. Optional:</strong></p>
+<ol class="arabic" start="5">
+<li><p><strong>frequency</strong>: the time frequency of the data: <code class="docutils literal notranslate"><span class="pre">daily</span></code>, <code class="docutils literal notranslate"><span class="pre">weekly</span></code>, <code class="docutils literal notranslate"><span class="pre">monthly</span></code>, or <code class="docutils literal notranslate"><span class="pre">yearly</span></code>. The default is <code class="docutils literal notranslate"><span class="pre">monthly</span></code>. Not all frequencies are supported by all providers; use <code class="docutils literal notranslate"><span class="pre">medunda</span> <span class="pre">show</span> <span class="pre">variables</span> <span class="pre">--provider</span> <span class="pre">&lt;provider_name&gt;</span> <span class="pre">--frequency</span> <span class="pre">&lt;frequency&gt;</span></code> to check which variables are available at a given frequency.</p></li>
+<li><p><strong>provider</strong>: the source from which the data are retrieved. The default is <code class="docutils literal notranslate"><span class="pre">cmems_mediterranean</span></code>. The available providers can be listed with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>medunda<span class="w"> </span>show<span class="w"> </span>providers
+</pre></div>
+</div>
+<p>Providers are divided into two groups:</p>
+<ul class="simple">
+<li><p><strong>CMEMS providers</strong>, which download data from the <a class="reference external" href="https://marine.copernicus.eu/">Copernicus Marine Data Store</a>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">cmems_mediterranean</span></code>: physical and biogeochemical data of the Mediterranean Sea, from the <a class="reference external" href="https://data.marine.copernicus.eu/product/MEDSEA_MULTIYEAR_PHY_006_004/description">MEDSEA_MULTIYEAR_PHY_006_004</a> and <a class="reference external" href="https://data.marine.copernicus.eu/product/MEDSEA_MULTIYEAR_BGC_006_008/description">MEDSEA_MULTIYEAR_BGC_006_008</a> products;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cmems_global</span></code>: physical data of the global ocean, from the <a class="reference external" href="https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description">GLOBAL_MULTIYEAR_PHY_001_030</a> product.</p></li>
+</ul>
+</li>
+<li><p><strong>Local providers</strong>, which retrieve data that are already available on the local machine:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">local_reanalysis</span></code>: reads the data from a local directory structure;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tar_archive</span></code>: extracts the data from tar archives.</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>provider-config</strong>: the path to a YAML configuration file for the provider. Local providers require it, while CMEMS providers do not accept it. By default, no configuration file is used.</p></li>
+<li><p><strong>split-by</strong>: how the downloaded data are split into files: one file per <code class="docutils literal notranslate"><span class="pre">year</span></code>, one file per <code class="docutils literal notranslate"><span class="pre">month</span></code>, or a single file for the <code class="docutils literal notranslate"><span class="pre">whole</span></code> time range. The default is <code class="docutils literal notranslate"><span class="pre">year</span></code>.</p></li>
+</ol>
+<p>The full command to start a new download:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>medunda<span class="w"> </span>downloader<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--variables<span class="w"> </span>&lt;variable_names&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--start-date<span class="w"> </span>&lt;YYYY-MM-DD&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--end-date<span class="w"> </span>&lt;YYYY-MM-DD&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--frequency<span class="w"> </span>&lt;daily<span class="p">|</span>weekly<span class="p">|</span>monthly<span class="p">|</span>yearly&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--domain<span class="w"> </span>&lt;domain_file<span class="p">|</span>basin:uuid&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--provider<span class="w"> </span>&lt;provider_name&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--provider-config<span class="w"> </span>&lt;provider_config_file&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--split-by<span class="w"> </span>&lt;whole<span class="p">|</span>year<span class="p">|</span>month&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output-dir<span class="w"> </span>&lt;output_path&gt;
 </pre></div>
 </div>
 <p><em>Example</em>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>medunda<span class="w"> </span>downloader<span class="w"> </span>create<span class="w"> </span>--variables<span class="w"> </span>thetao<span class="w"> </span>o2<span class="w"> </span>--start-date<span class="w"> </span><span class="m">1999</span>-01-01<span class="w"> </span>--end-date<span class="w"> </span><span class="m">2023</span>-12-31<span class="w"> </span>--frequency<span class="w"> </span>monthly<span class="w"> </span>--domain<span class="w"> </span>gsa9<span class="w"> </span>--split-by<span class="w"> </span>year<span class="w"> </span>--output-dir<span class="w"> </span>./data/
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>medunda<span class="w"> </span>downloader<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--variables<span class="w"> </span>thetao<span class="w"> </span>o2<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--start-date<span class="w"> </span><span class="m">1999</span>-01-01<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--end-date<span class="w"> </span><span class="m">2023</span>-12-31<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--frequency<span class="w"> </span>monthly<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--domain<span class="w"> </span>domains/GSA9.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--split-by<span class="w"> </span>year<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output-dir<span class="w"> </span>./data/
 </pre></div>
 </div>
+<p>The downloaded files are saved inside the output directory, in a subdirectory for each variable and frequency (e.g. <code class="docutils literal notranslate"><span class="pre">thetao/monthly/</span></code>).</p>
+</section>
+<section id="the-geodatacollection">
+<h2>The GeoDataCollection<a class="headerlink" href="#the-geodatacollection" title="Link to this heading">¶</a></h2>
+<p>Before downloading the data, the downloader writes a file named <code class="docutils literal notranslate"><span class="pre">medunda_geodata_collection.json</span></code> inside the output directory. This file contains the description of a <a class="reference internal" href="components.html#medunda.components.geodata.GeoDataCollection" title="medunda.components.geodata.GeoDataCollection"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeoDataCollection</span></code></a>, i.e. all the information required to describe and identify the dataset: the domain, the time range, the frequency, the provider, and the list of the data files that compose the dataset.</p>
+<p>The directory containing this file is the Medunda dataset that is used as input by the <strong><a class="reference internal" href="reducer.html#reducerdoc"><span class="std std-ref">Reducer</span></a></strong>.</p>
+<p>The following is an example of the <code class="docutils literal notranslate"><span class="pre">medunda_geodata_collection.json</span></code> file generated by Medunda for a download of the <code class="docutils literal notranslate"><span class="pre">thetao</span></code> variable on the Adriatic Sea, from 2010 to 2011, split by year:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"domain"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"AdriaticSea"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"bounding_box"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">"minimum_depth"</span><span class="p">:</span><span class="w"> </span><span class="mf">1.0182366371154785</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"maximum_depth"</span><span class="p">:</span><span class="w"> </span><span class="mf">1250.0</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"minimum_latitude"</span><span class="p">:</span><span class="w"> </span><span class="mf">39.609258912544874</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"maximum_latitude"</span><span class="p">:</span><span class="w"> </span><span class="mf">45.78273415600006</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"minimum_longitude"</span><span class="p">:</span><span class="w"> </span><span class="mf">12.154220053000188</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"maximum_longitude"</span><span class="p">:</span><span class="w"> </span><span class="mf">20.19036466397057</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"RectangularDomain"</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"start_date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2010-01-01T00:00:00"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"end_date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2011-12-31T00:00:00"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"data_files"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"thetao"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">                </span><span class="nt">"start_date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2010-01-01T00:00:00"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"end_date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2010-12-31T23:59:59"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"variable"</span><span class="p">:</span><span class="w"> </span><span class="s2">"thetao"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"thetao/monthly/AdriaticSea_thetao_monthly_2010-01-01--2010-12-31.nc"</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">                </span><span class="nt">"start_date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2011-01-01T00:00:00"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"end_date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2011-12-31T00:00:00"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"variable"</span><span class="p">:</span><span class="w"> </span><span class="s2">"thetao"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"thetao/monthly/AdriaticSea_thetao_monthly_2011-01-01--2011-12-31.nc"</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"frequency"</span><span class="p">:</span><span class="w"> </span><span class="s2">"monthly"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"provider"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cmems_global"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"provider_config"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="resuming-a-download">
+<h2>Resuming a download<a class="headerlink" href="#resuming-a-download" title="Link to this heading">¶</a></h2>
+<p>Since the <code class="docutils literal notranslate"><span class="pre">GeoDataCollection</span></code> is saved before the download starts, Medunda can resume the download process in case of an interruption. To resume a download, only the path of the existing dataset is required:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>medunda<span class="w"> </span>downloader<span class="w"> </span>resume<span class="w"> </span>--dataset-dir<span class="w"> </span>&lt;path_of_the_dataset&gt;
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">--dataset-dir</span></code> argument must point to the directory that was specified as <code class="docutils literal notranslate"><span class="pre">--output-dir</span></code> when the download was created.</p>
+<p>When resuming, the files that have already been downloaded are skipped, and only the missing ones are downloaded. Since a file that was being downloaded when the interruption occurred is downloaded again from scratch, splitting the dataset into smaller files (with <code class="docutils literal notranslate"><span class="pre">--split-by</span> <span class="pre">year</span></code> or <code class="docutils literal notranslate"><span class="pre">--split-by</span> <span class="pre">month</span></code>) reduces the amount of data that must be downloaded again.</p>
+</section>
 </section>
 
 
@@ -85,9 +196,20 @@ variables, frequencies, and other parameters for the data download.</p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Downloader</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Downloader</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#starting-a-new-download">Starting a new download</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-geodatacollection">The GeoDataCollection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#resuming-a-download">Resuming a download</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reducer.html">Reducer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotter.html">Plotter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="actions.html">Actions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="domains.html">Domains</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Python Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 
 <div class="relations">
@@ -95,7 +217,7 @@ variables, frequencies, and other parameters for the data download.</p>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="workflow.html" title="previous chapter">Workflow</a></li>
-      <li>Next: <a href="components.html" title="next chapter">Components</a></li>
+      <li>Next: <a href="reducer.html" title="next chapter">Reducer</a></li>
   </ul></li>
 </ul>
 </div>

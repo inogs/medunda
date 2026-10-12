@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Reducer &#8212; Medunda User Guide  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Plotter" href="plotter.html" />
+    <link rel="prev" title="Downloader" href="downloader.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-medunda.reducer">
+<span id="reducer"></span><span id="reducerdoc"></span><h1>Reducer<a class="headerlink" href="#module-medunda.reducer" title="Link to this heading">¶</a></h1>
+<p>The reducer is a command line tool that allows users to perform
+various statistical operations on downloaded Medunda datasets.</p>
+<p>It supports multiple actions, each corresponding to a specific operation.</p>
+<p>The reducer reads the input dataset, applies the selected action to the specified variables
+and writes the results to an output file in the desired format (NetCDF, CSV, GeoTIFF, or ASCII).</p>
+<p>The reducer can be executed from the command line using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>medunda<span class="w"> </span>reducer<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--input-dataset<span class="w"> </span>&lt;path_to_dataset&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--variables<span class="w"> </span>&lt;variable_names&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output-file<span class="w"> </span>&lt;output_path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--format<span class="w"> </span>&lt;netcdf<span class="p">|</span>csv<span class="p">|</span>geotiff<span class="p">|</span>ascii&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;action&gt;<span class="w"> </span><span class="o">[</span>action_options<span class="o">]</span>
+</pre></div>
+</div>
+<p>The main arguments are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--input-dataset</span></code>: path of the Medunda dataset to be processed, i.e. the directory that was passed as <code class="docutils literal notranslate"><span class="pre">--output-dir</span></code> to the <strong><a class="reference internal" href="downloader.html#downloaderdoc"><span class="std std-ref">Downloader</span></a></strong>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--variables</span></code>: one or more variables to be processed. This argument is optional: if it is not specified, all the variables of the dataset are processed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--output-file</span></code>: path of the output file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--format</span></code>: format of the output file. This argument is optional; the default is <code class="docutils literal notranslate"><span class="pre">netcdf</span></code>. The available formats are described below.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;action&gt;</span></code>: the operation to execute.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[action_options]</span></code>: additional options required by the selected action.</p></li>
+</ul>
+<p>Before executing the action, the reducer masks (i.e. sets to <code class="docutils literal notranslate"><span class="pre">NaN</span></code>) all the values that lie outside the domain of the dataset (see <strong><a class="reference internal" href="domains.html#domaindoc"><span class="std std-ref">Domains</span></a></strong>).</p>
+<p>Each action defines its own command-line options. See <strong><a class="reference internal" href="actions.html#actionsdoc"><span class="std std-ref">Actions</span></a></strong> for the available actions and their specific arguments.
+Each action returns a dataset with the processed data, which can then be visualized using the <strong><a class="reference internal" href="plotter.html#plotterdoc"><span class="std std-ref">Plotter</span></a></strong>.</p>
+<section id="output-formats">
+<h2>Output formats<a class="headerlink" href="#output-formats" title="Link to this heading">¶</a></h2>
+<section id="netcdf">
+<h3>NetCDF<a class="headerlink" href="#netcdf" title="Link to this heading">¶</a></h3>
+<p><a class="reference external" href="https://www.unidata.ucar.edu/software/netcdf/">NetCDF</a> is the default output format.</p>
+<p>The processed <a class="reference external" href="https://docs.xarray.dev/en/stable/generated/xarray.Dataset.html"><code class="docutils literal notranslate"><span class="pre">xarray.Dataset</span></code></a> is written directly to the specified NetCDF file.</p>
+</section>
+<hr class="docutils" />
+<section id="csv">
+<h3>CSV<a class="headerlink" href="#csv" title="Link to this heading">¶</a></h3>
+<p>CSV output is intended for results containing a single variable.</p>
+<p>For CSV output, the result must contain exactly one data variable; use <code class="docutils literal notranslate"><span class="pre">--variables</span></code> to select it. The resulting data are converted to a <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html">pandas DataFrame</a>, with one column for each coordinate and one for the variable, and written to the output file.</p>
+</section>
+<hr class="docutils" />
+<section id="geotiff">
+<h3>GeoTIFF<a class="headerlink" href="#geotiff" title="Link to this heading">¶</a></h3>
+<p><a class="reference external" href="https://www.ogc.org/standards/geotiff/">GeoTIFF</a> output is intended for spatial results.</p>
+<p>If the result contains a <code class="docutils literal notranslate"><span class="pre">time</span></code> dimension, the reducer first calculates the mean over time.</p>
+<p>The spatial dimensions are expected to be:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">longitude</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">latitude</span></code></p></li>
+</ul>
+<p>The output is written using the WGS84 coordinate reference system (<a class="reference external" href="https://epsg.io/4326"><code class="docutils literal notranslate"><span class="pre">EPSG:4326</span></code></a>).</p>
+</section>
+<hr class="docutils" />
+<section id="ascii">
+<h3>ASCII<a class="headerlink" href="#ascii" title="Link to this heading">¶</a></h3>
+<p>ASCII output produces a grid in the <a class="reference external" href="https://desktop.arcgis.com/en/arcmap/latest/manage-data/raster-and-images/esri-ascii-raster-format.htm">Esri ASCII raster format</a> and is intended for two-dimensional spatial grids.</p>
+<p>The result must contain a single data variable (use <code class="docutils literal notranslate"><span class="pre">--variables</span></code> to select it) and the <code class="docutils literal notranslate"><span class="pre">latitude</span></code> and <code class="docutils literal notranslate"><span class="pre">longitude</span></code> dimensions.</p>
+<p>If a <code class="docutils literal notranslate"><span class="pre">time</span></code> dimension is present, the reducer calculates the mean over time before creating the ASCII grid. After this step, the data must be two-dimensional: variables that also have a <code class="docutils literal notranslate"><span class="pre">depth</span></code> dimension must first be reduced with an action that removes it (for example, <code class="docutils literal notranslate"><span class="pre">extract_surface</span></code> or <code class="docutils literal notranslate"><span class="pre">compute_depth_average</span></code>).</p>
+<p>Missing values are written using <code class="docutils literal notranslate"><span class="pre">-9999</span></code> as the <code class="docutils literal notranslate"><span class="pre">NODATA</span></code> value.</p>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Medunda User Guide</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="downloader.html">Downloader</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Reducer</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#output-formats">Output formats</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plotter.html">Plotter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="actions.html">Actions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="domains.html">Domains</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Python Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="downloader.html" title="previous chapter">Downloader</a></li>
+      <li>Next: <a href="plotter.html" title="next chapter">Plotter</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/reducer.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

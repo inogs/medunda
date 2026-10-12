@@ -15,7 +15,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Actions" href="actions.html" />
-    <link rel="prev" title="Downloader" href="downloader.html" />
+    <link rel="prev" title="Plotter" href="plotter.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -43,7 +43,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>domain</strong> (<em>RectangularDomain</em><em> | </em><em>PolygonalDomain</em><em> | </em><em>MultiPolygonalDomain</em>)</p></li>
+<li><p><strong>domain</strong> (<em>Annotated</em><em>[</em><a class="reference internal" href="domains.html#medunda.domains.domain.RectangularDomain" title="medunda.domains.domain.RectangularDomain"><em>RectangularDomain</em></a><em> | </em><a class="reference internal" href="domains.html#medunda.domains.domain.PolygonalDomain" title="medunda.domains.domain.PolygonalDomain"><em>PolygonalDomain</em></a><em> | </em><a class="reference internal" href="domains.html#medunda.domains.domain.MultiPolygonalDomain" title="medunda.domains.domain.MultiPolygonalDomain"><em>MultiPolygonalDomain</em></a><em>, </em><em>FieldInfo</em><em>(</em><em>annotation=NoneType</em><em>, </em><em>required=True</em><em>, </em><em>discriminator='type'</em><em>)</em><em>]</em>)</p></li>
 <li><p><strong>start_date</strong> (<em>datetime</em>)</p></li>
 <li><p><strong>end_date</strong> (<em>datetime</em>)</p></li>
 <li><p><strong>data_files</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>DataFile</em><em>, </em><em>...</em><em>]</em><em>]</em>)</p></li>
@@ -60,7 +60,7 @@
 <dd><p>The domain associated with the dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>medunda.domains.domain.RectangularDomain | medunda.domains.domain.PolygonalDomain | medunda.domains.domain.MultiPolygonalDomain</p>
+<dd class="field-odd"><p><a class="reference internal" href="domains.html#medunda.domains.domain.RectangularDomain" title="medunda.domains.domain.RectangularDomain">medunda.domains.domain.RectangularDomain</a> | <a class="reference internal" href="domains.html#medunda.domains.domain.PolygonalDomain" title="medunda.domains.domain.PolygonalDomain">medunda.domains.domain.PolygonalDomain</a> | <a class="reference internal" href="domains.html#medunda.domains.domain.MultiPolygonalDomain" title="medunda.domains.domain.MultiPolygonalDomain">medunda.domains.domain.MultiPolygonalDomain</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -262,18 +262,24 @@ end dates of the dataset.</p>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="downloader.html">Downloader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reducer.html">Reducer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotter.html">Plotter</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Components</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#medunda.components.geodata.GeoDataCollection"><code class="docutils literal notranslate"><span class="pre">GeoDataCollection</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="actions.html">Actions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="domains.html">Domains</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Python Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="downloader.html" title="previous chapter">Downloader</a></li>
+      <li>Previous: <a href="plotter.html" title="previous chapter">Plotter</a></li>
       <li>Next: <a href="actions.html" title="next chapter">Actions</a></li>
   </ul></li>
 </ul>

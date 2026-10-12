@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Domains &#8212; Medunda User Guide  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Python Interface" href="interfaces.html" />
+    <link rel="prev" title="Actions" href="actions.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="domains">
+<span id="domaindoc"></span><h1>Domains<a class="headerlink" href="#domains" title="Link to this heading">¶</a></h1>
+<p>A <strong>domain</strong> defines the geographical and, optionally, vertical extent of the data to be retrieved or processed by MEDUNDA.
+Domains are used to restrict oceanographic datasets to a specific geographical area. A domain can be defined as a rectangular area, a polygon, or a collection of polygons.
+A domain can also optionally include minimum and maximum depth constraints.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="medunda.domains.domain.Domain">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">medunda.domains.domain.</span></span><span class="sig-name descname"><span class="pre">Domain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounding_box</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.domains.domain.Domain" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Represents a domain in a computational or data-handling context.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>bounding_box</strong> (<em>BoundingBox</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="medunda.domains.domain.Domain.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#medunda.domains.domain.Domain.name" title="Link to this definition">¶</a></dt>
+<dd><p>The name of the domain. Must conform to the naming
+convention disallowing special characters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="medunda.domains.domain.Domain.bounding_box">
+<span class="sig-name descname"><span class="pre">bounding_box</span></span><a class="headerlink" href="#medunda.domains.domain.Domain.bounding_box" title="Link to this definition">¶</a></dt>
+<dd><p>The bounding box representing the spatial
+boundaries of the domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">BoundingBox</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">name_is_conformal(name</span></span></dt>
+<dd><p>str) -&gt; str:
+Validates that the domain name complies with the naming standard by
+disallowing special characters. Returns the name if valid.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">compute_selection_mask(dataset</span></span></dt>
+<dd><p>xr.Dataset) -&gt; np.ndarray:
+Abstract method to compute a selection mask over a dataset.
+Must be implemented by subclasses.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="medunda.domains.domain.Domain.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#medunda.domains.domain.Domain.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="medunda.domains.domain.Domain.name_is_conformal">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">name_is_conformal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.domains.domain.Domain.name_is_conformal" title="Link to this definition">¶</a></dt>
+<dd><p>Check that the name does not contain special characters.
+If it does, raise a ValueError.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p>Medunda supports rectangular, polygonal, and multipolygonal domains. Domains can be defined directly in Python or loaded from external geographic definitions such as shapefiles, WKT files, and BitSea basins.</p>
+<section id="rectangulardomain">
+<h2>RectangularDomain<a class="headerlink" href="#rectangulardomain" title="Link to this heading">¶</a></h2>
+<p>A rectangular domain is defined by minimum and maximum latitude and longitude values. It can optionally include minimum and maximum depth constraints.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="medunda.domains.domain.RectangularDomain">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">medunda.domains.domain.</span></span><span class="sig-name descname"><span class="pre">RectangularDomain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounding_box</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RectangularDomain'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.domains.domain.RectangularDomain" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#medunda.domains.domain.Domain" title="medunda.domains.domain.Domain"><code class="xref py py-class docutils literal notranslate"><span class="pre">Domain</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>bounding_box</strong> (<em>BoundingBox</em>)</p></li>
+<li><p><strong>type</strong> (<em>Literal</em><em>[</em><em>'RectangularDomain'</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="medunda.domains.domain.RectangularDomain.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#medunda.domains.domain.RectangularDomain.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nn">---</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AdriaticSea</span>
+<span class="nt">geometry</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Rectangle</span>
+<span class="w">  </span><span class="nt">min_latitude</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">39.609258912544874</span>
+<span class="w">  </span><span class="nt">max_latitude</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">45.78273415600006</span>
+<span class="w">  </span><span class="nt">min_longitude</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12.154220053000188</span>
+<span class="w">  </span><span class="nt">max_longitude</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20.19036466397057</span>
+<span class="nt">depth</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">min_depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0182366371154785</span>
+<span class="w">  </span><span class="nt">max_depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1250</span>
+</pre></div>
+</div>
+</section>
+<section id="polygonaldomain">
+<h2>PolygonalDomain<a class="headerlink" href="#polygonaldomain" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="medunda.domains.domain.PolygonalDomain">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">medunda.domains.domain.</span></span><span class="sig-name descname"><span class="pre">PolygonalDomain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounding_box</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">point_latitudes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">point_longitudes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'PolygonalDomain'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.domains.domain.PolygonalDomain" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#medunda.domains.domain.Domain" title="medunda.domains.domain.Domain"><code class="xref py py-class docutils literal notranslate"><span class="pre">Domain</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>bounding_box</strong> (<em>BoundingBox</em>)</p></li>
+<li><p><strong>point_latitudes</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>point_longitudes</strong> (<em>list</em><em>[</em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>type</strong> (<em>Literal</em><em>[</em><em>'PolygonalDomain'</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="medunda.domains.domain.PolygonalDomain.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#medunda.domains.domain.PolygonalDomain.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<p>Example: North Adriatic Sea:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>WKT,nome,descrizione
+"POLYGON ((12.0548867 44.9596823, 12.4751137 44.6146529, 13.8456582 44.6224729, 14.2329262 44.9091292, 14.0846108 45.7931288, 13.439164 45.9308423, 11.9010781 45.6281905, 12.0548867 44.9596823))",NorthAdr,
+</pre></div>
+</div>
+</section>
+<section id="multipolygonaldomain">
+<h2>MultiPolygonalDomain<a class="headerlink" href="#multipolygonaldomain" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="medunda.domains.domain.MultiPolygonalDomain">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">medunda.domains.domain.</span></span><span class="sig-name descname"><span class="pre">MultiPolygonalDomain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounding_box</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'MultiPolygonalDomain'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polygons</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.domains.domain.MultiPolygonalDomain" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#medunda.domains.domain.Domain" title="medunda.domains.domain.Domain"><code class="xref py py-class docutils literal notranslate"><span class="pre">Domain</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>bounding_box</strong> (<em>BoundingBox</em>)</p></li>
+<li><p><strong>type</strong> (<em>Literal</em><em>[</em><em>'MultiPolygonalDomain'</em><em>]</em>)</p></li>
+<li><p><strong>polygons</strong> (<em>list</em><em>[</em><a class="reference internal" href="#medunda.domains.domain.PolygonalDomain" title="medunda.domains.domain.PolygonalDomain"><em>PolygonalDomain</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="medunda.domains.domain.MultiPolygonalDomain.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#medunda.domains.domain.MultiPolygonalDomain.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="domain-from-basin">
+<h2>domain_from_basin<a class="headerlink" href="#domain-from-basin" title="Link to this heading">¶</a></h2>
+<p>Creates a domain from a predefined BitSea basin identified by its UUID. This allows basin definitions to be directly incorporated into Medunda workflows.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.domains.domain.domain_from_basin">
+<span class="sig-prename descclassname"><span class="pre">medunda.domains.domain.</span></span><span class="sig-name descname"><span class="pre">domain_from_basin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basin_uuid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.domains.domain.domain_from_basin" title="Link to this definition">¶</a></dt>
+<dd><p>Generates a domain representation from a given basin identifier.</p>
+<p>This function constructs a domain representation from a basin specified by
+its UUID. If the basin is a composed entity, it processes its components
+recursively to generate the appropriate domain representation. The result
+could be either a simple polygonal domain or a multipolygonal domain,
+depending on the type of the basin. It ensures that unsupported basin
+types are appropriately handled by raising an error.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>basin_uuid</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The unique identifier for the basin to process.</p></li>
+<li><p><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span></code>, <em>optional</em>) – The optional name to assign to the
+created domain. If not provided, the name is derived from the
+basin UUID.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>The created domain</dt><dd><p>representing the given basin. Returns a PolygonalDomain for
+simple basins, and a MultiPolygonalDomain for composed basins.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#medunda.domains.domain.PolygonalDomain" title="medunda.domains.domain.PolygonalDomain">PolygonalDomain</a> | <a class="reference internal" href="#medunda.domains.domain.MultiPolygonalDomain" title="medunda.domains.domain.MultiPolygonalDomain">MultiPolygonalDomain</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>InvalidBasinUUIDError</strong> – If the provided basin UUID is invalid</p></li>
+<li><p><strong>ValueError</strong> – If processing a composed basin that has no sub-basins.</p></li>
+<li><p><strong>NotImplementedError</strong> – If encountering a basin type that is not
+    supported (only SimplePolygonalBasins are supported).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nn">---</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CentralMediterranean</span>
+<span class="nt">geometry</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">basin</span>
+<span class="w">  </span><span class="nt">uuid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mid3</span>
+</pre></div>
+</div>
+</section>
+<section id="read-zipped-shapefile">
+<h2>read_zipped_shapefile<a class="headerlink" href="#read-zipped-shapefile" title="Link to this heading">¶</a></h2>
+<p>Reads a shapefile stored in a ZIP archive and extracts the selected feature. The resulting geometry can be used to define a domain.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.domains.domain.read_zipped_shapefile">
+<span class="sig-prename descclassname"><span class="pre">medunda.domains.domain.</span></span><span class="sig-name descname"><span class="pre">read_zipped_shapefile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compressed_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temporary_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.domains.domain.read_zipped_shapefile" title="Link to this definition">¶</a></dt>
+<dd><p>Read the content of a zipped file that contains
+only one file (among the others) with an extension .shp
+and return the path to the uncompressed shapefile.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>compressed_path</strong> (<em>Path</em>)</p></li>
+<li><p><strong>temporary_dir</strong> (<em>Path</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nn">---</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GSA9</span>
+<span class="nt">geometry</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">shapefile</span>
+<span class="w">  </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">"${MAIN_DIR}/data/GSAs_simplified.zip"</span>
+<span class="w">  </span><span class="nt">selection_field_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SECT_COD</span>
+<span class="w">  </span><span class="nt">selection_field_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GSA09</span>
+<span class="nt">depth</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">min_depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0182366371154785</span>
+<span class="w">  </span><span class="nt">max_depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2961</span>
+</pre></div>
+</div>
+</section>
+<section id="read-domain-from-yaml">
+<h2>read_domain_from_yaml<a class="headerlink" href="#read-domain-from-yaml" title="Link to this heading">¶</a></h2>
+<p>Creates a domain from a YAML configuration file. The definition can specify the geometry and optional depth constraints.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.domains.domain.read_domain_from_yaml">
+<span class="sig-prename descclassname"><span class="pre">medunda.domains.domain.</span></span><span class="sig-name descname"><span class="pre">read_domain_from_yaml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">yaml_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.domains.domain.read_domain_from_yaml" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>yaml_path</strong> (<em>Path</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Annotated</em>[<a class="reference internal" href="#medunda.domains.domain.RectangularDomain" title="medunda.domains.domain.RectangularDomain"><em>RectangularDomain</em></a> | <a class="reference internal" href="#medunda.domains.domain.PolygonalDomain" title="medunda.domains.domain.PolygonalDomain"><em>PolygonalDomain</em></a> | <a class="reference internal" href="#medunda.domains.domain.MultiPolygonalDomain" title="medunda.domains.domain.MultiPolygonalDomain"><em>MultiPolygonalDomain</em></a>, FieldInfo(annotation=NoneType, required=True, discriminator=’type’)]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="domain-from-string">
+<h2>domain_from_string<a class="headerlink" href="#domain-from-string" title="Link to this heading">¶</a></h2>
+<p>Creates a domain from its string representation. It provides a convenient way to construct domains from textual specifications.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.domains.domain.domain_from_string">
+<span class="sig-prename descclassname"><span class="pre">medunda.domains.domain.</span></span><span class="sig-name descname"><span class="pre">domain_from_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain_description</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.domains.domain.domain_from_string" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>domain_description</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Annotated</em>[<a class="reference internal" href="#medunda.domains.domain.RectangularDomain" title="medunda.domains.domain.RectangularDomain"><em>RectangularDomain</em></a> | <a class="reference internal" href="#medunda.domains.domain.PolygonalDomain" title="medunda.domains.domain.PolygonalDomain"><em>PolygonalDomain</em></a> | <a class="reference internal" href="#medunda.domains.domain.MultiPolygonalDomain" title="medunda.domains.domain.MultiPolygonalDomain"><em>MultiPolygonalDomain</em></a>, FieldInfo(annotation=NoneType, required=True, discriminator=’type’)]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Medunda User Guide</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="downloader.html">Downloader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reducer.html">Reducer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotter.html">Plotter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="actions.html">Actions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Domains</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#medunda.domains.domain.Domain"><code class="docutils literal notranslate"><span class="pre">Domain</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rectangulardomain">RectangularDomain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#polygonaldomain">PolygonalDomain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multipolygonaldomain">MultiPolygonalDomain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#domain-from-basin">domain_from_basin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#read-zipped-shapefile">read_zipped_shapefile</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#read-domain-from-yaml">read_domain_from_yaml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#domain-from-string">domain_from_string</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Python Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="actions.html" title="previous chapter">Actions</a></li>
+      <li>Next: <a href="interfaces.html" title="next chapter">Python Interface</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/domains.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

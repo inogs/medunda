@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Python Interface &#8212; Medunda User Guide  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tools" href="tools.html" />
+    <link rel="prev" title="Domains" href="domains.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-medunda.interfaces.bottom_cell_map">
+<span id="python-interface"></span><span id="interfacesdoc"></span><h1>Python Interface<a class="headerlink" href="#module-medunda.interfaces.bottom_cell_map" title="Link to this heading">¶</a></h1>
+<section id="bottom-cell-map">
+<h2>Bottom Cell Map<a class="headerlink" href="#bottom-cell-map" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">BottomCellMap</span></code> maps observation points to the corresponding bottom cell of an oceanographic model grid and extracts the associated temporal data.</p>
+<p>The input points are provided as a Pandas DataFrame containing latitude, longitude, and time information. For each point, the corresponding model grid cell is identified based on the nearest valid surface cell and the model bathymetry. Data are then extracted from the deepest valid cell at that location.</p>
+<p>The mapping can be performed immediately or using Dask for delayed and parallel computation.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="medunda.interfaces.bottom_cell_map.BottomCellMap">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">medunda.interfaces.bottom_cell_map.</span></span><span class="sig-name descname"><span class="pre">BottomCellMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_collection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'latitude'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'longitude'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'time'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.interfaces.bottom_cell_map.BottomCellMap" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class to map points in a dataset to temporal series of data from the bottom
+cell of a model grid.</p>
+<p>This class allows for the mapping of points defined by latitude, longitude, and time
+to the corresponding bottom cell in a model grid, taking into account the bathymetry
+and the model’s spatial resolution.</p>
+<p>This class allows users to apply a function to the data at the bottom cell
+corresponding to each point, with the option to return the results as a Dask Delayed
+object for parallel computation or as a Pandas DataFrame for immediate use.</p>
+<p>The main method <cite>map</cite> takes a function that operates on an xarray Dataset and
+a Pandas DataFrame containing the points to be mapped. This dataframe must contain
+columns for latitude, longitude, and time, which are used to find the nearest model
+grid points and extract the corresponding data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_collection</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">GeoDataCollection</span></code>) – The dataset containing the model data.</p></li>
+<li><p><strong>time_range</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">timedelta</span></code>) – The time range around each point’s time to consider for
+data extraction. For each point, data will be extracted starting from the
+point’s time minus this range to the point’s time.</p></li>
+<li><p><strong>lat_column</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The name of the column in the point table that contains latitude
+values. Defaults to “latitude”.</p></li>
+<li><p><strong>lon_column</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The name of the column in the point table that contains longitude
+values. Defaults to “longitude”.</p></li>
+<li><p><strong>time_column</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The name of the column in the point table that contains time
+values. Defaults to “time”.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="medunda.interfaces.bottom_cell_map.BottomCellMap.map">
+<span class="sig-name descname"><span class="pre">map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">point_table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func_meta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delayed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.interfaces.bottom_cell_map.BottomCellMap.map" title="Link to this definition">¶</a></dt>
+<dd><p>Maps the provided function to the bottom cell data corresponding
+to each point in the point table.</p>
+<p>This method needs a Pandas DataFrame <cite>point_table</cite> that contains a
+column for latitude, a column for longitude, and a column for time.
+The name of these columns can be customized using the attributes of
+this class: <cite>lat_column</cite>, <cite>lon_column</cite>, and <cite>time_column</cite>.
+The output of this method is a Pandas DataFrame containing all the
+columns of the original <cite>point_table</cite>, plus additional columns that
+the user-defined function <cite>func</cite> returns.
+The <cite>func</cite> should accept an xarray Dataset as input and return a
+dictionary where keys are column names and values are the data for
+those columns. The Dataset passed to <cite>func</cite> will contain one
+variable for each variable in the original dataset, indexed by one
+dimension: <cite>model_time</cite>. The <cite>model_time</cite> dimension has an associated
+coordinate that contains all the time steps of the model in the
+interval between the point’s time minus <cite>time_range</cite> and the point’s
+time (included). The values of each variable are taken from the bottom
+cell of the model grid corresponding to the point’s location. The cell
+of the model is determined by the latitude and longitude of the point,
+and the bathymetry of the model grid. The corresponding cell on the
+surface is chosen as the one that is closest to the point’s location,
+and that is not masked by the bathymetry (i.e., the point is not on
+land). Then, the data is extracted from the deepest cell of the model
+that contains water and that is on the same longitude and latitude
+of the surface cell.
+The Xarray Dataset contains also the following scalar coordinates:</p>
+<ul class="simple">
+<li><p>latitude: the latitude of the original point.</p></li>
+<li><p>longitude: the longitude of the original point.</p></li>
+<li><p>time: the time of the original point.</p></li>
+<li><p><cite>model_latitude</cite>: the latitude of the model point corresponding
+to the bottom cell of the model grid at the point’s location.</p></li>
+<li><p><cite>model_longitude</cite>: the longitude of the model point corresponding
+to the bottom cell of the model grid at the point’s location.</p></li>
+<li><p><cite>model_depth</cite>: the depth of the model point corresponding to the
+bottom cell of the model grid at the point’s location. This
+coordinate (and the <cite>depth</cite> dimension it comes from) is only
+present when the underlying dataset has 3D variables; if the
+dataset only contains 2D variables, <cite>model_depth</cite> is omitted.</p></li>
+<li><p>distance: the geodesic distance between the original point and
+the model point corresponding to the bottom cell of the model grid
+at the point’s location (in meters).</p></li>
+</ul>
+<p>The <cite>func</cite> must return a dictionary whose keys can be chosen freely
+by the user, but they must not change among points. The values of the
+dictionary must be integers, floats, or strings. The values will
+be added as new columns to the output DataFrame. The output DataFrame
+will contain all the columns of the original <cite>point_table</cite>, plus the
+columns returned by the <cite>func</cite>. The names of the columns returned by
+the <cite>func</cite> must not conflict with the names of the columns in the
+<cite>point_table</cite>.</p>
+<p>The <cite>func</cite> is applied to each point in the <cite>point_table</cite>, and the
+results are collected in a Pandas DataFrame. If <cite>delayed</cite> is set to
+<cite>True</cite>, the method returns a Dask Delayed object that can be computed
+later. If <cite>delayed</cite> is set to <cite>False</cite>, the method computes the results
+immediately and returns a Pandas DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Dataset</em><em>]</em><em>, </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – A function that takes an xarray Dataset as input and
+returns a dictionary where keys are column names and values
+are the data for those columns.</p></li>
+<li><p><strong>point_table</strong> (<em>DataFrame</em>) – A Pandas DataFrame containing the points to be mapped.
+The DataFrame must contain columns for latitude, longitude,
+and time, which are used to find the nearest model grid points
+and extract the corresponding data.</p></li>
+<li><p><strong>func_meta</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>DTypeLike</em><em>] </em><em>| </em><em>None</em>) – Here you can specify the dtypes of the output of func.
+For example, if func returns two columns named A and B and the
+values of the column A are integers while the values of B are
+floating point numbers, func_meta must be
+{“A”: int, “B”: np.float32}. If it is not submitted, the code
+will try to guess an appropriate meta by executing func on the
+first point.</p></li>
+<li><p><strong>delayed</strong> (<em>bool</em>) – If True, the method returns a Dask Delayed object that can
+be computed later. If False, the method computes the results
+immediately and returns a Pandas DataFrame.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <cite>delayed</cite> is <cite>False</cite> (the default), a Pandas DataFrame
+with one row per point of <cite>point_table</cite>, containing all
+the columns of <cite>point_table</cite> plus the columns returned by
+<cite>func</cite>. If <cite>delayed</cite> is <cite>True</cite>, a Dask DataFrame with the
+same columns, not computed yet.
+In both cases, the rows are indexed like <cite>point_table</cite>, but
+may not be in the same order: if <cite>point_table.index</cite> has no
+duplicates, it can still be used to match each output row
+back to the corresponding input point.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>DataFrame</em> | <em>DataFrame</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<section id="example">
+<h3>Example<a class="headerlink" href="#example" title="Link to this heading">¶</a></h3>
+<p>A <code class="docutils literal notranslate"><span class="pre">BottomCellMap</span></code> object can be initialized with a <code class="docutils literal notranslate"><span class="pre">GeoDataCollection</span></code> and a time range:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">medunda.interfaces.bottom_cell_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">BottomCellMap</span>
+
+<span class="n">bottom_mapper</span> <span class="o">=</span> <span class="n">BottomCellMap</span><span class="p">(</span>
+    <span class="n">data_collection</span><span class="o">=</span><span class="n">data_collection</span><span class="p">,</span>
+    <span class="n">time_range</span><span class="o">=</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The mapping is then performed by providing a function and a table of points:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">bottom_mapper</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+    <span class="n">func</span><span class="o">=</span><span class="n">my_function</span><span class="p">,</span>
+    <span class="n">point_table</span><span class="o">=</span><span class="n">points</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The user-defined function receives an <code class="docutils literal notranslate"><span class="pre">xarray.Dataset</span></code> containing the data extracted for each point and must return a dictionary. The dictionary keys are used as column names in the output.</p>
+<p>For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"temperature"</span><span class="p">:</span> <span class="n">dataset</span><span class="p">[</span><span class="s2">"thetao"</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p>The resulting DataFrame contains the original point information together with the columns returned by the function.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="output-data">
+<h2>Output data<a class="headerlink" href="#output-data" title="Link to this heading">¶</a></h2>
+<p>For each point, the dataset provided to the user-defined function contains the temporal data extracted from the corresponding bottom cell.</p>
+<p>In addition to the model variables, the dataset contains information describing the relationship between the observation point and the model grid:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">latitude</span></code>: latitude of the original point.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">longitude</span></code>: longitude of the original point.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">time</span></code>: time of the original point.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model_latitude</span></code>: latitude of the corresponding model grid cell.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model_longitude</span></code>: longitude of the corresponding model grid cell.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model_depth</span></code>: depth of the corresponding bottom cell.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">distance</span></code>: geodesic distance between the original point and the corresponding model grid cell, in metres.</p></li>
+</ul>
+<p>The extracted model data use the <code class="docutils literal notranslate"><span class="pre">model_time</span></code> dimension.</p>
+</section>
+<hr class="docutils" />
+<section id="delayed-computation">
+<h2>Delayed computation<a class="headerlink" href="#delayed-computation" title="Link to this heading">¶</a></h2>
+<p>By default, <code class="docutils literal notranslate"><span class="pre">map()</span></code> computes the results immediately and returns a Pandas DataFrame.</p>
+<p>For large datasets, delayed computation can be enabled:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">bottom_mapper</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+    <span class="n">func</span><span class="o">=</span><span class="n">my_function</span><span class="p">,</span>
+    <span class="n">point_table</span><span class="o">=</span><span class="n">points</span><span class="p">,</span>
+    <span class="n">delayed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>In this case, the computation is returned as a Dask DataFrame and can be executed later using <code class="docutils literal notranslate"><span class="pre">.compute()</span></code>.</p>
+</section>
+<hr class="docutils" />
+<section id="custom-column-names">
+<h2>Custom column names<a class="headerlink" href="#custom-column-names" title="Link to this heading">¶</a></h2>
+<p>The names of the latitude, longitude, and time columns in the input point table can be customized when creating the <code class="docutils literal notranslate"><span class="pre">BottomCellMap</span></code> object:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bottom_mapper</span> <span class="o">=</span> <span class="n">BottomCellMap</span><span class="p">(</span>
+    <span class="n">data_collection</span><span class="o">=</span><span class="n">data_collection</span><span class="p">,</span>
+    <span class="n">time_range</span><span class="o">=</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">),</span>
+    <span class="n">lat_column</span><span class="o">=</span><span class="s2">"lat"</span><span class="p">,</span>
+    <span class="n">lon_column</span><span class="o">=</span><span class="s2">"lon"</span><span class="p">,</span>
+    <span class="n">time_column</span><span class="o">=</span><span class="s2">"date"</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The corresponding columns must exist in the input point table.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Medunda User Guide</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="downloader.html">Downloader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reducer.html">Reducer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotter.html">Plotter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="actions.html">Actions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="domains.html">Domains</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Python Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#bottom-cell-map">Bottom Cell Map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#output-data">Output data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#delayed-computation">Delayed computation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#custom-column-names">Custom column names</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="domains.html" title="previous chapter">Domains</a></li>
+      <li>Next: <a href="tools.html" title="next chapter">Tools</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/interfaces.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

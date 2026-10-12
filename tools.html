@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Tools &#8212; Medunda User Guide  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Python Interface" href="interfaces.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="tools">
+<span id="toolsdoc"></span><h1>Tools<a class="headerlink" href="#tools" title="Link to this heading">¶</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">medunda.tools</span></code> package provides utility modules used throughout MEDUNDA for command-line argument handling, file naming, logging, parallel processing, temporary directory management, time-table operations, and type definitions.</p>
+<section id="module-medunda.tools.argparse_utils">
+<span id="argparse-utilities"></span><h2>Argparse_Utilities<a class="headerlink" href="#module-medunda.tools.argparse_utils" title="Link to this heading">¶</a></h2>
+<p>This module provides utility functions for argument parsing in Medunda tools.</p>
+</section>
+<hr class="docutils" />
+<section id="module-medunda.tools.file_names">
+<span id="file-name"></span><h2>File_Name<a class="headerlink" href="#module-medunda.tools.file_names" title="Link to this heading">¶</a></h2>
+<p>In this module we store all the functions that handle, read, and modify the
+names of the data files that Medunda stores</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.tools.file_names.from_file_path_to_time_range">
+<span class="sig-prename descclassname"><span class="pre">medunda.tools.file_names.</span></span><span class="sig-name descname"><span class="pre">from_file_path_to_time_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.tools.file_names.from_file_path_to_time_range" title="Link to this definition">¶</a></dt>
+<dd><p>Extracts the start and end dates from a filename.</p>
+<p>The filename is expected to be in the format:
+“domain_variable_frequency_startdate–enddate.nc” where <cite>startdate</cite> and
+<cite>enddate</cite> are in YYYY-MM-DD format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>file_path</strong> (<em>Path</em>) – The path to the file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the start and end dates as datetime objects.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[<em>datetime</em>, <em>datetime</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.tools.file_names.get_output_filename">
+<span class="sig-prename descclassname"><span class="pre">medunda.tools.file_names.</span></span><span class="sig-name descname"><span class="pre">get_output_filename</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.tools.file_names.get_output_filename" title="Link to this definition">¶</a></dt>
+<dd><p>Generate the output filename based on the variable, frequency, start
+and end dates, and domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variable</strong> (<em>str</em>) – The variable stored inside the file.</p></li>
+<li><p><strong>frequency</strong> (<em>str</em>) – The frequency of the data (e.g., daily, monthly).</p></li>
+<li><p><strong>start</strong> (<em>datetime</em>) – The start date of the data.</p></li>
+<li><p><strong>end</strong> (<em>datetime</em>) – The end date of the data.</p></li>
+<li><p><strong>domain_name</strong> (<em>str</em>) – The name of the domain.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="module-medunda.tools.logging_utils">
+<span id="logging-utilities"></span><h2>Logging_Utilities<a class="headerlink" href="#module-medunda.tools.logging_utils" title="Link to this heading">¶</a></h2>
+<p>Logging utilities for Medunda tools.</p>
+</section>
+<hr class="docutils" />
+<section id="module-medunda.tools.parallelization">
+<span id="parallelization"></span><h2>Parallelization<a class="headerlink" href="#module-medunda.tools.parallelization" title="Link to this heading">¶</a></h2>
+<p>In this module, we provide parallelization utilities for managing
+and utilizing multiple processes.</p>
+</section>
+<hr class="docutils" />
+<section id="module-medunda.tools.temp_dirs">
+<span id="temporary-directories"></span><h2>Temporary_Directories<a class="headerlink" href="#module-medunda.tools.temp_dirs" title="Link to this heading">¶</a></h2>
+<p>Temporary directory context manager for Medunda tools.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="medunda.tools.temp_dirs.TemporaryDirectory">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">medunda.tools.temp_dirs.</span></span><span class="sig-name descname"><span class="pre">TemporaryDirectory</span></span><a class="headerlink" href="#medunda.tools.temp_dirs.TemporaryDirectory" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Temporary directory context manager for Medunda tools.</p>
+<p>This class provides a context manager for creating and managing temporary
+directories. It ensures that the directory is created upon entering the
+context and removed upon exiting.</p>
+<p>It is basically a wrapper around the built-in TemporaryDirectory class, but
+there are two main differences: the context manager returns a Path object
+instead of a string, and the directory is created inside the scratch dir
+if an environment variable SCRATCH is set.</p>
+<p>The idea of using a scratch directory is to avoid issues on clusters where
+the /tmp directory is not shared with all nodes (and it is usually very
+small). This class ensures that all the temporary directories are created
+inside a directory named <cite>.medunda_temp</cite> which is created inside the scratch
+directory.</p>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="module-medunda.tools.time_tables">
+<span id="time-tables"></span><h2>Time_Tables<a class="headerlink" href="#module-medunda.tools.time_tables" title="Link to this heading">¶</a></h2>
+<p>Tools for dividing a time interval into several subintervals.</p>
+<p>This module provides utility functions to split a time range into intervals
+of months or years, or using a custom interval function. Useful for time-based
+data processing, reporting, or scheduling tasks.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.tools.time_tables.get_next_month">
+<span class="sig-prename descclassname"><span class="pre">medunda.tools.time_tables.</span></span><span class="sig-name descname"><span class="pre">get_next_month</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_date</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.tools.time_tables.get_next_month" title="Link to this definition">¶</a></dt>
+<dd><p>Returns the first day of the month following the month containing
+<cite>current_date</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>current_date</strong> (<em>datetime</em>) – The reference date.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The first day of the next month.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>datetime</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.tools.time_tables.get_next_year">
+<span class="sig-prename descclassname"><span class="pre">medunda.tools.time_tables.</span></span><span class="sig-name descname"><span class="pre">get_next_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_date</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.tools.time_tables.get_next_year" title="Link to this definition">¶</a></dt>
+<dd><p>Returns the first day of the year following the year containing
+<cite>current_date</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>current_date</strong> (<em>datetime</em>) – The reference date.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The first day of the next year.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>datetime</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.tools.time_tables.split_by_month">
+<span class="sig-prename descclassname"><span class="pre">medunda.tools.time_tables.</span></span><span class="sig-name descname"><span class="pre">split_by_month</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.tools.time_tables.split_by_month" title="Link to this definition">¶</a></dt>
+<dd><p>Splits a time interval into monthly subintervals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_date</strong> (<em>datetime</em>) – The start of the interval.</p></li>
+<li><p><strong>end_date</strong> (<em>datetime</em>) – The end of the interval.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of (start, end) tuples for each month.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[tuple[<em>datetime</em>, <em>datetime</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.tools.time_tables.split_by_year">
+<span class="sig-prename descclassname"><span class="pre">medunda.tools.time_tables.</span></span><span class="sig-name descname"><span class="pre">split_by_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.tools.time_tables.split_by_year" title="Link to this definition">¶</a></dt>
+<dd><p>Splits a time interval into yearly subintervals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_date</strong> (<em>datetime</em>) – The start of the interval.</p></li>
+<li><p><strong>end_date</strong> (<em>datetime</em>) – The end of the interval.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of (start, end) tuples for each year.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[tuple[<em>datetime</em>, <em>datetime</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="medunda.tools.time_tables.split_into_intervals">
+<span class="sig-prename descclassname"><span class="pre">medunda.tools.time_tables.</span></span><span class="sig-name descname"><span class="pre">split_into_intervals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_next_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">datetime.timedelta(seconds=1)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#medunda.tools.time_tables.split_into_intervals" title="Link to this definition">¶</a></dt>
+<dd><p>Splits a time interval into subintervals using a custom function to
+determine split points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_date</strong> (<em>datetime</em>) – The start of the interval.</p></li>
+<li><p><strong>end_date</strong> (<em>datetime</em>) – The end of the interval.</p></li>
+<li><p><strong>get_next_point</strong> (<em>Callable</em><em>[</em><em>[</em><em>datetime</em><em>]</em><em>, </em><em>datetime</em><em>]</em>) – Function that returns the next split point.</p></li>
+<li><p><strong>resolution</strong> (<em>timedelta</em>) – The smallest unit of time to subtract from each interval’s
+end (except the last). Defaults to 1 second.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of (start, end) tuples for each subinterval.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If start_date is after end_date.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[tuple[<em>datetime</em>, <em>datetime</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="module-medunda.tools.typing">
+<span id="typing"></span><h2>Typing<a class="headerlink" href="#module-medunda.tools.typing" title="Link to this heading">¶</a></h2>
+<p>Type alias definitions for Medunda tools.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Medunda User Guide</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="downloader.html">Downloader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reducer.html">Reducer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plotter.html">Plotter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="actions.html">Actions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="domains.html">Domains</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Python Interface</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-medunda.tools.argparse_utils">Argparse_Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-medunda.tools.file_names">File_Name</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-medunda.tools.logging_utils">Logging_Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-medunda.tools.parallelization">Parallelization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-medunda.tools.temp_dirs">Temporary_Directories</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-medunda.tools.time_tables">Time_Tables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-medunda.tools.typing">Typing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="interfaces.html" title="previous chapter">Python Interface</a></li>
+      <li>Next: <a href="examples.html" title="next chapter">Examples</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/tools.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
