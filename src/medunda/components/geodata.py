@@ -230,7 +230,7 @@ class GeoDataCollection(BaseModel):
 
         data_files = self.get_data_files()
 
-        def clean_longitude_zeros(xr_dataset: xr.Dataset) -> xr.Dataset:
+        def clean_longitude_zeros(xr_dataset: "xr.Dataset") -> "xr.Dataset":
             # Fixing the 0 value of the longitude! There is a subtle bug in the
             # Copernicus files: the value of the Greenwich meridian is
             # 1.4387797e-13 for the physical files and 1.4210855e-13 in the

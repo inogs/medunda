@@ -31,7 +31,7 @@ def allocate_medunda_data_file(
     var_units: str | None,
     meshmask: "xr.Dataset",
     spatial_slices: dict[Literal["depth", "latitude", "longitude"], slice],
-    time_steps: np.ndarray,
+    time_steps: "np.ndarray",
     f_pointer: "netCDF4.Dataset",
 ):
     """

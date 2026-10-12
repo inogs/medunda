@@ -112,7 +112,7 @@ def allocate_medunda_data_file(
     var_units: str | None,
     meshmask: "xr.Dataset",
     spatial_slices,
-    time_steps: np.ndarray,
+    time_steps: "np.ndarray",
     f_pointer: "netCDF4.Dataset",
 ):
     """
@@ -206,7 +206,7 @@ def writer(
     var_units: str | None,
     meshmask: "xr.Dataset",
     spatial_slices: dict[str, slice],
-    time_steps: np.ndarray,
+    time_steps: "np.ndarray",
 ):
     """
     Writes data to a Medunda NetCDF file in a time-stepped manner.
