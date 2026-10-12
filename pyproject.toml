@@ -33,6 +33,8 @@ hypothesis = "^6.135.26"
 pre-commit = "^4.4.0"
 deptry = ">=0.24.0"
 ipython = ">9"
+mypy = "^2.4.0"
+pyright = "^1.1.414"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^9"

@@ -32,6 +32,10 @@ class InvalidBasinUUIDError(ValueError):
     pass
 
 
+class InvalidGeometry(Exception):
+    pass
+
+
 class BoundingBox(BaseModel):
     """
     Represents a geographical bounding box with optional depth constraints.
@@ -508,10 +512,11 @@ def read_domain_from_yaml(yaml_path: Path) -> ConcreteDomain:
     elif geo_type == "basin":
         return domain_from_basin(geometry["uuid"], name=name)
 
-    raise Exception(
+    error_msg = (
         "The geometry type you have chosen should have been implemented "
         "but, because of a bug of the code, it is not recognized"
     )
+    raise InvalidGeometry(error_msg)
 
 
 def domain_from_string(domain_description: str) -> ConcreteDomain:
