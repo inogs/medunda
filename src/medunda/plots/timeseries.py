@@ -40,15 +40,6 @@ def plotting_timeseries(
             "This dataset has no 'time' dimension therefore cannot plot time series."
         )
 
-    if start_date is None and end_date is None:
-        start_date = data["time"].values[0]
-        end_date = data["time"].values[-1]
-    else:
-        if start_date is not None:
-            start_date = start_date
-        if end_date is not None:
-            end_date = end_date
-
     spatial_dims = [
         dim
         for dim in ["lat", "latitude", "lon", "longitude"]

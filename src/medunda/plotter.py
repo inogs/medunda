@@ -134,14 +134,16 @@ def parse_colormap_description(cmap_desc: str) -> "Colormap":
 def check_variable(ds, var):
     if isinstance(ds, xr.Dataset):
         if var not in ds:
-            raise ValueError(f"Variable '{var}' not found in dataset")
+            error_msg = f"Variable '{var}' not found in dataset"
+            raise ValueError(error_msg)
         data = ds[var]
 
     elif isinstance(ds, xr.DataArray):
         data = ds
 
     else:
-        raise ValueError("Unsupported dataset type")
+        error_msg = "Unsupported dataset type"
+        raise TypeError(error_msg)
 
     if var in VAR_METADATA:
         var_metadata: dict[str, str | Colormap] = dict(VAR_METADATA[var])

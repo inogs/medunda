@@ -60,13 +60,16 @@ def plotting_maps(
     else:
         selected_time = pd.to_datetime(time)
 
-        # Convert the time coordinate to datetime if it's not already
-        data["time"] = pd.to_datetime(data["time"].values)
+        # Convert the time coordinate to datetime if it's not already.
+        # assign_coords returns a new object, so the caller's data is not
+        # modified
+        data = data.assign_coords(time=pd.to_datetime(data["time"].values))
 
         try:
             data_slice = data.sel(time=selected_time, method="nearest")
         except Exception as e:
-            raise ValueError(f"Could not select time {selected_time}: {e}")
+            error_msg = f"Could not select time {selected_time}"
+            raise ValueError(error_msg) from e
 
         actual_time = pd.to_datetime(data_slice["time"].values)
 
@@ -100,6 +103,7 @@ def plotting_maps(
             dim=aggregation_dimension
         )
 
+        n_dims = len(data_slice.dims)
         if n_dims != 2:
             raise ValueError(
                 f"Data has {n_dims} dimensions after aggregation, expected 2 "

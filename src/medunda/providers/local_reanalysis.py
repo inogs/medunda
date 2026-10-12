@@ -71,7 +71,7 @@ def allocate_medunda_data_file(
         "longitude": {"units": "degrees_east", "axis": "X"},
         "depth": {"units": "m", "axis": "Z", "long_name": "Depth"},
     }
-    for coord in coords:
+    for coord, coord_attrs in coords.items():
         coord_elements = meshmask[coord].values[spatial_slices[coord]]
         f_pointer.createDimension(coord, coord_elements.shape[0])
         coord_var = f_pointer.createVariable(
@@ -80,9 +80,9 @@ def allocate_medunda_data_file(
             dimensions=(coord,),
         )
         coord_var[:] = coord_elements
-        coord_var.units = coords[coord]["units"]
-        coord_var.axis = coords[coord]["axis"]
-        coord_var.long_name = coords[coord].get("long_name", coord)
+        coord_var.units = coord_attrs["units"]
+        coord_var.axis = coord_attrs["axis"]
+        coord_var.long_name = coord_attrs.get("long_name", coord)
         coord_var.standard_name = coord
         if coord == "depth":
             coord_var.positive = "down"
@@ -323,16 +323,18 @@ class LocalReanalysis(Provider):
     ) -> dict[Frequency, dict]:
         output: dict[Frequency, dict] = {}
         if "frequencies" not in config_content:
-            raise ValueError(
+            error_msg = (
                 'The configuration file must contain a "frequencies" section.'
             )
+            raise ValueError(error_msg)
         if not isinstance(config_content["frequencies"], list):
-            raise ValueError('The "frequencies" section must be a list')
+            error_msg = 'The "frequencies" section must be a list'
+            raise TypeError(error_msg)
 
         required_keys = {"frequency", "variables", "path"}
         for frequency in config_content["frequencies"]:
             if not isinstance(frequency, Mapping):
-                raise ValueError(
+                error_msg = (
                     'Each frequency in the "frequencies" section must be a '
                     "dictionary with the following keys: {}. "
                     "Received: {}".format(
@@ -340,10 +342,11 @@ class LocalReanalysis(Provider):
                         frequency,
                     )
                 )
+                raise TypeError(error_msg)
 
             missing_keys = required_keys - set(frequency.keys())
             if missing_keys:
-                raise ValueError(
+                error_msg = (
                     'Each frequency in the "frequencies" section must contain '
                     "the following keys: {}. Missing keys in {} ---> {}".format(
                         ", ".join(sorted(required_keys)),
@@ -351,42 +354,48 @@ class LocalReanalysis(Provider):
                         ", ".join(sorted(missing_keys)),
                     )
                 )
+                raise ValueError(error_msg)
 
             for key in frequency:
                 if key not in required_keys:
                     supported_keys = ", ".join(sorted(required_keys))
-                    raise ValueError(
+                    error_msg = (
                         f'Invalid key "{key}" in frequency {frequency}. '
                         f"Supported keys are: {supported_keys}."
                     )
+                    raise ValueError(error_msg)
 
             try:
                 frequency_value = Frequency(frequency["frequency"].lower())
             except Exception as e:
-                raise ValueError(
+                error_msg = (
                     f"Invalid frequency '{frequency['frequency']}' in the "
                     f"section {frequency}. Supported frequencies are 'monthly' "
                     "and 'daily'."
-                ) from e
+                )
+                raise ValueError(error_msg) from e
 
             frequency_path = Path(frequency["path"])
             frequency_vars = frequency["variables"]
             if not isinstance(frequency_vars, list):
-                raise ValueError(
+                error_msg = (
                     f'The "variables" key in frequency {frequency} must be a '
                     f"list. Received: {frequency_vars}"
                 )
+                raise TypeError(error_msg)
             for var in frequency_vars:
                 if var not in variables:
-                    raise ValueError(
+                    error_msg = (
                         f'Variable "{var}" in frequency {frequency} is not '
                         f'defined in the "variables" section.'
                     )
+                    raise ValueError(error_msg)
 
             if frequency_value in output:
-                raise ValueError(
+                error_msg = (
                     f"Frequency '{frequency_value}' is defined multiple times."
                 )
+                raise ValueError(error_msg)
 
             output[frequency_value] = {
                 "path": frequency_path,
@@ -401,41 +410,47 @@ class LocalReanalysis(Provider):
     ) -> dict[VarName, dict[str, str]]:
         variables_config: dict[VarName, dict[str, str]] = {}
         if "variables" not in config_content:
-            raise ValueError(
+            error_msg = (
                 'The configuration file must contain a "variables" section.'
             )
+            raise ValueError(error_msg)
         if not isinstance(config_content["variables"], list):
-            raise ValueError('The "variables" section must be a list.')
+            error_msg = 'The "variables" section must be a list.'
+            raise TypeError(error_msg)
 
         for raw_var in config_content["variables"]:
             if not isinstance(raw_var, Mapping):
-                raise ValueError(
+                error_msg = (
                     'Each variable in the "variables" section must be a '
                     "dictionary with the following mandatory keys: "
                     "variable and unit. Optional keys are: dataset_name. "
                     f"Received: {raw_var}"
                 )
+                raise TypeError(error_msg)
             if "variable" not in raw_var or "unit" not in raw_var:
-                raise ValueError(
+                error_msg = (
                     'Each variable in the "variables" section must contain '
                     'the keys "variable" and "unit". Optional keys are: '
                     f"dataset_name. Received: {raw_var}"
                 )
+                raise ValueError(error_msg)
             for key in raw_var:
                 if key not in {"variable", "unit", "dataset_name"}:
-                    raise ValueError(
+                    error_msg = (
                         f'Invalid key "{key}" in variable {raw_var}. '
                         'Supported keys are: "variable", "unit", and '
                         '"dataset_name".'
                     )
+                    raise ValueError(error_msg)
             var_name = raw_var["variable"]
             try:
                 current_var = Variable.get_by_name(var_name)
             except ValueError as e:
-                raise ValueError(
+                error_msg = (
                     f'Invalid variable "{var_name}" in the "variables" '
                     "section. Medunda does not support this variable."
-                ) from e
+                )
+                raise ValueError(error_msg) from e
 
             variables_config[var_name] = {
                 "unit": raw_var["unit"],

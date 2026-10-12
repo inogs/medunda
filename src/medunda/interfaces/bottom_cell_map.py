@@ -27,6 +27,14 @@ from medunda.tools.xarray_utils import to_delayed
 
 LOGGER = logging.getLogger(__name__)
 
+
+class PointFunctionError(RuntimeError):
+    """
+    Raised when the function applied by `BottomCellMap` fails on one of the
+    points. The original exception is available as `__cause__`.
+    """
+
+
 # If the chunks that come natively from the files on the disk are
 # already smaller than these many grid points (along latitude and along
 # longitude), they are used as they are. Otherwise, `BottomCellMap.map`
@@ -194,15 +202,15 @@ def _extract_points(
                 f"the function received the following data: {point_data}\n\n"
                 f"Error raised: \n{e}"
             )
-            raise Exception(
-                f"Error in function {f.__name__} for point {global_i}"
-            ) from e
+            error_msg = f"Error in function {f.__name__} for point {global_i}"
+            raise PointFunctionError(error_msg) from e
 
         if not isinstance(point_output, dict):
-            raise ValueError(
+            error_msg = (
                 f"Function {f.__name__} must always return a dictionary. It "
                 f"returned a {type(point_output)} instead."
             )
+            raise TypeError(error_msg)
 
         conflicting_columns = set(point_output) & set(preserve_columns)
         if conflicting_columns:

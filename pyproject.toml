@@ -67,6 +67,9 @@ banned-module-level-imports = [
 # The interfaces are meant to be imported explicitly by user scripts, never
 # at startup, so they are allowed to import heavy modules directly.
 "src/medunda/interfaces/**" = ["TID253"]
+# Each lazy module has the same name of the library it wraps, even when the
+# name of the library does not follow PEP 8.
+"src/medunda/tools/lazy_imports/netCDF4.py" = ["N999"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
