@@ -30,7 +30,7 @@ from datetime import timedelta
 from medunda.interfaces.bottom_cell_map import BottomCellMap
 
 bottom_mapper = BottomCellMap(
-    dataset=dataset,
+    data_collection=data_collection,
     time_range=timedelta(days=7),
 )
 ```
@@ -101,7 +101,7 @@ The names of the latitude, longitude, and time columns in the input point table 
 
 ```python
 bottom_mapper = BottomCellMap(
-    dataset=dataset,
+    data_collection=data_collection,
     time_range=timedelta(days=7),
     lat_column="lat",
     lon_column="lon",

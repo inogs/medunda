@@ -1,10 +1,10 @@
 import logging
 import shutil
 from abc import ABC
-from datetime import timezone
+from collections.abc import Mapping
+from datetime import UTC
 from pathlib import Path
 from typing import Any
-from typing import Mapping
 from warnings import warn
 
 from medunda.components.data_files import DataFile
@@ -244,8 +244,8 @@ class CMEMSProvider(Provider, ABC):
                 # Copernicusmarine API interprets datetimes as UTC,
                 # so we need to ensure that the start and end datetimes
                 # are timezone-aware and set to UTC.
-                start = file.start_date.replace(tzinfo=timezone.utc)
-                end = file.end_date.replace(tzinfo=timezone.utc)
+                start = file.start_date.replace(tzinfo=UTC)
+                end = file.end_date.replace(tzinfo=UTC)
                 copernicusmarine.subset(
                     dataset_id=product_id,
                     variables=[var_name],

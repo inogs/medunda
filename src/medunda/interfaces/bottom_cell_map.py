@@ -1,12 +1,12 @@
 import logging
 import warnings
+from collections.abc import Callable
 from collections.abc import Hashable
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
-from typing import Callable
 from typing import Literal
-from typing import Sequence
 from typing import cast
 
 import dask.dataframe
@@ -451,6 +451,7 @@ class BottomCellMap:
         that contains water and that is on the same longitude and latitude
         of the surface cell.
         The Xarray Dataset contains also the following scalar coordinates:
+
         - latitude: the latitude of the original point.
         - longitude: the longitude of the original point.
         - time: the time of the original point.
@@ -1044,17 +1045,17 @@ class BottomCellMap:
             `_extract_points` except `f` and `dataset`.
         """
         has_depth = bottom_indices is not None
-        return dict(
-            point_table=point_subset,
-            depth_indices=(
+        return {
+            "point_table": point_subset,
+            "depth_indices": (
                 bottom_indices[bottom_positions] if has_depth else None
             ),
-            indices_shift=indices_shift,
-            column_names=column_names,
-            time_range=self._time_range,
-            preserve_columns=preserve_columns,
-            has_depth=has_depth,
-        )
+            "indices_shift": indices_shift,
+            "column_names": column_names,
+            "time_range": self._time_range,
+            "preserve_columns": preserve_columns,
+            "has_depth": has_depth,
+        }
 
     def _resolve_func_meta(
         self,

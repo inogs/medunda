@@ -6,70 +6,92 @@
    :no-members:
 ```
 
+The downloader has two commands: `create`, which starts a new download, and `resume`, which completes a download that has been interrupted.
+
+## Starting a new download
+
 To run the downloader, provide the following required and optional arguments:
 
 **I. Required:**
 
-1. **variables**: one or more variables can be downloaded that can be found when running this command:
-```bash
+1. **variables**: one or more variables to download. The variables supported by Medunda can be listed with:
+
+   ```bash
    medunda show variables
-```
-   this prints all the variables supported by Medunda from all providers.
+   ```
 
-2. **start-date and end-date**: written in this format: YYYY-MM-DD
+   This prints all the variables supported by Medunda from all providers. To see only the variables available from a specific provider (and, optionally, at a specific frequency), use:
 
-3. **Frequency**: the available frequencies are daily, weekly, monthly and yearly. The frequency is dependent from the dataset. Not all frequencies are supported by all datasets. The default is monthly.
+   ```bash
+   medunda show variables --provider <provider_name> --frequency <frequency>
+   ```
 
-4. **Domain**: choose a predefined domain such as the Mediterranean Sea or Adriatic Sea, or provide a YAML file describing a rectangular, shapefile, WKT, or BitSea basin domain. See **{ref}`domaindoc`** for the supported domain types.
+2. **start-date** and **end-date**: the time range to download, written in the format `YYYY-MM-DD`.
+
+3. **domain**: the geographical (and, optionally, vertical) region to download. It can be either the path to a YAML file describing a rectangular, shapefile, WKT, or BitSea basin domain, or a string in the form `basin:<uuid>` that identifies a BitSea basin. Some ready-to-use YAML files (e.g. `MediterraneanSea.yaml`, `AdriaticSea.yaml`, `GSA9.yaml`, `GlobalOcean.yaml`) are available in the `domains` directory of the repository. See **{ref}`domaindoc`** for the supported domain types.
+
+4. **output-dir**: the directory where the downloaded dataset is saved. The directory is created if it does not exist. Each directory can contain only one dataset: the download fails if the directory already contains a dataset from a previous download.
 
 **II. Optional:**
 
-5. **Provider**: providers are divided into two main groups. CMEMS providers or Local Providers. (to be explained in a following page: cmems med reanalysis physical and biogeochemical variables or global reanalysis) The default is `cmems_mediterranean`. Local providers require a provider config, which is
-```bash
+5. **frequency**: the time frequency of the data: `daily`, `weekly`, `monthly`, or `yearly`. The default is `monthly`. Not all frequencies are supported by all providers; use `medunda show variables --provider <provider_name> --frequency <frequency>` to check which variables are available at a given frequency.
+
+6. **provider**: the source from which the data are retrieved. The default is `cmems_mediterranean`. The available providers can be listed with:
+
+   ```bash
    medunda show providers
-```
-This prints the providers Medunda reaches out to to download data.
+   ```
 
-6. **provider-config**: only needed by providers that require a configuration file. The default is no configuration file.
+   Providers are divided into two groups:
 
-7. **split-by**: this offers to users the possibility to split the dataset files according to temporal resolution: either yearly files or monthly files or the entirety of the dataset in one single file. The default option is split-by year.
+   * **CMEMS providers**, which download data from the [Copernicus Marine Data Store](https://marine.copernicus.eu/):
+     * `cmems_mediterranean`: physical and biogeochemical data of the Mediterranean Sea, from the [MEDSEA_MULTIYEAR_PHY_006_004](https://data.marine.copernicus.eu/product/MEDSEA_MULTIYEAR_PHY_006_004/description) and [MEDSEA_MULTIYEAR_BGC_006_008](https://data.marine.copernicus.eu/product/MEDSEA_MULTIYEAR_BGC_006_008/description) products;
+     * `cmems_global`: physical data of the global ocean, from the [GLOBAL_MULTIYEAR_PHY_001_030](https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description) product.
+   * **Local providers**, which retrieve data that are already available on the local machine:
+     * `local_reanalysis`: reads the data from a local directory structure;
+     * `tar_archive`: extracts the data from tar archives.
 
-8. **output-dir**: the directory where to save the downloaded dataset. this should be a one use only directory, meaning the user cannot create two geo-data collection in the same directory.
+7. **provider-config**: the path to a YAML configuration file for the provider. Local providers require it, while CMEMS providers do not accept it. By default, no configuration file is used.
+
+8. **split-by**: how the downloaded data are split into files: one file per `year`, one file per `month`, or a single file for the `whole` time range. The default is `year`.
 
 The full command to start a new download:
 
 ```bash
-poetry run medunda downloader create \
---variables <variable_names> \
---start-date <YYYY-MM-DD> \
---end-date <YYYY-MM-DD> \
---frequency <daily|weekly|monthly|yearly> \
---domain <domain_file> \
---provider <data_source> \
---provider-config <configuration of the provider> \
---split-by <whole|year|month> \
---output-dir <output_path>
+medunda downloader create \
+    --variables <variable_names> \
+    --start-date <YYYY-MM-DD> \
+    --end-date <YYYY-MM-DD> \
+    --frequency <daily|weekly|monthly|yearly> \
+    --domain <domain_file|basin:uuid> \
+    --provider <provider_name> \
+    --provider-config <provider_config_file> \
+    --split-by <whole|year|month> \
+    --output-dir <output_path>
 ```
+
 *Example*:
-```bash
-medunda downloader create --variables thetao o2 --start-date 1999-01-01 --end-date 2023-12-31 --frequency monthly --domain domains/GSA9.yaml --split-by year --output-dir ./data/
-```
-
-At the end of the download, a ```GeoDataCollection``` is created, which summarizes the downloaded dataset by storing information required to describe and identify it such as the spatial and temporal resolutions, data files, frequency, domain type and provider.
-
-This allows Medunda to  resume the download process in case of an interruption.
-
-To resume a download, only the path of the existing dataset is required, using the following command:
 
 ```bash
-medunda downloader resume --dataset-dir <path_of_the_dataset>
+medunda downloader create \
+    --variables thetao o2 \
+    --start-date 1999-01-01 \
+    --end-date 2023-12-31 \
+    --frequency monthly \
+    --domain domains/GSA9.yaml \
+    --split-by year \
+    --output-dir ./data/
 ```
 
-As with a new download, ```--dataset-dir``` should point to the same directory specified as ```--output-dir```.
+The downloaded files are saved inside the output directory, in a subdirectory for each variable and frequency (e.g. `thetao/monthly/`).
 
-The ```resume``` functionality requires the dataset to have been created using the ```split-by``` option.
+## The GeoDataCollection
 
-The following is an example of a ```GeoDataCollection``` generated by Medunda after a download:
+Before downloading the data, the downloader writes a file named `medunda_geodata_collection.json` inside the output directory. This file contains the description of a {py:class}`~medunda.components.geodata.GeoDataCollection`, i.e. all the information required to describe and identify the dataset: the domain, the time range, the frequency, the provider, and the list of the data files that compose the dataset.
+
+The directory containing this file is the Medunda dataset that is used as input by the **{ref}`reducerdoc`**.
+
+The following is an example of the `medunda_geodata_collection.json` file generated by Medunda for a download of the `thetao` variable on the Adriatic Sea, from 2010 to 2011, split by year:
 
 ```json
 {
@@ -91,9 +113,15 @@ The following is an example of a ```GeoDataCollection``` generated by Medunda af
         "thetao": [
             {
                 "start_date": "2010-01-01T00:00:00",
+                "end_date": "2010-12-31T23:59:59",
+                "variable": "thetao",
+                "path": "thetao/monthly/AdriaticSea_thetao_monthly_2010-01-01--2010-12-31.nc"
+            },
+            {
+                "start_date": "2011-01-01T00:00:00",
                 "end_date": "2011-12-31T00:00:00",
                 "variable": "thetao",
-                "path": "thetao\\monthly\\AdriaticSea_thetao_monthly_2010-01-01--2011-12-31.nc"
+                "path": "thetao/monthly/AdriaticSea_thetao_monthly_2011-01-01--2011-12-31.nc"
             }
         ]
     },
@@ -102,3 +130,15 @@ The following is an example of a ```GeoDataCollection``` generated by Medunda af
     "provider_config": null
 }
 ```
+
+## Resuming a download
+
+Since the `GeoDataCollection` is saved before the download starts, Medunda can resume the download process in case of an interruption. To resume a download, only the path of the existing dataset is required:
+
+```bash
+medunda downloader resume --dataset-dir <path_of_the_dataset>
+```
+
+The `--dataset-dir` argument must point to the directory that was specified as `--output-dir` when the download was created.
+
+When resuming, the files that have already been downloaded are skipped, and only the missing ones are downloaded. Since a file that was being downloaded when the interruption occurred is downloaded again from scratch, splitting the dataset into smaller files (with `--split-by year` or `--split-by month`) reduces the amount of data that must be downloaded again.

@@ -14,13 +14,13 @@ from queue import Queue
 import yaml
 
 import medunda.tools.lazy_imports.bitsea.mask as bitsea
-import medunda.tools.lazy_imports.netCDF4 as netCDF4
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import Variable
 from medunda.components.variables import VariableDataset
 from medunda.domains.domain import Domain
 from medunda.providers.provider import Provider
+from medunda.tools.lazy_imports import netCDF4
 from medunda.tools.lazy_imports import np
 from medunda.tools.lazy_imports import xr
 from medunda.tools.parallelization import get_n_of_processes
@@ -95,7 +95,7 @@ def reader(
                 np.ma.getdata(ds[nc_var_name][slices]), dtype=np.float32
             )
     except Exception as e:
-        raise IOError(f"Error reading file {nc_data_file}") from e
+        raise OSError(f"Error reading file {nc_data_file}") from e
     LOGGER.debug("Read an array of shape %s", data.shape)
 
     LOGGER.debug("Inserting data for time %s into the queue", time_step)
@@ -104,8 +104,6 @@ def reader(
 
     LOGGER.debug("Removing temporary file %s", nc_data_file)
     nc_data_file.unlink()
-
-    return None
 
 
 def allocate_medunda_data_file(

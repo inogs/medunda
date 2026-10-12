@@ -8,13 +8,13 @@ from typing import Literal
 import yaml
 
 import medunda.tools.lazy_imports.bitsea.mask as bitsea
-import medunda.tools.lazy_imports.netCDF4 as netCDF4
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import Variable
 from medunda.components.variables import VariableDataset
 from medunda.domains.domain import Domain
 from medunda.providers.provider import Provider
+from medunda.tools.lazy_imports import netCDF4
 from medunda.tools.lazy_imports import np
 from medunda.tools.lazy_imports import xr
 from medunda.tools.typing import VarName

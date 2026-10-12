@@ -141,7 +141,7 @@ def test_reduce_axes_on_depth(
                 # axis. In current_sum we store the weighted sum of the
                 # different elements
                 current_sum = 0.0
-                for k in range(0, dataset.sizes["depth"]):
+                for k in range(dataset.sizes["depth"]):
                     depth_selection = selection.copy()
                     depth_selection["depth"] = k
                     current_value = (

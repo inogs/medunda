@@ -1,7 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Mapping
 
 from medunda.components.data_files import DataFile
 from medunda.components.frequencies import Frequency

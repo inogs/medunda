@@ -17,12 +17,12 @@ from typing import cast
 
 import medunda.tools.lazy_imports.cmocean as lazy_cmocean
 import medunda.tools.lazy_imports.colormap as clp
-import medunda.tools.lazy_imports.rioxarray as rioxarray
 from medunda.components.variables import Variable
 from medunda.components.variables import VariableDataset
 from medunda.plots import maps
 from medunda.plots import timeseries
 from medunda.tools.lazy_imports import pd
+from medunda.tools.lazy_imports import rioxarray
 from medunda.tools.lazy_imports import xr
 from medunda.tools.logging_utils import configure_logger
 

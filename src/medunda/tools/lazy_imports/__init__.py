@@ -1,10 +1,10 @@
-import medunda.tools.lazy_imports.copernicusmarine as copernicusmarine
-import medunda.tools.lazy_imports.dask_array as dask_array
-import medunda.tools.lazy_imports.geopandas as geopandas
-import medunda.tools.lazy_imports.numpy as numpy
-import medunda.tools.lazy_imports.pandas as pandas
-import medunda.tools.lazy_imports.pyplot as pyplot
-import medunda.tools.lazy_imports.xarray as xarray
+from medunda.tools.lazy_imports import copernicusmarine
+from medunda.tools.lazy_imports import dask_array
+from medunda.tools.lazy_imports import geopandas
+from medunda.tools.lazy_imports import numpy
+from medunda.tools.lazy_imports import pandas
+from medunda.tools.lazy_imports import pyplot
+from medunda.tools.lazy_imports import xarray
 
 xr = xarray
 da = dask_array
@@ -17,14 +17,14 @@ __all__ = [
     "copernicusmarine",
     "da",
     "dask_array",
-    "xarray",
-    "xr",
-    "gpd",
     "geopandas",
+    "gpd",
+    "np",
+    "numpy",
     "pandas",
     "pd",
     "plt",
     "pyplot",
-    "numpy",
-    "np",
+    "xarray",
+    "xr",
 ]

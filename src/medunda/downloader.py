@@ -183,7 +183,7 @@ def download_data(
         config_file=provider_config
     )
     if hasattr(provider, "name"):
-        provider_name = getattr(provider, "name")
+        provider_name = provider.name
     else:
         provider_name = provider_class_name
 

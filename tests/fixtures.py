@@ -130,10 +130,10 @@ def dataset(request):
 
 
 __all__ = [
-    "data4d",
-    "dataset_4d",
-    "map_dataset",
-    "dataset_at_a_specific_depth",
     "climatological_dataset",
+    "data4d",
     "dataset",
+    "dataset_4d",
+    "dataset_at_a_specific_depth",
+    "map_dataset",
 ]

@@ -129,8 +129,7 @@ def build_action_args(args: argparse.Namespace) -> dict[str, Any]:
     del args_values["format"]
     del args_values["action"]
 
-    if "tool" in args_values:
-        del args_values["tool"]
+    args_values.pop("tool", None)
 
     return args_values
 

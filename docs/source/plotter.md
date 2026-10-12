@@ -149,4 +149,3 @@ python -m medunda plotter \
     --start-time <YYYY-MM-DD> \
     --end-time <YYYY-MM-DD>
 ```
----
