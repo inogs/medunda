@@ -31,6 +31,7 @@ def configure_parser(subparsers):
 
     average_parser.add_argument(
         "--operation",
+        dest="operator",
         type=str,
         choices=["mean", "integral", "max", "min"],
         required=False,

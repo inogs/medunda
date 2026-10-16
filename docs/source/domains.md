@@ -64,7 +64,7 @@ WKT,nome,descrizione
 
 ## domain_from_basin
 
-Creates a domain from a predefined BitSea basin identified by its UUID. This allows basin definitions to be directly incorporated into Medunda workflows.
+Creates a domain from a predefined *bit.sea* basin identified by its UUID. This allows basin definitions to be directly incorporated into Medunda workflows.
 
 ```{eval-rst}
 .. autofunction:: medunda.domains.domain.domain_from_basin
