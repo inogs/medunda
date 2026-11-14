@@ -11,8 +11,8 @@ from pydantic import Field
 from pydantic import field_validator
 
 from medunda.components.data_files import DataFile
+from medunda.components.domain import ConcreteDomain
 from medunda.components.frequencies import Frequency
-from medunda.domains.domain import ConcreteDomain
 from medunda.providers import get_provider
 from medunda.tools.lazy_imports import numpy as np
 from medunda.tools.lazy_imports import xr

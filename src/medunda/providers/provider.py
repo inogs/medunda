@@ -4,9 +4,9 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from medunda.components.data_files import DataFile
+from medunda.components.domain import Domain
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import VariableDataset
-from medunda.domains.domain import Domain
 from medunda.tools.typing import VarName
 
 

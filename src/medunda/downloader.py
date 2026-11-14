@@ -18,11 +18,11 @@ from pathlib import Path
 from sys import exit as sys_exit
 
 from medunda.components.data_files import DataFile
+from medunda.components.domain import ConcreteDomain
+from medunda.components.domain import domain_from_string
 from medunda.components.frequencies import Frequency
 from medunda.components.geodata import GeoDataCollection
 from medunda.components.variables import VariableDataset
-from medunda.domains.domain import ConcreteDomain
-from medunda.domains.domain import domain_from_string
 from medunda.providers import PROVIDERS
 from medunda.providers import get_provider
 from medunda.tools.argparse_utils import date_from_str

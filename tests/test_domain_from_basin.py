@@ -1,9 +1,9 @@
 import numpy as np
 import xarray as xr
 
-from medunda.domains.domain import MultiPolygonalDomain
-from medunda.domains.domain import PolygonalDomain
-from medunda.domains.domain import domain_from_basin
+from medunda.components.domain import MultiPolygonalDomain
+from medunda.components.domain import PolygonalDomain
+from medunda.components.domain import domain_from_basin
 
 
 class FakeSimpleBasin:
