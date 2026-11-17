@@ -3,7 +3,7 @@ from abc import abstractmethod
 from collections.abc import Mapping
 from pathlib import Path
 
-from medunda.components.data_files import DataFile
+from medunda.components.data_files import NetcdfArchive
 from medunda.components.domain import Domain
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import VariableDataset
@@ -63,7 +63,7 @@ class Provider(ABC):
         domain: Domain,
         frequency: Frequency,
         main_path: Path,
-        data_files: Mapping[VarName, tuple[DataFile, ...]],
+        data_files: Mapping[VarName, tuple[NetcdfArchive, ...]],
     ) -> None:
         """
         Downloads the required data files.
@@ -73,7 +73,7 @@ class Provider(ABC):
             frequency: The temporal resolution of the data to download.
             main_path: The root directory where the files will be saved.
             data_files: A mapping of each variable to the files that need to
-                be downloaded for that variable. If a `DataFile` contains a
+                be downloaded for that variable. If a `NetcdfArchive` has a
                 relative path, it is interpreted as relative to `main_path`.
         """
         raise NotImplementedError

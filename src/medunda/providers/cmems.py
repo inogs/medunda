@@ -8,7 +8,7 @@ from typing import Any
 from typing import ClassVar
 from warnings import warn
 
-from medunda.components.data_files import DataFile
+from medunda.components.data_files import NetcdfArchive
 from medunda.components.domain import Domain
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import VariableDataset
@@ -189,7 +189,7 @@ class CMEMSProvider(Provider, ABC):
         domain: Domain,
         frequency: Frequency,
         main_path: Path,
-        data_files: Mapping[VarName, tuple[DataFile, ...]],
+        data_files: Mapping[VarName, tuple[NetcdfArchive, ...]],
     ) -> None:
         """
         Downloads the data for the dataset.

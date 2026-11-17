@@ -8,7 +8,7 @@ from typing import Literal
 import yaml
 
 import medunda.tools.lazy_imports.bitsea.mask as bitsea
-from medunda.components.data_files import DataFile
+from medunda.components.data_files import NetcdfArchive
 from medunda.components.domain import Domain
 from medunda.components.frequencies import Frequency
 from medunda.components.variables import Variable
@@ -163,7 +163,7 @@ class LocalReanalysis(Provider):
         domain: Domain,
         frequency: Frequency,
         main_path: Path,
-        data_files: Mapping[VarName, tuple[DataFile, ...]],
+        data_files: Mapping[VarName, tuple[NetcdfArchive, ...]],
     ) -> None:
         # Get the current meshmask
         LOGGER.debug("Getting meshmask")

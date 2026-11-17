@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from sys import exit as sys_exit
 
-from medunda.components.data_files import DataFile
+from medunda.components.data_files import NetcdfArchive
 from medunda.components.domain import ConcreteDomain
 from medunda.components.domain import domain_from_string
 from medunda.components.frequencies import Frequency
@@ -213,7 +213,7 @@ def download_data(
     # We want to prepare a GeoDataCollection object that will contain the path
     # of all the
     # files that we will download.
-    downloaded_files: dict[VarName, tuple[DataFile, ...]] = {}
+    downloaded_files: dict[VarName, tuple[NetcdfArchive, ...]] = {}
 
     # Dataset file
     dataset_file = output_dir / "medunda_geodata_collection.json"
@@ -228,7 +228,7 @@ def download_data(
 
     for variable in variables:
         # We save here the files that we download for this variable
-        files_for_current_var: list[DataFile] = []
+        files_for_current_var: list[NetcdfArchive] = []
 
         var_output_dir = Path(variable) / str(frequency)
 
@@ -242,7 +242,7 @@ def download_data(
             )
 
             output_file_path = var_output_dir / output_file_name
-            output_file = DataFile(
+            output_file = NetcdfArchive(
                 start_date=start_date,
                 end_date=end_date,
                 variable=variable,

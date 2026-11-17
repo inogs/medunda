@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
 
-from medunda.components.data_files import DataFile
+from medunda.components.data_files import AnyDataSource
 from medunda.components.domain import ConcreteDomain
 from medunda.components.frequencies import Frequency
 from medunda.providers import get_provider
@@ -39,7 +39,7 @@ class GeoDataCollection(BaseModel):
     domain: ConcreteDomain
     start_date: datetime
     end_date: datetime
-    data_files: dict[VarName, tuple[DataFile, ...]] = {}
+    data_files: dict[VarName, tuple[AnyDataSource, ...]] = {}
     frequency: Frequency = Frequency.MONTHLY
     provider: str = "cmems"
     provider_config: Path | None = None
